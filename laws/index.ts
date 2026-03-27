@@ -33,7 +33,7 @@ interface LawFile {
 }
 
 export function loadAllLaws(): LawChunk[] {
-  const files = readdirSync(__dirname).filter(f => f.endsWith('.json'));
+  const files = readdirSync(__dirname).filter(f => f.endsWith('.json') && f !== 'package.json');
 
   const allChunks: LawChunk[] = [];
 

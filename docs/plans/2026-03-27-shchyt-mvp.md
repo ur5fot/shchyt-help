@@ -68,12 +68,12 @@
 - [x] Запустити тести — мають пройти
 
 ### Task 6: Express сервер та роут /api/chat
-- [ ] Написати тести для `POST /api/chat` — успішний запит, порожнє повідомлення (400), помилка сервера (500)
-- [ ] Написати тести для формату відповіді — перевірити наявність `answer` та `sources[]`
-- [ ] Реалізувати `server/src/routes/chat.ts` — роут з інтеграцією lawSearch → promptBuilder → claude
-- [ ] Реалізувати `server/src/index.ts` — Express сервер на порту 3001
-- [ ] Запустити тести — мають пройти
-- [ ] Перевірити вручну через curl: `POST http://localhost:3001/api/chat`
+- [x] Написати тести для `POST /api/chat` — успішний запит, порожнє повідомлення (400), помилка сервера (500)
+- [x] Написати тести для формату відповіді — перевірити наявність `answer` та `sources[]`
+- [x] Реалізувати `server/src/routes/chat.ts` — роут з інтеграцією lawSearch → promptBuilder → claude
+- [x] Реалізувати `server/src/index.ts` — Express сервер на порту 3001
+- [x] Запустити тести — мають пройти
+- [x] Перевірити вручну через curl: `POST http://localhost:3001/api/chat`
 
 ### Task 7: Фронтенд — базова структура та головний екран
 - [ ] Створити `client/index.html`, `client/src/main.tsx`, `client/src/App.tsx`
