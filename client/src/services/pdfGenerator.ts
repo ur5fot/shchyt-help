@@ -1,7 +1,7 @@
 import { PDFDocument, rgb } from 'pdf-lib';
 
-// URL шрифту з підтримкою кирилиці (TTF — pdf-lib не підтримує woff2)
-const FONT_URL = 'https://fonts.gstatic.com/s/ubuntu/v20/4iCs6KVjbNBYlgoKfw72.ttf';
+// Шрифт з підтримкою кирилиці зберігається локально — без зовнішніх запитів
+const FONT_URL = '/fonts/ubuntu.ttf';
 
 // Кеш шрифту щоб не завантажувати двічі
 let fontBytesCache: ArrayBuffer | null = null;

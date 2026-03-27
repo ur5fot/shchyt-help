@@ -1,4 +1,5 @@
 // Точка входу сервера — запускає Express на порту 3001
+import 'dotenv/config';
 import { createApp } from './app.ts';
 
 const ПОРТ = 3001;
