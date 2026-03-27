@@ -109,4 +109,70 @@ describe('Chat', () => {
     await userEvent.click(screen.getByRole('button', { name: /Надіслати/i }));
     expect(mockSendMessage).not.toHaveBeenCalled();
   });
+
+  describe('підказки в чаті', () => {
+    it('відображає підказки коли чат порожній', () => {
+      render(<Chat initialMessage="" onBack={vi.fn()} />);
+      expect(screen.getByText(/Типові питання/i)).toBeInTheDocument();
+    });
+
+    it('відображає кілька підказок', () => {
+      render(<Chat initialMessage="" onBack={vi.fn()} />);
+      const підказки = screen.getAllByTestId('підказка');
+      expect(підказки.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it('клік на підказку заповнює поле вводу', async () => {
+      render(<Chat initialMessage="" onBack={vi.fn()} />);
+      const підказка = screen.getByText(/Чи маю я право на відпустку/i);
+      await userEvent.click(підказка);
+      const input = screen.getByPlaceholderText(/Введіть ваше питання/i) as HTMLInputElement;
+      expect(input.value).toBe('Чи маю я право на відпустку під час служби?');
+    });
+
+    it('ховає підказки після надсилання повідомлення', async () => {
+      render(<Chat initialMessage="" onBack={vi.fn()} />);
+      const input = screen.getByPlaceholderText(/Введіть ваше питання/i);
+      await userEvent.type(input, 'Питання');
+      await userEvent.click(screen.getByRole('button', { name: /Надіслати/i }));
+      await waitFor(() => {
+        expect(screen.queryByText(/Типові питання/i)).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('джерела у відповідях', () => {
+    it('відображає джерела після відповіді AI', async () => {
+      mockSendMessage.mockResolvedValueOnce({
+        answer: 'Відповідь',
+        sources: [
+          {
+            law: 'Про соціальний захист',
+            article: 'Стаття 9',
+            sourceUrl: 'https://zakon.rada.gov.ua/laws/show/2011-12',
+          },
+        ],
+      });
+      render(<Chat initialMessage="" onBack={vi.fn()} />);
+      const input = screen.getByPlaceholderText(/Введіть ваше питання/i);
+      await userEvent.type(input, 'Питання');
+      await userEvent.click(screen.getByRole('button', { name: /Надіслати/i }));
+      await waitFor(() => {
+        expect(screen.getByText(/Стаття 9/i)).toBeInTheDocument();
+        expect(screen.getByText(/Джерела/i)).toBeInTheDocument();
+      });
+    });
+
+    it('не відображає секцію джерел якщо джерела порожні', async () => {
+      mockSendMessage.mockResolvedValueOnce({ answer: 'Відповідь', sources: [] });
+      render(<Chat initialMessage="" onBack={vi.fn()} />);
+      const input = screen.getByPlaceholderText(/Введіть ваше питання/i);
+      await userEvent.type(input, 'Питання');
+      await userEvent.click(screen.getByRole('button', { name: /Надіслати/i }));
+      await waitFor(() => {
+        expect(screen.getByText('Відповідь')).toBeInTheDocument();
+      });
+      expect(screen.queryByText(/Джерела/i)).not.toBeInTheDocument();
+    });
+  });
 });

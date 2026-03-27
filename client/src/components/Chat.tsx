@@ -1,16 +1,27 @@
 import { useState, useEffect, useRef } from 'react';
 import Message, { type MessageRole } from './Message';
-import { sendMessage } from '../services/api';
+import Sources from './Sources';
+import { sendMessage, type Source } from '../services/api';
 
 interface ChatMessage {
   role: MessageRole;
   text: string;
+  sources?: Source[];
 }
 
 interface ChatProps {
   initialMessage: string;
   onBack: () => void;
 }
+
+const ПІДКАЗКИ = [
+  'Чи маю я право на відпустку під час служби?',
+  'Які виплати належать після поранення?',
+  'Як отримати статус учасника бойових дій?',
+  'Що робити якщо не виплачують грошове забезпечення?',
+  'Чи можна оскаржити наказ командира?',
+  'Які пільги мають члени сімей військовослужбовців?',
+];
 
 export default function Chat({ initialMessage, onBack }: ChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -42,7 +53,10 @@ export default function Chat({ initialMessage, onBack }: ChatProps) {
 
     try {
       const response = await sendMessage(trimmed);
-      setMessages((prev) => [...prev, { role: 'assistant', text: response.answer }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', text: response.answer, sources: response.sources },
+      ]);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Невідома помилка';
       setError(message);
@@ -57,6 +71,12 @@ export default function Chat({ initialMessage, onBack }: ChatProps) {
       void handleSend(input);
     }
   }
+
+  function handleПідказка(підказка: string) {
+    setInput(підказка);
+  }
+
+  const isEmpty = messages.length === 0 && !loading;
 
   return (
     <div className="flex flex-col h-screen max-w-2xl mx-auto">
@@ -73,8 +93,34 @@ export default function Chat({ initialMessage, onBack }: ChatProps) {
 
       <div className="flex-1 overflow-y-auto px-4 py-4">
         {messages.map((msg, i) => (
-          <Message key={i} role={msg.role} text={msg.text} />
+          <div key={i}>
+            <Message role={msg.role} text={msg.text} />
+            {msg.role === 'assistant' && msg.sources && msg.sources.length > 0 && (
+              <Sources sources={msg.sources} />
+            )}
+          </div>
         ))}
+
+        {isEmpty && (
+          <div className="mt-4">
+            <p className="text-xs text-gray-500 uppercase tracking-wide mb-3 text-center">
+              Типові питання
+            </p>
+            <ul className="flex flex-col gap-2">
+              {ПІДКАЗКИ.map((підказка) => (
+                <li key={підказка}>
+                  <button
+                    onClick={() => handleПідказка(підказка)}
+                    className="w-full text-left px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm transition-colors"
+                    data-testid="підказка"
+                  >
+                    {підказка}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {loading && (
           <div className="flex justify-start mb-3">
