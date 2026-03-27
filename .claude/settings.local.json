@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /Users/dim/code/pravova_help -type f -name .*)",
+      "Skill(ralphex:ralphex)",
+      "Skill(ralphex:ralphex:*)"
+    ]
+  }
+}

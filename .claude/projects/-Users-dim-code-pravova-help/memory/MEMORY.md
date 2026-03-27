@@ -1,0 +1,1 @@
+- [feedback_language.md](feedback_language.md) — Весь проект ведеться українською мовою (код, коментарі, UI, коміти)
