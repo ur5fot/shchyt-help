@@ -8,7 +8,13 @@ import { askClaude } from '../services/claude.ts';
 const router = Router();
 
 // Кешуємо завантажені чанки при старті
-const всіЧанки = loadAllLaws();
+let всіЧанки: ReturnType<typeof loadAllLaws>;
+try {
+  всіЧанки = loadAllLaws();
+} catch (e) {
+  console.error('Помилка завантаження бази законів:', e);
+  всіЧанки = [];
+}
 
 interface ChatRequest {
   message?: string;

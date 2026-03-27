@@ -3,17 +3,20 @@ import { PDFDocument, rgb } from 'pdf-lib';
 // Шрифт з підтримкою кирилиці зберігається локально — без зовнішніх запитів
 const FONT_URL = '/fonts/ubuntu.ttf';
 
-// Кеш шрифту щоб не завантажувати двічі
-let fontBytesCache: ArrayBuffer | null = null;
+// Кеш шрифту щоб не завантажувати двічі — зберігаємо Promise, щоб уникнути race condition
+let fontPromise: Promise<ArrayBuffer> | null = null;
 
 async function loadFont(): Promise<ArrayBuffer> {
-  if (fontBytesCache) return fontBytesCache;
-  const response = await fetch(FONT_URL);
-  if (!response.ok) {
-    throw new Error(`Не вдалося завантажити шрифт: ${response.status}`);
+  if (!fontPromise) {
+    fontPromise = fetch(FONT_URL).then(response => {
+      if (!response.ok) {
+        fontPromise = null; // скидаємо при помилці, щоб дозволити повторну спробу
+        throw new Error(`Не вдалося завантажити шрифт: ${response.status}`);
+      }
+      return response.arrayBuffer();
+    });
   }
-  fontBytesCache = await response.arrayBuffer();
-  return fontBytesCache;
+  return fontPromise;
 }
 
 // Підставляє значення полів у текст шаблону
@@ -39,7 +42,22 @@ function wrapLines(text: string, font: { widthOfTextAtSize: (t: string, s: numbe
         const candidate = current ? `${current} ${word}` : word;
         if (font.widthOfTextAtSize(candidate, fontSize) > maxWidth) {
           if (current) lines.push(current);
-          current = word;
+          // Якщо одне слово ширше за рядок — розбиваємо посимвольно
+          if (font.widthOfTextAtSize(word, fontSize) > maxWidth) {
+            let part = '';
+            for (const char of word) {
+              const candidate2 = part + char;
+              if (font.widthOfTextAtSize(candidate2, fontSize) > maxWidth) {
+                if (part) lines.push(part);
+                part = char;
+              } else {
+                part = candidate2;
+              }
+            }
+            current = part;
+          } else {
+            current = word;
+          }
         } else {
           current = candidate;
         }
