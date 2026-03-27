@@ -8,13 +8,17 @@ let fontPromise: Promise<ArrayBuffer> | null = null;
 
 async function loadFont(): Promise<ArrayBuffer> {
   if (!fontPromise) {
-    fontPromise = fetch(FONT_URL).then(response => {
-      if (!response.ok) {
-        fontPromise = null; // скидаємо при помилці, щоб дозволити повторну спробу
-        throw new Error(`Не вдалося завантажити шрифт: ${response.status}`);
-      }
-      return response.arrayBuffer();
-    });
+    fontPromise = fetch(FONT_URL)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Не вдалося завантажити шрифт: ${response.status}`);
+        }
+        return response.arrayBuffer();
+      })
+      .catch(err => {
+        fontPromise = null; // скидаємо при будь-якій помилці, щоб дозволити повторну спробу
+        throw err;
+      });
   }
   return fontPromise;
 }

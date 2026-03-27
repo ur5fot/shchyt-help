@@ -6,7 +6,8 @@ import chatRouter from './routes/chat.ts';
 export function createApp() {
   const app = express();
 
-  app.use(cors({ origin: 'http://localhost:5173' }));
+  // Дозволяємо будь-який localhost-порт — Vite може автоматично змінити порт якщо 5173 зайнятий
+  app.use(cors({ origin: /^http:\/\/localhost(:\d+)?$/ }));
   app.use(express.json({ limit: '10kb' }));
 
   app.use('/api/chat', chatRouter);

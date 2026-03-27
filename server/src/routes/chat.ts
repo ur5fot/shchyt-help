@@ -7,13 +7,14 @@ import { askClaude } from '../services/claude.ts';
 
 const router = Router();
 
-// Кешуємо завантажені чанки при старті
+// Кешуємо завантажені чанки при старті — критична залежність, без неї сервер непрацездатний
 let всіЧанки: ReturnType<typeof loadAllLaws>;
 try {
   всіЧанки = loadAllLaws();
+  console.log(`База законів завантажена: ${всіЧанки.length} чанків`);
 } catch (e) {
-  console.error('Помилка завантаження бази законів:', e);
-  всіЧанки = [];
+  console.error('КРИТИЧНА ПОМИЛКА: Не вдалося завантажити базу законів:', e);
+  throw e; // зупиняємо сервер — без бази законів відповіді будуть порожніми
 }
 
 interface ChatRequest {
