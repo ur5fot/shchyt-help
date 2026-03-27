@@ -15,7 +15,7 @@ vi.mock('@anthropic-ai/sdk', () => {
 // Імпортуємо після моку
 const { default: Anthropic } = await import('@anthropic-ai/sdk');
 const mockCreate = (Anthropic as any).__mockCreate ??
-  (Anthropic({} as any) as any).messages.create;
+  ((Anthropic as any)({} as any)).messages.create;
 
 // Отримуємо мок функцію create
 function getMockCreate() {

@@ -69,7 +69,7 @@ export async function generatePdf(
   }
 
   const page = doc.addPage([595, 842]); // A4
-  const { width, height } = page.getSize();
+  const { height } = page.getSize();
 
   const marginLeft = 60;
   const marginTop = 60;
