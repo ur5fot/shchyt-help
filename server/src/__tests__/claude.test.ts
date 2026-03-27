@@ -26,6 +26,8 @@ function getMockCreate() {
 describe('askClaude', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Скидаємо кеш модулів щоб кожен тест отримав свіжий lazy-client
+    vi.resetModules();
     // Встановлюємо змінну середовища
     process.env.ANTHROPIC_API_KEY = 'test-api-key';
   });

@@ -38,8 +38,19 @@ export function loadAllLaws(): LawChunk[] {
   const allChunks: LawChunk[] = [];
 
   for (const file of files) {
-    const content = readFileSync(join(__dirname, file), 'utf-8');
-    const law: LawFile = JSON.parse(content);
+    let law: LawFile;
+    try {
+      const content = readFileSync(join(__dirname, file), 'utf-8');
+      law = JSON.parse(content) as LawFile;
+    } catch (err) {
+      console.error(`Помилка завантаження файлу закону ${file}:`, err);
+      continue;
+    }
+
+    if (!Array.isArray(law.chunks)) {
+      console.error(`Файл ${file} не містить масиву chunks — пропущено`);
+      continue;
+    }
 
     for (const chunk of law.chunks) {
       allChunks.push({
