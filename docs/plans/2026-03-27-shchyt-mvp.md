@@ -99,12 +99,12 @@
 - [x] Запустити тести — мають пройти
 
 ### Task 10: Парсер законів
-- [ ] Написати тести для `scripts/parse-law.ts` — парсинг HTML на чанки, витяг keywords
-- [ ] Реалізувати парсер: завантаження HTML з zakon.rada.gov.ua → розбивка на статті/частини → генерація keywords → збереження JSON
-- [ ] Написати тести для edge cases — невалідний URL, порожня сторінка
-- [ ] Спарсити ЗУ «Про військовий обов'язок і військову службу» → `laws/pro-viyskovyy-obovyazok.json`
-- [ ] Спарсити ЗУ «Про статус ветеранів війни» → `laws/pro-status-veteraniv.json`
-- [ ] Запустити тести — мають пройти
+- [x] Написати тести для `scripts/parse-law.ts` — парсинг HTML на чанки, витяг keywords
+- [x] Реалізувати парсер: завантаження HTML з zakon.rada.gov.ua → розбивка на статті/частини → генерація keywords → збереження JSON
+- [x] Написати тести для edge cases — невалідний URL, порожня сторінка
+- [x] Спарсити ЗУ «Про військовий обов'язок і військову службу» → `laws/pro-viyskovyy-obovyazok.json`
+- [x] Спарсити ЗУ «Про статус ветеранів війни» → `laws/pro-status-veteraniv.json`
+- [x] Запустити тести — мають пройти
 
 ### Task 11: Шаблони документів та генерація PDF
 - [ ] Створити шаблони JSON: `templates/raport-nevyplata.json`, `templates/raport-vidpustka.json`, `templates/skarga.json`
