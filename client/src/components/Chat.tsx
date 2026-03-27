@@ -1,12 +1,29 @@
 import { useState, useEffect, useRef } from 'react';
 import Message, { type MessageRole } from './Message';
 import Sources from './Sources';
+import DocGenerator from './DocGenerator';
 import { sendMessage, type Source } from '../services/api';
+
+// Ключові слова, при наявності яких у відповіді пропонуємо рапорт про невиплату
+const КЛЮЧОВІ_НЕВИПЛАТА = ['невипла', 'не виплат', 'грошове забезпечення', 'бойові виплат', 'заборгован'];
+// Ключові слова для рапорту про відпустку
+const КЛЮЧОВІ_ВІДПУСТКА = ['відпустк', 'надати відпустк', 'право на відпустк'];
+// Ключові слова для скарги
+const КЛЮЧОВІ_СКАРГА = ['оскаржит', 'скаргу', 'неправомірн', 'порушен'];
+
+function detectTemplate(text: string): string | null {
+  const lower = text.toLowerCase();
+  if (КЛЮЧОВІ_НЕВИПЛАТА.some((kw) => lower.includes(kw))) return 'raport-nevyplata';
+  if (КЛЮЧОВІ_ВІДПУСТКА.some((kw) => lower.includes(kw))) return 'raport-vidpustka';
+  if (КЛЮЧОВІ_СКАРГА.some((kw) => lower.includes(kw))) return 'skarga';
+  return null;
+}
 
 interface ChatMessage {
   role: MessageRole;
   text: string;
   sources?: Source[];
+  suggestedTemplate?: string | null;
 }
 
 interface ChatProps {
@@ -28,6 +45,7 @@ export default function Chat({ initialMessage, onBack }: ChatProps) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeDocTemplate, setActiveDocTemplate] = useState<{ msgIndex: number; templateId: string } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const initialSent = useRef(false);
 
@@ -55,7 +73,12 @@ export default function Chat({ initialMessage, onBack }: ChatProps) {
       const response = await sendMessage(trimmed);
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', text: response.answer, sources: response.sources },
+        {
+          role: 'assistant',
+          text: response.answer,
+          sources: response.sources,
+          suggestedTemplate: detectTemplate(response.answer),
+        },
       ]);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Невідома помилка';
@@ -97,6 +120,26 @@ export default function Chat({ initialMessage, onBack }: ChatProps) {
             <Message role={msg.role} text={msg.text} />
             {msg.role === 'assistant' && msg.sources && msg.sources.length > 0 && (
               <Sources sources={msg.sources} />
+            )}
+            {msg.role === 'assistant' && msg.suggestedTemplate && (
+              <div className="mb-3">
+                {activeDocTemplate?.msgIndex === i ? (
+                  <DocGenerator
+                    templateId={activeDocTemplate.templateId}
+                    onClose={() => setActiveDocTemplate(null)}
+                  />
+                ) : (
+                  <button
+                    onClick={() =>
+                      setActiveDocTemplate({ msgIndex: i, templateId: msg.suggestedTemplate! })
+                    }
+                    className="text-sm px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-blue-400 hover:text-blue-300 rounded-xl border border-gray-700 transition-colors"
+                    data-testid="generate-doc-button"
+                  >
+                    📄 Згенерувати рапорт
+                  </button>
+                )}
+              </div>
             )}
           </div>
         ))}
