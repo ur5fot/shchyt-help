@@ -38,7 +38,7 @@ function wrapLines(text: string, maxCharsPerLine = 80): string[] {
       let current = '';
       for (const word of words) {
         if ((current + ' ' + word).trim().length > maxCharsPerLine) {
-          lines.push(current.trim());
+          if (current) lines.push(current.trim());
           current = word;
         } else {
           current = (current + ' ' + word).trim();
@@ -58,7 +58,7 @@ export async function generatePdf(
 
   const doc = await PDFDocument.create();
 
-  // Завантажуємо шрифт з підтримкою кирилиці (потрібне інтернет-з'єднання)
+  // Завантажуємо шрифт з підтримкою кирилиці (зберігається локально у public/fonts)
   const fontBytes = await loadFont();
   const font = await doc.embedFont(fontBytes);
 

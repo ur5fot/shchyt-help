@@ -14,7 +14,7 @@ vi.mock('../services/claude.ts', () => ({
   askClaude: vi.fn(),
 }));
 
-vi.mock('../../../laws/index', () => ({
+vi.mock('../../../laws/index.ts', () => ({
   loadAllLaws: vi.fn().mockReturnValue([]),
 }));
 

@@ -49,14 +49,22 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     // Запитуємо Claude
     const відповідь = await askClaude(промпт);
 
-    // Формуємо джерела для клієнта
-    const джерела: SourceItem[] = результатиПошуку.map(р => ({
-      law: р.chunk.lawTitle,
-      article: р.chunk.part
-        ? `${р.chunk.article}, ${р.chunk.part}`
-        : р.chunk.article,
-      sourceUrl: р.chunk.sourceUrl,
-    }));
+    // Формуємо джерела для клієнта (дедуплікуємо по унікальному ключу)
+    const seen = new Set<string>();
+    const джерела: SourceItem[] = результатиПошуку
+      .map(р => ({
+        law: р.chunk.lawTitle,
+        article: р.chunk.part
+          ? `${р.chunk.article}, ${р.chunk.part}`
+          : р.chunk.article,
+        sourceUrl: р.chunk.sourceUrl,
+      }))
+      .filter(д => {
+        const key = `${д.law}|${д.article}|${д.sourceUrl}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
 
     res.json({ answer: відповідь, sources: джерела });
   } catch (помилка) {
