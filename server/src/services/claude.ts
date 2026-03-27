@@ -33,7 +33,7 @@ export async function askClaude(промпт: string): Promise<string> {
   });
 
   const блок = відповідь.content[0];
-  if (блок.type !== 'text') {
+  if (!блок || блок.type !== 'text') {
     throw new Error('Несподіваний тип відповіді від Claude');
   }
 

@@ -62,6 +62,7 @@ export default function Chat({ initialMessage, onBack }: ChatProps) {
   }, [messages, loading]);
 
   async function handleSend(text: string) {
+    if (loading) return;
     const trimmed = text.trim();
     if (!trimmed) return;
 

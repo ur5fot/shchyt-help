@@ -55,8 +55,6 @@ describe('generatePdf', () => {
 
   it('підставляє значення полів у шаблон', async () => {
     const { PDFDocument } = await import('pdf-lib');
-    const mockDoc = await (PDFDocument.create as ReturnType<typeof vi.fn>)();
-    mockDoc.addPage();
 
     await generatePdf('Звіт за {period} року', { period: 'жовтень 2024' });
 

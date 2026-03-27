@@ -28,7 +28,7 @@ interface ChatResponse {
 router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Response) => {
   const { message } = req.body;
 
-  if (!message || message.trim().length === 0) {
+  if (!message || typeof message !== 'string' || message.trim().length === 0) {
     res.status(400).json({ error: 'Повідомлення не може бути порожнім' });
     return;
   }
