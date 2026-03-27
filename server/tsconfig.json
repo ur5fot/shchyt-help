@@ -5,12 +5,12 @@
     "moduleResolution": "bundler",
     "lib": ["ES2022"],
     "outDir": "dist",
-    "rootDir": ".",
+    "rootDir": "..",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*", "laws/**/*"],
+  "include": ["src/**/*", "../laws/**/*"],
   "exclude": ["node_modules", "dist"]
 }
