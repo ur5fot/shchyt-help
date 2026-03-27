@@ -16,11 +16,17 @@ export async function sendMessage(message: string): Promise<ChatResponse> {
     body: JSON.stringify({ message }),
   });
 
-  const data = await response.json();
-
   if (!response.ok) {
-    throw new Error(data.error ?? 'Помилка запиту');
+    let errorMessage = `Помилка запиту (${response.status})`;
+    try {
+      const data = await response.json();
+      errorMessage = data.error ?? errorMessage;
+    } catch {
+      // відповідь не є JSON (наприклад, HTML від проксі)
+    }
+    throw new Error(errorMessage);
   }
 
+  const data = await response.json();
   return data as ChatResponse;
 }

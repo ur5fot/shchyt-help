@@ -58,16 +58,9 @@ export async function generatePdf(
 
   const doc = await PDFDocument.create();
 
-  // Спроба завантажити шрифт з кирилицею; якщо недоступний — використати Helvetica
-  let font;
-  try {
-    const fontBytes = await loadFont();
-    font = await doc.embedFont(fontBytes);
-  } catch {
-    // Fallback на стандартний шрифт (без кирилиці — для оффлайн режиму)
-    const { StandardFonts } = await import('pdf-lib');
-    font = await doc.embedFont(StandardFonts.Helvetica);
-  }
+  // Завантажуємо шрифт з підтримкою кирилиці (потрібне інтернет-з'єднання)
+  const fontBytes = await loadFont();
+  const font = await doc.embedFont(fontBytes);
 
   let currentPage = doc.addPage([595, 842]); // A4
   const { height } = currentPage.getSize();

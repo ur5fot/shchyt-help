@@ -33,6 +33,11 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     return;
   }
 
+  if (message.trim().length > 2000) {
+    res.status(400).json({ error: 'Повідомлення занадто довге (максимум 2000 символів)' });
+    return;
+  }
+
   try {
     // Знаходимо релевантні чанки законів
     const результатиПошуку = searchLaws(message, всіЧанки);
