@@ -76,11 +76,11 @@
 - [x] Перевірити вручну через curl: `POST http://localhost:3001/api/chat`
 
 ### Task 7: Фронтенд — базова структура та головний екран
-- [ ] Створити `client/index.html`, `client/src/main.tsx`, `client/src/App.tsx`
-- [ ] Написати тести для `Home.tsx` — рендер назви, дисклеймер, кнопка "Задати питання"
-- [ ] Реалізувати `client/src/components/Home.tsx` — назва "Shchyt", кнопка, дисклеймер
-- [ ] Налаштувати Tailwind CSS (темна тема, мобільний вигляд)
-- [ ] Запустити тести — мають пройти
+- [x] Створити `client/index.html`, `client/src/main.tsx`, `client/src/App.tsx`
+- [x] Написати тести для `Home.tsx` — рендер назви, дисклеймер, кнопка "Задати питання"
+- [x] Реалізувати `client/src/components/Home.tsx` — назва "Shchyt", кнопка, дисклеймер
+- [x] Налаштувати Tailwind CSS (темна тема, мобільний вигляд)
+- [x] Запустити тести — мають пройти
 
 ### Task 8: Фронтенд — API сервіс та чат-інтерфейс
 - [ ] Написати тести для `client/src/services/api.ts` — виклик fetch, обробка помилок
