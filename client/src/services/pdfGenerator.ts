@@ -1,7 +1,7 @@
 import { PDFDocument, rgb } from 'pdf-lib';
 
-// URL шрифту з підтримкою кирилиці (завантажується при першому виклику)
-const FONT_URL = 'https://fonts.gstatic.com/s/ubuntu/v20/4iCs6KVjbNBYlgoKfw72.woff2';
+// URL шрифту з підтримкою кирилиці (TTF — pdf-lib не підтримує woff2)
+const FONT_URL = 'https://fonts.gstatic.com/s/ubuntu/v20/4iCs6KVjbNBYlgoKfw72.ttf';
 
 // Кеш шрифту щоб не завантажувати двічі
 let fontBytesCache: ArrayBuffer | null = null;
@@ -20,7 +20,8 @@ async function loadFont(): Promise<ArrayBuffer> {
 function applyFields(template: string, fields: Record<string, string>): string {
   let result = template;
   for (const [key, value] of Object.entries(fields)) {
-    result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+    // Використовуємо функцію-замінник, щоб уникнути спецсимволів $ у value
+    result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), () => value);
   }
   return result;
 }
@@ -68,8 +69,8 @@ export async function generatePdf(
     font = await doc.embedFont(StandardFonts.Helvetica);
   }
 
-  const page = doc.addPage([595, 842]); // A4
-  const { height } = page.getSize();
+  let currentPage = doc.addPage([595, 842]); // A4
+  const { height } = currentPage.getSize();
 
   const marginLeft = 60;
   const marginTop = 60;
@@ -82,24 +83,16 @@ export async function generatePdf(
   for (const line of lines) {
     if (y < marginTop + lineHeight) {
       // Нова сторінка якщо не вистачає місця
-      const newPage = doc.addPage([595, 842]);
-      y = newPage.getSize().height - marginTop;
-      newPage.drawText(line, {
-        x: marginLeft,
-        y,
-        size: fontSize,
-        font,
-        color: rgb(0, 0, 0),
-      });
-    } else {
-      page.drawText(line, {
-        x: marginLeft,
-        y,
-        size: fontSize,
-        font,
-        color: rgb(0, 0, 0),
-      });
+      currentPage = doc.addPage([595, 842]);
+      y = currentPage.getSize().height - marginTop;
     }
+    currentPage.drawText(line, {
+      x: marginLeft,
+      y,
+      size: fontSize,
+      font,
+      color: rgb(0, 0, 0),
+    });
     y -= lineHeight;
   }
 

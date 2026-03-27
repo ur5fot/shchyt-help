@@ -136,7 +136,7 @@ export default function Chat({ initialMessage, onBack }: ChatProps) {
                     className="text-sm px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-blue-400 hover:text-blue-300 rounded-xl border border-gray-700 transition-colors"
                     data-testid="generate-doc-button"
                   >
-                    📄 Згенерувати рапорт
+                    📄 {msg.suggestedTemplate === 'skarga' ? 'Згенерувати скаргу' : 'Згенерувати рапорт'}
                   </button>
                 )}
               </div>
