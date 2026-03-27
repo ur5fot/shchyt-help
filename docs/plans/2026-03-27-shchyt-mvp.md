@@ -30,16 +30,16 @@
 ## Кроки реалізації
 
 ### Task 1: Ініціалізація проекту та залежності
-- [ ] Створити кореневий `package.json` з `workspaces` для client/ та server/
-- [ ] Ініціалізувати `server/package.json` із залежностями: express, cors, @anthropic-ai/sdk, tsx, typescript, @types/express, @types/cors, vitest
-- [ ] Ініціалізувати `client/package.json` із залежностями: react, react-dom, tailwindcss, @tailwindcss/vite, pdf-lib, vitest, @testing-library/react, jsdom
-- [ ] Створити `server/tsconfig.json`
-- [ ] Створити `client/vite.config.ts` з проксі `/api → localhost:3001`
-- [ ] Створити `client/tailwind.config.js`
-- [ ] Створити `.env.example` з `ANTHROPIC_API_KEY=sk-ant-...`
-- [ ] Додати `.env` до `.gitignore`
-- [ ] Налаштувати `npm run dev` у кореневому package.json (concurrently запускає клієнт і сервер)
-- [ ] Перевірити що `npm install` працює без помилок
+- [x] Створити кореневий `package.json` з `workspaces` для client/ та server/
+- [x] Ініціалізувати `server/package.json` із залежностями: express, cors, @anthropic-ai/sdk, tsx, typescript, @types/express, @types/cors, vitest
+- [x] Ініціалізувати `client/package.json` із залежностями: react, react-dom, tailwindcss, @tailwindcss/vite, pdf-lib, vitest, @testing-library/react, jsdom
+- [x] Створити `server/tsconfig.json`
+- [x] Створити `client/vite.config.ts` з проксі `/api → localhost:3001`
+- [x] Створити `client/tailwind.config.js`
+- [x] Створити `.env.example` з `ANTHROPIC_API_KEY=sk-ant-...`
+- [x] Додати `.env` до `.gitignore`
+- [x] Налаштувати `npm run dev` у кореневому package.json (concurrently запускає клієнт і сервер)
+- [x] Перевірити що `npm install` працює без помилок
 
 ### Task 2: База законів — структура та завантаження
 - [ ] Написати тести для `laws/index.ts` — завантаження JSON-файлів та валідація структури

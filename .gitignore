@@ -1,0 +1,29 @@
+
+# ralphex progress logs
+.ralphex/progress/
+
+# Залежності
+node_modules/
+**/node_modules/
+
+# Збірки
+dist/
+build/
+**/dist/
+
+# Змінні середовища (не комітити!)
+.env
+.env.local
+.env.*.local
+
+# Логи
+*.log
+npm-debug.log*
+
+# Редактори
+.DS_Store
+.idea/
+.vscode/
+
+# Vitest coverage
+coverage/
