@@ -2,6 +2,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT } from '../prompts/system.ts';
 import { МОДЕЛЬ_CLAUDE, МАКС_ТОКЕНІВ } from '../constants.ts';
+import { logger } from '../logger.ts';
 
 /**
  * Відправляє промпт до Claude API та повертає текстову відповідь.
@@ -23,17 +24,23 @@ function getClient(): Anthropic {
 
 export async function askClaude(промпт: string): Promise<string> {
   const client = getClient();
-  const відповідь = await client.messages.create({
-    model: МОДЕЛЬ_CLAUDE,
-    max_tokens: МАКС_ТОКЕНІВ,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: промпт }],
-  });
 
-  const блок = відповідь.content[0];
-  if (!блок || блок.type !== 'text') {
-    throw new Error('Несподіваний тип відповіді від Claude');
+  try {
+    const відповідь = await client.messages.create({
+      model: МОДЕЛЬ_CLAUDE,
+      max_tokens: МАКС_ТОКЕНІВ,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: промпт }],
+    });
+
+    const блок = відповідь.content[0];
+    if (!блок || блок.type !== 'text') {
+      throw new Error('Несподіваний тип відповіді від Claude');
+    }
+
+    return блок.text;
+  } catch (помилка) {
+    logger.error({ помилка }, 'Помилка виклику Claude API');
+    throw помилка;
   }
-
-  return блок.text;
 }

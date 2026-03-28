@@ -5,6 +5,7 @@ import { searchLaws } from '../services/lawSearch.ts';
 import { buildPrompt } from '../services/promptBuilder.ts';
 import { askClaude } from '../services/claude.ts';
 import { МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ, ДИСКЛЕЙМЕР } from '../constants.ts';
+import { logger } from '../logger.ts';
 
 const router = Router();
 
@@ -12,9 +13,9 @@ const router = Router();
 let всіЧанки: ReturnType<typeof loadAllLaws>;
 try {
   всіЧанки = loadAllLaws();
-  console.log(`База законів завантажена: ${всіЧанки.length} чанків`);
+  logger.info({ кількістьЧанків: всіЧанки.length }, 'База законів завантажена');
 } catch (e) {
-  console.error('КРИТИЧНА ПОМИЛКА: Не вдалося завантажити базу законів:', e);
+  logger.fatal({ помилка: e }, 'Не вдалося завантажити базу законів');
   throw e; // зупиняємо сервер — без бази законів відповіді будуть порожніми
 }
 
@@ -46,10 +47,14 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     return;
   }
 
+  const початок = Date.now();
+
   try {
     // Знаходимо релевантні чанки законів
     const результатиПошуку = searchLaws(message, всіЧанки);
     const чанки = результатиПошуку.map(р => р.chunk);
+
+    logger.info({ кількістьЧанків: чанки.length, довжинаЗапиту: message.length }, 'Пошук законів завершено');
 
     // Складаємо промпт з контекстом законів
     const промпт = buildPrompt(message, чанки);
@@ -79,9 +84,13 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
         return true;
       });
 
+    const часВідповіді = Date.now() - початок;
+    logger.info({ часВідповідіМс: часВідповіді, кількістьДжерел: джерела.length }, 'Запит оброблено');
+
     res.json({ answer: відповідь, sources: джерела });
   } catch (помилка) {
-    console.error('Помилка при обробці запиту:', помилка);
+    const часВідповіді = Date.now() - початок;
+    logger.error({ помилка, часВідповідіМс: часВідповіді }, 'Помилка при обробці запиту');
 
     // Зрозуміле повідомлення при відсутньому API ключі
     if (помилка instanceof Error && помилка.message.includes('ANTHROPIC_API_KEY')) {
