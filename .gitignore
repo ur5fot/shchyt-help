@@ -25,5 +25,8 @@ npm-debug.log*
 .idea/
 .vscode/
 
+# Векторна база LanceDB (генерується локально)
+data/lancedb/
+
 # Vitest coverage
 coverage/

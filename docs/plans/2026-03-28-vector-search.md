@@ -49,13 +49,13 @@
 - [x] `npm test` — всі тести проходять
 
 ### Task 4: Скрипт ініціалізації бази (`scripts/init-vector-db.ts`)
-- [ ] завантажити всі чанки через `loadAllLaws()`
-- [ ] для кожного чанка скласти текст: `"passage: {lawTitle}. {article}. {title}. {text}"`
-- [ ] згенерувати ембеддинги батчем
-- [ ] створити LanceDB таблицю з чанками та ембеддингами
-- [ ] додати npm script: `"init-vector-db": "tsx scripts/init-vector-db.ts"` в root `package.json`
-- [ ] запустити скрипт — перевірити що `data/lancedb/` створена з даними
-- [ ] додати `data/lancedb/` в `.gitignore` (генерується локально)
+- [x] завантажити всі чанки через `loadAllLaws()`
+- [x] для кожного чанка скласти текст: `"passage: {lawTitle}. {article}. {title}. {text}"`
+- [x] згенерувати ембеддинги батчем
+- [x] створити LanceDB таблицю з чанками та ембеддингами
+- [x] додати npm script: `"init-vector-db": "tsx scripts/init-vector-db.ts"` в root `package.json`
+- [x] запустити скрипт — перевірити що `data/lancedb/` створена з даними
+- [x] додати `data/lancedb/` в `.gitignore` (генерується локально)
 
 ### Task 5: Гібридний пошук в `lawSearch.ts`
 - [ ] імпортувати `створитиЕмбеддинг` з `embeddings.ts` та `пошукПоВектору` з `vectorStore.ts`
