@@ -131,6 +131,7 @@ export default function DocGenerator({ templateId, onClose }: DocGeneratorProps)
                 value={values[field.id] ?? ''}
                 onChange={(e) => handleChange(field.id, e.target.value)}
                 placeholder={field.placeholder}
+                maxLength={500}
                 className="bg-gray-800 text-gray-100 placeholder-gray-500 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-600"
               />
             )}

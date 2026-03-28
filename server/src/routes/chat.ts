@@ -42,7 +42,9 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     return;
   }
 
-  if (message.trim().length > МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ) {
+  const trimmed = message.trim();
+
+  if (trimmed.length > МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ) {
     res.status(400).json({ error: `Повідомлення занадто довге (максимум ${МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ} символів)` });
     return;
   }
@@ -51,13 +53,13 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
 
   try {
     // Знаходимо релевантні чанки законів
-    const результатиПошуку = searchLaws(message, всіЧанки);
+    const результатиПошуку = searchLaws(trimmed, всіЧанки);
     const чанки = результатиПошуку.map(р => р.chunk);
 
-    logger.info({ кількістьЧанків: чанки.length, довжинаЗапиту: message.length }, 'Пошук законів завершено');
+    logger.info({ кількістьЧанків: чанки.length, довжинаЗапиту: trimmed.length }, 'Пошук законів завершено');
 
     // Складаємо промпт з контекстом законів
-    const промпт = buildPrompt(message, чанки);
+    const промпт = buildPrompt(trimmed, чанки);
 
     // Запитуємо Claude
     let відповідь = await askClaude(промпт);
