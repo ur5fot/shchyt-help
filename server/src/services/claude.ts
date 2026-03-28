@@ -41,6 +41,9 @@ export async function askClaude(
     messages = [
       { role: 'user', content: `Резюме попереднього діалогу:\n${резюме}` },
       { role: 'assistant', content: 'Зрозуміло, продовжуємо.' },
+      ...(історія && історія.length > 0
+        ? історія.map((msg) => ({ role: msg.role, content: msg.content }) as Anthropic.MessageParam)
+        : []),
       { role: 'user', content: промпт },
     ];
   } else if (історія && історія.length > 0) {

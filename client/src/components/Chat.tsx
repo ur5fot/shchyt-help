@@ -61,8 +61,9 @@ export default function Chat({ initialMessage, onBack }: ChatProps) {
 
       if (response.summary) {
         setSummary(response.summary);
-        // +1 бо поточне user-повідомлення вже додане в messages
-        setSummarizedUpTo(messages.length + 1);
+        // Стиснення покриває тільки history, яка була messages.slice(summarizedUpTo) зі стану до цього виклику.
+        // Поточний user+assistant turn ще не стиснений — він потрапить у наступний history.
+        setSummarizedUpTo(messages.length);
       }
 
       setMessages((prev) => [

@@ -25,6 +25,7 @@ export interface VectorSearchResult {
 // Singleton з'єднання з БД
 let зєднання: lancedb.Connection | null = null;
 let таблиця: Table | null = null;
+let промісІніціалізації: Promise<lancedb.Connection> | null = null;
 
 /**
  * Ініціалізує з'єднання з LanceDB. Створює директорію якщо потрібно.
@@ -32,8 +33,16 @@ let таблиця: Table | null = null;
  */
 export async function ініціалізуватиБД(шлях?: string): Promise<lancedb.Connection> {
   if (зєднання) return зєднання;
-  зєднання = await lancedb.connect(шлях ?? ШЛЯХ_ДО_БД);
-  return зєднання;
+  if (!промісІніціалізації) {
+    промісІніціалізації = lancedb.connect(шлях ?? ШЛЯХ_ДО_БД).then((conn) => {
+      зєднання = conn;
+      return conn;
+    }).catch((err) => {
+      промісІніціалізації = null;
+      throw err;
+    });
+  }
+  return промісІніціалізації;
 }
 
 /**
@@ -182,4 +191,5 @@ export function _скинутиЗєднання(): void {
   }
   таблиця = null;
   зєднання = null;
+  промісІніціалізації = null;
 }

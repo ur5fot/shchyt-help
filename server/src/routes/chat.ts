@@ -5,7 +5,7 @@ import { searchLaws, hybridSearchLaws } from '../services/lawSearch.ts';
 import { buildPrompt } from '../services/promptBuilder.ts';
 import { askClaude, summarizeHistory, type HistoryMessage } from '../services/claude.ts';
 import { ініціалізуватиБД, чиДоступнаБД } from '../services/vectorStore.ts';
-import { МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ, МАКС_ПОВІДОМЛЕНЬ_БЕЗ_СТИСНЕННЯ, ДИСКЛЕЙМЕР } from '../constants.ts';
+import { МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ, МАКС_ПОВІДОМЛЕНЬ_БЕЗ_СТИСНЕННЯ, МАКС_ПОВІДОМЛЕНЬ_ІСТОРІЇ, МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ_ІСТОРІЇ, ДИСКЛЕЙМЕР } from '../constants.ts';
 import { logger } from '../logger.ts';
 
 const router = Router();
@@ -90,6 +90,14 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     return;
   }
 
+  // Обмежуємо історію для захисту від зловживань
+  const sanitizedHistory = history
+    ?.slice(-МАКС_ПОВІДОМЛЕНЬ_ІСТОРІЇ)
+    .map((msg) => ({
+      role: msg.role,
+      content: msg.content.slice(0, МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ_ІСТОРІЇ),
+    }));
+
   if (summary !== undefined && typeof summary !== 'string') {
     res.status(400).json({ error: 'Невалідний формат резюме' });
     return;
@@ -98,6 +106,11 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
   const початок = Date.now();
 
   try {
+    // Перевіряємо LanceDB якщо ще не доступна (могли ініціалізувати після старту)
+    if (!lanceDBДоступна) {
+      lanceDBДоступна = await чиДоступнаБД();
+    }
+
     // Знаходимо релевантні чанки законів
     let результатиПошуку;
     if (lanceDBДоступна) {
@@ -115,7 +128,7 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     const промпт = buildPrompt(trimmed, чанки);
 
     // Визначаємо чи потрібно стискати історію
-    let актуальнаІсторія: HistoryMessage[] | undefined = history;
+    let актуальнаІсторія: HistoryMessage[] | undefined = sanitizedHistory;
     let актуальнеРезюме: string | undefined = summary;
     let новеРезюме: string | undefined;
 
