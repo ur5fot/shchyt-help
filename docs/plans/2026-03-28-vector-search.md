@@ -41,12 +41,12 @@
 - [x] `npm test` — всі тести проходять
 
 ### Task 3: Створити модуль LanceDB (`server/src/services/vectorStore.ts`)
-- [ ] функція `ініціалізуватиБД()` — створює/відкриває LanceDB в `data/lancedb/`
-- [ ] функція `створитиТаблицю(чанки: LawChunk[], ембеддинги: number[][])` — створює таблицю з полями: id, article, part, title, text, keywords, lawTitle, sourceUrl, vector
-- [ ] функція `пошукПоВектору(queryVector: number[], topK?: number): Promise<VectorSearchResult[]>` — cosine similarity пошук, повертає чанки з distance
-- [ ] функція `оновитиЧанки(чанки: LawChunk[], ембеддинги: number[][])` — upsert для автооновлення
-- [ ] написати тести з mock даними
-- [ ] `npm test` — всі тести проходять
+- [x] функція `ініціалізуватиБД()` — створює/відкриває LanceDB в `data/lancedb/`
+- [x] функція `створитиТаблицю(чанки: LawChunk[], ембеддинги: number[][])` — створює таблицю з полями: id, article, part, title, text, keywords, lawTitle, sourceUrl, vector
+- [x] функція `пошукПоВектору(queryVector: number[], topK?: number): Promise<VectorSearchResult[]>` — cosine similarity пошук, повертає чанки з distance
+- [x] функція `оновитиЧанки(чанки: LawChunk[], ембеддинги: number[][])` — upsert для автооновлення
+- [x] написати тести з mock даними
+- [x] `npm test` — всі тести проходять
 
 ### Task 4: Скрипт ініціалізації бази (`scripts/init-vector-db.ts`)
 - [ ] завантажити всі чанки через `loadAllLaws()`
