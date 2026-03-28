@@ -3,6 +3,7 @@ import type { Table } from '@lancedb/lancedb';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type { LawChunk } from '../../../laws/index';
+import { logger } from '../logger';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -92,7 +93,8 @@ async function відкритиТаблицю(): Promise<Table | null> {
     if (!імена.includes(НАЗВА_ТАБЛИЦІ)) return null;
     таблиця = await бд.openTable(НАЗВА_ТАБЛИЦІ);
     return таблиця;
-  } catch {
+  } catch (err) {
+    logger.warn({ помилка: err }, 'Не вдалося відкрити таблицю LanceDB');
     return null;
   }
 }
