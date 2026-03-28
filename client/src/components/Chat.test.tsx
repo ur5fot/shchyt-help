@@ -41,14 +41,14 @@ describe('Chat', () => {
     const input = screen.getByPlaceholderText(/Введіть ваше питання/i);
     await userEvent.type(input, 'Яке моє право?');
     await userEvent.click(screen.getByRole('button', { name: /Надіслати/i }));
-    expect(mockSendMessage).toHaveBeenCalledWith('Яке моє право?');
+    expect(mockSendMessage).toHaveBeenCalledWith('Яке моє право?', [], undefined);
   });
 
   it('надсилає повідомлення при натисканні Enter', async () => {
     render(<Chat initialMessage="" onBack={vi.fn()} />);
     const input = screen.getByPlaceholderText(/Введіть ваше питання/i);
     await userEvent.type(input, 'Яке моє право?{Enter}');
-    expect(mockSendMessage).toHaveBeenCalledWith('Яке моє право?');
+    expect(mockSendMessage).toHaveBeenCalledWith('Яке моє право?', [], undefined);
   });
 
   it('відображає повідомлення користувача після надсилання', async () => {
@@ -89,7 +89,7 @@ describe('Chat', () => {
   it('автоматично надсилає initialMessage якщо він непорожній', async () => {
     render(<Chat initialMessage="Автоматичне питання" onBack={vi.fn()} />);
     await waitFor(() => {
-      expect(mockSendMessage).toHaveBeenCalledWith('Автоматичне питання');
+      expect(mockSendMessage).toHaveBeenCalledWith('Автоматичне питання', [], undefined);
     });
   });
 

@@ -3,8 +3,8 @@ import { Router, type Request, type Response } from 'express';
 import { loadAllLaws } from '../../../laws/index.ts';
 import { searchLaws } from '../services/lawSearch.ts';
 import { buildPrompt } from '../services/promptBuilder.ts';
-import { askClaude } from '../services/claude.ts';
-import { МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ, ДИСКЛЕЙМЕР } from '../constants.ts';
+import { askClaude, summarizeHistory, type HistoryMessage } from '../services/claude.ts';
+import { МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ, МАКС_ПОВІДОМЛЕНЬ_БЕЗ_СТИСНЕННЯ, ДИСКЛЕЙМЕР } from '../constants.ts';
 import { logger } from '../logger.ts';
 
 const router = Router();
@@ -21,6 +21,8 @@ try {
 
 interface ChatRequest {
   message?: string;
+  history?: HistoryMessage[];
+  summary?: string;
 }
 
 interface SourceItem {
@@ -32,10 +34,22 @@ interface SourceItem {
 interface ChatResponse {
   answer: string;
   sources: SourceItem[];
+  summary?: string;
+}
+
+function validateHistory(history: unknown): history is HistoryMessage[] {
+  if (!Array.isArray(history)) return false;
+  return history.every(
+    (msg) =>
+      typeof msg === 'object' &&
+      msg !== null &&
+      (msg.role === 'user' || msg.role === 'assistant') &&
+      typeof msg.content === 'string',
+  );
 }
 
 router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Response) => {
-  const { message } = req.body;
+  const { message, history, summary } = req.body;
 
   if (!message || typeof message !== 'string' || message.trim().length === 0) {
     res.status(400).json({ error: 'Повідомлення не може бути порожнім' });
@@ -46,6 +60,16 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
 
   if (trimmed.length > МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ) {
     res.status(400).json({ error: `Повідомлення занадто довге (максимум ${МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ} символів)` });
+    return;
+  }
+
+  if (history !== undefined && !validateHistory(history)) {
+    res.status(400).json({ error: 'Невалідний формат історії чату' });
+    return;
+  }
+
+  if (summary !== undefined && typeof summary !== 'string') {
+    res.status(400).json({ error: 'Невалідний формат резюме' });
     return;
   }
 
@@ -61,8 +85,31 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     // Складаємо промпт з контекстом законів
     const промпт = buildPrompt(trimmed, чанки);
 
+    // Визначаємо чи потрібно стискати історію
+    let актуальнаІсторія: HistoryMessage[] | undefined = history;
+    let актуальнеРезюме: string | undefined = summary;
+    let новеРезюме: string | undefined;
+
+    if (актуальнаІсторія && актуальнаІсторія.length > МАКС_ПОВІДОМЛЕНЬ_БЕЗ_СТИСНЕННЯ) {
+      logger.info({ кількістьПовідомлень: актуальнаІсторія.length }, 'Стиснення історії чату');
+
+      try {
+        // Якщо є попереднє резюме — додаємо його як контекст перед сумаризацією
+        const повідомленняДляСтиснення: HistoryMessage[] = актуальнеРезюме
+          ? [{ role: 'assistant', content: `Попереднє резюме: ${актуальнеРезюме}` }, ...актуальнаІсторія]
+          : актуальнаІсторія;
+
+        актуальнеРезюме = await summarizeHistory(повідомленняДляСтиснення);
+        актуальнаІсторія = undefined;
+        новеРезюме = актуальнеРезюме;
+      } catch (помилка) {
+        logger.warn({ помилка }, 'Не вдалося стиснути історію, використовуємо останні повідомлення');
+        актуальнаІсторія = актуальнаІсторія.slice(-МАКС_ПОВІДОМЛЕНЬ_БЕЗ_СТИСНЕННЯ);
+      }
+    }
+
     // Запитуємо Claude
-    let відповідь = await askClaude(промпт);
+    let відповідь = await askClaude(промпт, актуальнаІсторія, актуальнеРезюме);
 
     // Перевіряємо наявність дисклеймера — додаємо якщо AI пропустив
     if (!відповідь.includes(ДИСКЛЕЙМЕР)) {
@@ -89,7 +136,12 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     const часВідповіді = Date.now() - початок;
     logger.info({ часВідповідіМс: часВідповіді, кількістьДжерел: джерела.length }, 'Запит оброблено');
 
-    res.json({ answer: відповідь, sources: джерела });
+    const response: ChatResponse = { answer: відповідь, sources: джерела };
+    if (новеРезюме) {
+      response.summary = новеРезюме;
+    }
+
+    res.json(response);
   } catch (помилка) {
     const часВідповіді = Date.now() - початок;
     logger.error({ помилка, часВідповідіМс: часВідповіді }, 'Помилка при обробці запиту');

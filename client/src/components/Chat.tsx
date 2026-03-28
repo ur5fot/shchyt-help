@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import Message, { type MessageRole } from './Message';
 import Sources from './Sources';
 import DocGenerator from './DocGenerator';
-import { sendMessage, type Source } from '../services/api';
+import { sendMessage, type Source, type HistoryMessage } from '../services/api';
 import { detectTemplate } from '../services/templateDetector';
 import { ПІДКАЗКИ, МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ } from '../constants';
 
@@ -24,6 +24,8 @@ export default function Chat({ initialMessage, onBack }: ChatProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeDocTemplate, setActiveDocTemplate] = useState<{ msgIndex: number; templateId: string } | null>(null);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [summarizedUpTo, setSummarizedUpTo] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const initialSent = useRef(false);
 
@@ -49,7 +51,20 @@ export default function Chat({ initialMessage, onBack }: ChatProps) {
     setError(null);
 
     try {
-      const response = await sendMessage(trimmed);
+      // Відправляємо тільки повідомлення після останнього стиснення
+      const history: HistoryMessage[] = messages.slice(summarizedUpTo).map((msg) => ({
+        role: msg.role,
+        content: msg.text,
+      }));
+
+      const response = await sendMessage(trimmed, history, summary ?? undefined);
+
+      if (response.summary) {
+        setSummary(response.summary);
+        // +1 бо поточне user-повідомлення вже додане в messages
+        setSummarizedUpTo(messages.length + 1);
+      }
+
       setMessages((prev) => [
         ...prev,
         {
@@ -60,6 +75,8 @@ export default function Chat({ initialMessage, onBack }: ChatProps) {
         },
       ]);
     } catch (err) {
+      // Видаляємо user-повідомлення без відповіді — інакше порушиться чергування ролей
+      setMessages((prev) => prev.slice(0, -1));
       const message = err instanceof Error ? err.message : 'Невідома помилка';
       setError(message);
     } finally {

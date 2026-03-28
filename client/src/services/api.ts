@@ -4,16 +4,30 @@ export interface Source {
   sourceUrl: string;
 }
 
+export interface HistoryMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export interface ChatResponse {
   answer: string;
   sources: Source[];
+  summary?: string;
 }
 
-export async function sendMessage(message: string): Promise<ChatResponse> {
+export async function sendMessage(
+  message: string,
+  history?: HistoryMessage[],
+  summary?: string,
+): Promise<ChatResponse> {
+  const body: Record<string, unknown> = { message };
+  if (history && history.length > 0) body.history = history;
+  if (summary) body.summary = summary;
+
   const response = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
