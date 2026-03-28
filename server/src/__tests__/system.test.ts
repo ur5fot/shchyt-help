@@ -13,7 +13,7 @@ describe('SYSTEM_PROMPT', () => {
 
   it('вимагає цитувати конкретні статті законів', () => {
     const текст = SYSTEM_PROMPT.toLowerCase();
-    expect(текст).toMatch(/стatt|статт|цитуй/);
+    expect(текст).toMatch(/статт|цитуй/);
   });
 
   it('забороняє вигадувати статті', () => {

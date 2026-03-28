@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Home from './components/Home';
 import Chat from './components/Chat';
 
-export type Screen = 'home' | 'chat';
+type Screen = 'home' | 'chat';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home');
