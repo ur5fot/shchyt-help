@@ -36,7 +36,7 @@ global.fetch = vi.fn().mockResolvedValue({
   arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8)),
 });
 
-import { generatePdf } from './pdfGenerator';
+import { generatePdf, санітизуватиПоле } from './pdfGenerator';
 
 describe('generatePdf', () => {
   beforeEach(() => {
@@ -76,5 +76,44 @@ describe('generatePdf', () => {
 
   it('не кидає помилку при порожніх полях', async () => {
     await expect(generatePdf('Текст без плейсхолдерів', {})).resolves.toBeInstanceOf(Uint8Array);
+  });
+
+  it('санітизує поля перед підстановкою в шаблон', async () => {
+    const result = await generatePdf('Документ від {name}', {
+      name: '  Іванов\x00  ',
+    });
+    expect(result).toBeInstanceOf(Uint8Array);
+  });
+});
+
+describe('санітизуватиПоле', () => {
+  it('обрізає пробіли з країв', () => {
+    expect(санітизуватиПоле('  Іванов  ')).toBe('Іванов');
+  });
+
+  it('видаляє нульові байти та керуючі символи', () => {
+    expect(санітизуватиПоле('Текст\x00з\x01нульовими\x7Fбайтами')).toBe('Текстзнульовимибайтами');
+  });
+
+  it('зберігає переноси рядків та табуляцію', () => {
+    expect(санітизуватиПоле('Рядок 1\nРядок 2\tТаб')).toBe('Рядок 1\nРядок 2\tТаб');
+  });
+
+  it('нормалізує \\r\\n та \\r до \\n', () => {
+    expect(санітизуватиПоле('А\r\nБ\rВ')).toBe('А\nБ\nВ');
+  });
+
+  it('обмежує довжину до 500 символів', () => {
+    const long = 'А'.repeat(600);
+    const result = санітизуватиПоле(long);
+    expect(result.length).toBe(500);
+  });
+
+  it('повертає порожній рядок для рядка з пробілів', () => {
+    expect(санітизуватиПоле('   ')).toBe('');
+  });
+
+  it('не змінює коректне значення', () => {
+    expect(санітизуватиПоле('Сержант Іванов І.П.')).toBe('Сержант Іванов І.П.');
   });
 });

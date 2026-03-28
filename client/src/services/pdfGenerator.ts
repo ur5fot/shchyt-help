@@ -1,5 +1,31 @@
 import { PDFDocument, rgb } from 'pdf-lib';
 
+// Максимальна довжина одного поля (символів)
+const МАКС_ДОВЖИНА_ПОЛЯ = 500;
+
+// Санітизація значення поля перед підстановкою в PDF-шаблон
+export function санітизуватиПоле(value: string): string {
+  let result = value.trim();
+  // Видаляємо нульові байти та керуючі символи (крім \n та \t)
+  result = result.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+  // Нормалізуємо переноси рядків: \r\n та \r → \n
+  result = result.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  // Обмежуємо довжину
+  if (result.length > МАКС_ДОВЖИНА_ПОЛЯ) {
+    result = result.slice(0, МАКС_ДОВЖИНА_ПОЛЯ);
+  }
+  return result;
+}
+
+// Санітизує всі значення полів
+function санітизуватиПоля(fields: Record<string, string>): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(fields)) {
+    result[key] = санітизуватиПоле(value);
+  }
+  return result;
+}
+
 // Шрифт з підтримкою кирилиці зберігається локально — без зовнішніх запитів
 const FONT_URL = '/fonts/ubuntu.ttf';
 
@@ -76,7 +102,8 @@ export async function generatePdf(
   templateText: string,
   fields: Record<string, string>
 ): Promise<Uint8Array> {
-  const filledText = applyFields(templateText, fields);
+  const safeFields = санітизуватиПоля(fields);
+  const filledText = applyFields(templateText, safeFields);
 
   const doc = await PDFDocument.create();
 
