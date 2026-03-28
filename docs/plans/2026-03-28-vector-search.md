@@ -34,11 +34,11 @@
 - [x] перевірити що `npm test` проходить (нові залежності не ламають існуючий код)
 
 ### Task 2: Створити модуль ембеддингів (`server/src/services/embeddings.ts`)
-- [ ] функція `завантажитиМодель()` — lazy singleton, pipeline `feature-extraction` з `Xenova/multilingual-e5-small`
-- [ ] функція `створитиЕмбеддинг(текст: string, тип: 'query' | 'passage'): Promise<number[]>` — генерує вектор 384d, з префіксом `"query: "` або `"passage: "` (вимога моделі E5)
-- [ ] функція `створитиЕмбеддинги(тексти: string[], тип: 'query' | 'passage'): Promise<number[][]>` — батч-генерація
-- [ ] написати тести: перевірити розмірність вектора, різні вектори для різних текстів
-- [ ] `npm test` — всі тести проходять
+- [x] функція `завантажитиМодель()` — lazy singleton, pipeline `feature-extraction` з `Xenova/multilingual-e5-small`
+- [x] функція `створитиЕмбеддинг(текст: string, тип: 'query' | 'passage'): Promise<number[]>` — генерує вектор 384d, з префіксом `"query: "` або `"passage: "` (вимога моделі E5)
+- [x] функція `створитиЕмбеддинги(тексти: string[], тип: 'query' | 'passage'): Promise<number[][]>` — батч-генерація
+- [x] написати тести: перевірити розмірність вектора, різні вектори для різних текстів
+- [x] `npm test` — всі тести проходять
 
 ### Task 3: Створити модуль LanceDB (`server/src/services/vectorStore.ts`)
 - [ ] функція `ініціалізуватиБД()` — створює/відкриває LanceDB в `data/lancedb/`
