@@ -54,8 +54,9 @@ async function loadFont(): Promise<ArrayBuffer> {
 function applyFields(template: string, fields: Record<string, string>): string {
   let result = template;
   for (const [key, value] of Object.entries(fields)) {
-    // Використовуємо функцію-замінник, щоб уникнути спецсимволів $ у value
-    result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), () => value);
+    // Екрануємо спецсимволи RegExp у ключі та використовуємо функцію-замінник для $ у value
+    const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    result = result.replace(new RegExp(`\\{${escaped}\\}`, 'g'), () => value);
   }
   return result;
 }

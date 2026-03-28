@@ -170,6 +170,7 @@ export default function Chat({ initialMessage, onBack }: ChatProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
+            maxLength={2000}
             placeholder="Введіть ваше питання..."
             className="flex-1 bg-gray-800 text-gray-100 placeholder-gray-500 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-600"
           />

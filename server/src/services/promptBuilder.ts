@@ -7,7 +7,7 @@ import type { LawChunk } from '../../../laws/index';
  */
 export function buildPrompt(питання: string, чанки: LawChunk[]): string {
   if (чанки.length === 0) {
-    return `Питання військовослужбовця: ${питання}`;
+    return `Контекст із законодавства України: жодного релевантного фрагменту не знайдено.\n\n---\n\nПитання військовослужбовця: ${питання}`;
   }
 
   const контекст = чанки
