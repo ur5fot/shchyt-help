@@ -39,7 +39,7 @@ export async function створитиЕмбеддинг(
     normalize: true,
   });
 
-  return Array.from(результат.data as Float32Array).slice(0, РОЗМІР_ВЕКТОРА);
+  return Array.from(результат.data as Float32Array);
 }
 
 /**

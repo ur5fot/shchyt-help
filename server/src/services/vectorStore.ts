@@ -114,7 +114,7 @@ export async function пошукПоВектору(
     part: рядок.part as string,
     title: (рядок.title as string) || null,
     text: рядок.text as string,
-    keywords: (рядок.keywords as string).split(','),
+    keywords: (рядок.keywords as string) ? (рядок.keywords as string).split(',').filter(Boolean) : [],
     lawTitle: рядок.lawTitle as string,
     sourceUrl: рядок.sourceUrl as string,
     _distance: рядок._distance as number,

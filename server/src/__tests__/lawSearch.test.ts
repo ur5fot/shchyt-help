@@ -4,13 +4,17 @@ import type { LawChunk } from '../../../laws/index';
 import { створитиЕмбеддинг } from '../services/embeddings';
 import { пошукПоВектору } from '../services/vectorStore';
 
-// Мокаємо модулі embeddings та vectorStore
+// Мокаємо модулі embeddings, vectorStore та logger
 vi.mock('../services/embeddings', () => ({
   створитиЕмбеддинг: vi.fn(),
 }));
 
 vi.mock('../services/vectorStore', () => ({
   пошукПоВектору: vi.fn(),
+}));
+
+vi.mock('../logger', () => ({
+  logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
 }));
 
 const mockСтворитиЕмбеддинг = vi.mocked(створитиЕмбеддинг);
@@ -359,7 +363,7 @@ describe('hybridSearchLaws — гібридний пошук', () => {
     vi.clearAllMocks();
   });
 
-  it('комбінує keyword та vector результати', async () => {
+  it('комбінує keyword та vector результати з правильними вагами', async () => {
     // Mock: vector пошук повертає чанк 3 (медицина) як найближчий
     mockСтворитиЕмбеддинг.mockResolvedValue(new Array(384).fill(0.1));
     mockПошукПоВектору.mockResolvedValue([
@@ -372,7 +376,7 @@ describe('hybridSearchLaws — гібридний пошук', () => {
         keywords: ['медицина', 'лікування', 'госпіталь'],
         lawTitle: 'Закон про соцзахист',
         sourceUrl: 'https://zakon.rada.gov.ua/laws/show/2011-12',
-        _distance: 0.2, // similarity = 0.9
+        _distance: 0.2, // similarity = 1 - 0.2/2 = 0.9
       },
       {
         id: 'test-st1-ch1',
@@ -383,18 +387,27 @@ describe('hybridSearchLaws — гібридний пошук', () => {
         keywords: ['грошове забезпечення', 'виплати', 'оклад'],
         lawTitle: 'Закон про соцзахист',
         sourceUrl: 'https://zakon.rada.gov.ua/laws/show/2011-12',
-        _distance: 0.8, // similarity = 0.6
+        _distance: 0.8, // similarity = 1 - 0.8/2 = 0.6
       },
     ]);
 
     const результати = await hybridSearchLaws('лікування', тестовіЧанки);
 
     expect(результати.length).toBeGreaterThan(0);
-    // Медичний чанк має бути серед результатів (є і в keyword, і в vector)
     const медичний = результати.find(r => r.chunk.id === 'test-st3-ch1');
     expect(медичний).toBeDefined();
-    // Оцінка має бути комбінацією keyword та vector
-    expect(медичний!.score).toBeGreaterThan(0);
+    // Гібридна оцінка = 0.4 * keywordNorm + 0.6 * vectorSimilarity
+    // Медичний чанк має і keyword, і vector — оцінка має включати обидві складові
+    // Vector складова: 0.6 * 0.9 = 0.54
+    // Keyword складова: 0.4 * 1.0 = 0.4 (він найвищий за keyword, тому нормалізований = 1.0)
+    // Мінімум: більше ніж тільки vector (0.54) або тільки keyword (0.4)
+    expect(медичний!.score).toBeGreaterThan(0.54);
+
+    // test-st1-ch1 має тільки vector оцінку (0.6 * 0.6 = 0.36) — нижчу за медичний
+    const грошовий = результати.find(r => r.chunk.id === 'test-st1-ch1');
+    if (грошовий) {
+      expect(медичний!.score).toBeGreaterThan(грошовий.score);
+    }
   });
 
   it('fallback на keyword пошук якщо LanceDB недоступна', async () => {
@@ -406,6 +419,8 @@ describe('hybridSearchLaws — гібридний пошук', () => {
     expect(результати.length).toBeGreaterThan(0);
     const відпустковий = результати.find(r => r.chunk.id === 'test-st2-ch1');
     expect(відпустковий).toBeDefined();
+    // Vector пошук не повинен викликатися після помилки ембеддингу
+    expect(mockПошукПоВектору).not.toHaveBeenCalled();
   });
 
   it('vector-only результати включаються навіть якщо keyword не знайшов', async () => {

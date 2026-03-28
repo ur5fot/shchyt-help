@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { tmpdir } from 'os';
-import { mkdtempSync } from 'fs';
+import { mkdtempSync, rmSync } from 'fs';
 import { join } from 'path';
 import type { LawChunk } from '../../../laws/index';
 import {
@@ -48,13 +48,14 @@ function створитиТестовіЧанки(): LawChunk[] {
 }
 
 // Створити mock ембеддинги (нормалізовані вектори розмірності 384)
-function створитиМокЕмбеддинги(кількість: number): number[][] {
+function створитиМокЕмбеддинги(кількість: number, offset: number = 0): number[][] {
   return Array.from({ length: кількість }, (_, і) => {
     const вектор = new Array(384).fill(0);
     // Різні вектори для різних чанків — змінюємо різні компоненти
-    вектор[і * 10] = 0.8;
-    вектор[і * 10 + 1] = 0.5;
-    вектор[і * 10 + 2] = 0.3;
+    const idx = (і + offset) * 10;
+    вектор[idx] = 0.8;
+    вектор[idx + 1] = 0.5;
+    вектор[idx + 2] = 0.3;
     // Нормалізуємо
     const норма = Math.sqrt(вектор.reduce((с: number, v: number) => с + v * v, 0));
     return вектор.map((v: number) => v / норма);
@@ -71,6 +72,7 @@ describe('vectorStore', () => {
 
   afterEach(() => {
     _скинутиЗєднання();
+    rmSync(тестоваДиректорія, { recursive: true, force: true });
   });
 
   describe('ініціалізуватиБД', () => {
@@ -223,7 +225,7 @@ describe('vectorStore', () => {
       _скинутиЗєднання();
       await ініціалізуватиБД(тестоваДиректорія);
 
-      // Оновлюємо — додаємо третій чанк
+      // Оновлюємо — додаємо новий чанк з унікальним ембеддингом (offset=5 щоб не збігався)
       const новийЧанк: LawChunk = {
         id: 'test-chunk-new',
         article: 'Стаття 99',
@@ -234,7 +236,7 @@ describe('vectorStore', () => {
         lawTitle: 'Новий закон',
         sourceUrl: 'https://example.com',
       };
-      const новийЕмбеддинг = створитиМокЕмбеддинги(1);
+      const новийЕмбеддинг = створитиМокЕмбеддинги(1, 5);
 
       await оновитиЧанки([новийЧанк], новийЕмбеддинг);
 
@@ -245,6 +247,10 @@ describe('vectorStore', () => {
       const результати = await пошукПоВектору(новийЕмбеддинг[0], 10);
       const ids = результати.map((р) => р.id);
       expect(ids).toContain('test-chunk-new');
+      // Існуючі чанки теж мають бути збережені — загалом 3 рядки (2 + 1)
+      expect(ids).toContain('test-chunk-1');
+      expect(ids).toContain('test-chunk-2');
+      expect(результати).toHaveLength(3);
     });
 
     it('кидає помилку при невідповідності кількості', async () => {

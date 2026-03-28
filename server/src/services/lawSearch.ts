@@ -6,6 +6,7 @@ import {
   ВАГА_ВЕКТОРА,
   МІНІМАЛЬНА_ГІБРИДНА_ОЦІНКА,
 } from '../constants';
+import { logger } from '../logger';
 
 export interface SearchResult {
   chunk: LawChunk;
@@ -109,7 +110,7 @@ export function розширитиСинонімами(слова: string[]): st
  * keywords (+3), назва статті (+2), текст (+1).
  * Повертає відсортований масив результатів (не більше 5).
  */
-export function searchLaws(запит: string, чанки: LawChunk[]): SearchResult[] {
+export function searchLaws(запит: string, чанки: LawChunk[], maxResults: number = МАКС_РЕЗУЛЬТАТІВ): SearchResult[] {
   if (!запит || запит.trim().length === 0) {
     return [];
   }
@@ -166,7 +167,7 @@ export function searchLaws(запит: string, чанки: LawChunk[]): SearchRe
 
   // Сортуємо за спаданням оцінки та обмежуємо кількість
   результати.sort((а, б) => б.score - а.score);
-  return результати.slice(0, МАКС_РЕЗУЛЬТАТІВ);
+  return результати.slice(0, maxResults);
 }
 
 /**
@@ -203,8 +204,8 @@ export async function hybridSearchLaws(
   запит: string,
   чанки: LawChunk[]
 ): Promise<SearchResult[]> {
-  // Keyword пошук (без обмеження top-5, щоб мати повний набір для злиття)
-  const keywordРезультати = searchLaws(запит, чанки);
+  // Keyword пошук без обмеження top-5, щоб мати повний набір для злиття
+  const keywordРезультати = searchLaws(запит, чанки, Infinity);
 
   // Vector пошук
   const vectorОцінки = new Map<string, number>();
@@ -220,9 +221,9 @@ export async function hybridSearchLaws(
       vectorОцінки.set(vr.id, similarity);
       vectorЧанки.set(vr.id, vr);
     }
-  } catch {
-    // LanceDB недоступна — повертаємо тільки keyword результати
-    return keywordРезультати;
+  } catch (помилка) {
+    logger.warn({ помилка }, 'Vector пошук недоступний — fallback на keyword-only');
+    return keywordРезультати.slice(0, МАКС_РЕЗУЛЬТАТІВ);
   }
 
   // Нормалізуємо keyword scores
