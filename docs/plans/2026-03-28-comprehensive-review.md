@@ -53,12 +53,12 @@
 - [x] запустити тести — мають пройти перед наступним таском
 
 ### Task 5: [ВАЖЛИВО] Додати ESLint та Prettier
-- [ ] встановити `eslint`, `@typescript-eslint/*`, `prettier`, `eslint-config-prettier` в root
-- [ ] створити `.eslintrc.cjs` з TypeScript strict правилами
-- [ ] створити `.prettierrc` з базовими налаштуваннями
-- [ ] додати скрипти `lint` та `format` в root `package.json`
-- [ ] запустити `lint` — виправити знайдені проблеми
-- [ ] запустити тести — мають пройти перед наступним таском
+- [x] встановити `eslint`, `@typescript-eslint/*`, `prettier`, `eslint-config-prettier` в root
+- [x] створити `.eslintrc.cjs` з TypeScript strict правилами
+- [x] створити `.prettierrc` з базовими налаштуваннями
+- [x] додати скрипти `lint` та `format` в root `package.json`
+- [x] запустити `lint` — виправити знайдені проблеми
+- [x] запустити тести — мають пройти перед наступним таском
 
 ### Task 6: [ВАЖЛИВО] Винести спільні константи та прибрати дублювання
 - [ ] створити файл спільних констант (MAX_MESSAGE_LENGTH, MAX_TOKENS, MAX_SEARCH_RESULTS тощо)

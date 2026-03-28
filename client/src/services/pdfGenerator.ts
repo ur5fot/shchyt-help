@@ -7,6 +7,7 @@ const МАКС_ДОВЖИНА_ПОЛЯ = 500;
 export function санітизуватиПоле(value: string): string {
   let result = value.trim();
   // Видаляємо нульові байти та керуючі символи (крім \n та \t)
+  // eslint-disable-next-line no-control-regex
   result = result.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
   // Нормалізуємо переноси рядків: \r\n та \r → \n
   result = result.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
