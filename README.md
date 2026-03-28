@@ -67,6 +67,9 @@ npx tsx scripts/parse-law.ts https://zakon.rada.gov.ua/laws/show/XXXXX > laws/na
 ```bash
 npm run dev          # Запустити клієнт і сервер одночасно
 npm run test         # Запустити всі тести (Vitest)
+npm run lint         # Перевірити код ESLint
+npm run lint:fix     # Автоматично виправити ESLint-помилки
+npm run format       # Форматувати код Prettier
 ```
 
 ## Стек
@@ -74,4 +77,6 @@ npm run test         # Запустити всі тести (Vitest)
 - **Frontend:** React 18, Vite, TypeScript, Tailwind CSS, pdf-lib
 - **Backend:** Node.js, Express, TypeScript
 - **AI:** Claude API (claude-sonnet-4-20250514) через @anthropic-ai/sdk
+- **Логування:** pino (JSON в production, pretty в dev)
 - **Тести:** Vitest, @testing-library/react
+- **Лінтинг:** ESLint + Prettier
