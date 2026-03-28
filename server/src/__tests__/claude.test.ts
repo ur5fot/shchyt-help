@@ -44,7 +44,8 @@ describe('askClaude', () => {
         max_tokens: expect.any(Number),
         system: expect.any(String),
         messages: [{ role: 'user', content: 'Тестовий промпт' }],
-      })
+      }),
+      expect.objectContaining({ timeout: 30_000 }),
     );
   });
 

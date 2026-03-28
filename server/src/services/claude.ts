@@ -26,12 +26,15 @@ export async function askClaude(промпт: string): Promise<string> {
   const client = getClient();
 
   try {
-    const відповідь = await client.messages.create({
-      model: МОДЕЛЬ_CLAUDE,
-      max_tokens: МАКС_ТОКЕНІВ,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: промпт }],
-    });
+    const відповідь = await client.messages.create(
+      {
+        model: МОДЕЛЬ_CLAUDE,
+        max_tokens: МАКС_ТОКЕНІВ,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: промпт }],
+      },
+      { timeout: 30_000 },
+    );
 
     const блок = відповідь.content[0];
     if (!блок || блок.type !== 'text') {

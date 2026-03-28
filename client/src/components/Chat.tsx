@@ -4,7 +4,7 @@ import Sources from './Sources';
 import DocGenerator from './DocGenerator';
 import { sendMessage, type Source } from '../services/api';
 import { detectTemplate } from '../services/templateDetector';
-import { ПІДКАЗКИ } from '../constants';
+import { ПІДКАЗКИ, МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ } from '../constants';
 
 interface ChatMessage {
   role: MessageRole;
@@ -170,7 +170,7 @@ export default function Chat({ initialMessage, onBack }: ChatProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            maxLength={2000}
+            maxLength={МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ}
             placeholder="Введіть ваше питання..."
             className="flex-1 bg-gray-800 text-gray-100 placeholder-gray-500 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-600"
           />
