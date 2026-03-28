@@ -3,23 +3,8 @@ import Message, { type MessageRole } from './Message';
 import Sources from './Sources';
 import DocGenerator from './DocGenerator';
 import { sendMessage, type Source } from '../services/api';
+import { detectTemplate } from '../services/templateDetector';
 import { ПІДКАЗКИ } from '../constants';
-
-// Ключові слова, при наявності яких у відповіді пропонуємо рапорт про невиплату
-// Примітка: 'грошове забезпечення' навмисно виключено — занадто широке, спрацьовує на будь-яку відповідь про виплати
-const КЛЮЧОВІ_НЕВИПЛАТА = ['невипла', 'не виплат', 'бойові виплат', 'заборгован', 'затримуван', 'не нарахован', 'не виплачу'];
-// Ключові слова для рапорту про відпустку
-const КЛЮЧОВІ_ВІДПУСТКА = ['відпустк', 'надати відпустк', 'право на відпустк'];
-// Ключові слова для скарги — 'порушен' навмисно виключено: занадто широке, спрацьовує на звичайні правові відповіді
-const КЛЮЧОВІ_СКАРГА = ['оскаржит', 'скаргу', 'неправомірн', 'оскаржен'];
-
-function detectTemplate(text: string): string | null {
-  const lower = text.toLowerCase();
-  if (КЛЮЧОВІ_НЕВИПЛАТА.some((kw) => lower.includes(kw))) return 'raport-nevyplata';
-  if (КЛЮЧОВІ_ВІДПУСТКА.some((kw) => lower.includes(kw))) return 'raport-vidpustka';
-  if (КЛЮЧОВІ_СКАРГА.some((kw) => lower.includes(kw))) return 'skarga';
-  return null;
-}
 
 interface ChatMessage {
   role: MessageRole;
