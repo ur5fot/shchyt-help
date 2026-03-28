@@ -87,10 +87,10 @@
 - [x] додати npm script: `"update-law": "tsx scripts/update-laws.ts"` в root `package.json`
 
 ### Task 8: Документація та фіналізація
-- [ ] оновити `CLAUDE.md` — нові команди, архітектура з LanceDB
-- [ ] оновити `package.json` опис команд
-- [ ] `npm test` — фінальна перевірка всіх тестів
-- [ ] `npm run lint` — фінальна перевірка лінтера
+- [x] оновити `CLAUDE.md` — нові команди, архітектура з LanceDB
+- [x] оновити `package.json` опис команд
+- [x] `npm test` — фінальна перевірка всіх тестів
+- [x] `npm run lint` — фінальна перевірка лінтера
 
 ## Verification
 1. `npm run init-vector-db` → `data/lancedb/` створена з 45 записами
