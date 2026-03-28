@@ -1,4 +1,5 @@
 import { PDFDocument, rgb } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
 
 // Максимальна довжина одного поля (символів)
 const МАКС_ДОВЖИНА_ПОЛЯ = 500;
@@ -108,6 +109,7 @@ export async function generatePdf(
   const filledText = applyFields(templateText, safeFields);
 
   const doc = await PDFDocument.create();
+  doc.registerFontkit(fontkit);
 
   // Завантажуємо шрифт з підтримкою кирилиці (зберігається локально у public/fonts)
   const fontBytes = await loadFont();

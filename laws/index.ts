@@ -61,5 +61,9 @@ export function loadAllLaws(): LawChunk[] {
     }
   }
 
+  if (allChunks.length === 0) {
+    throw new Error('Жодного чанку не завантажено — перевірте файли законів у директорії laws/');
+  }
+
   return allChunks;
 }

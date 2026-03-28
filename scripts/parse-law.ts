@@ -1,5 +1,5 @@
 import { writeFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -190,13 +190,15 @@ async function main() {
   console.log(`Завантаження: ${url}`);
   const law = await parseLaw(url, shortTitle);
 
-  const filename = outputFilename || shortTitle
+  const rawFilename = outputFilename || shortTitle
     .toLowerCase()
     .replace(/«|»/g, '')
     .replace(/[^а-яіїєґa-z0-9]+/gi, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
 
+  // basename запобігає path traversal (наприклад, "../../etc/foo")
+  const filename = basename(rawFilename);
   const outputPath = join(__dirname, '..', 'laws', `${filename}.json`);
   writeFileSync(outputPath, JSON.stringify(law, null, 2), 'utf-8');
 

@@ -16,6 +16,7 @@ vi.mock('pdf-lib', () => {
   const mockDoc = {
     addPage: vi.fn().mockReturnValue(mockPage),
     embedFont: vi.fn().mockResolvedValue(mockFont),
+    registerFontkit: vi.fn(),
     save: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3, 4, 5])),
   };
 
@@ -29,6 +30,11 @@ vi.mock('pdf-lib', () => {
     rgb: vi.fn().mockReturnValue({ r: 0, g: 0, b: 0 }),
   };
 });
+
+// Мокуємо @pdf-lib/fontkit
+vi.mock('@pdf-lib/fontkit', () => ({
+  default: {},
+}));
 
 // Мокуємо fetch для шрифту
 global.fetch = vi.fn().mockResolvedValue({

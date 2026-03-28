@@ -65,7 +65,7 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     let відповідь = await askClaude(промпт);
 
     // Перевіряємо наявність дисклеймера — додаємо якщо AI пропустив
-    if (!відповідь.includes('⚠️')) {
+    if (!відповідь.includes(ДИСКЛЕЙМЕР)) {
       відповідь = відповідь.trimEnd() + '\n\n' + ДИСКЛЕЙМЕР;
     }
 

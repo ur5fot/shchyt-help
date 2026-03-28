@@ -23,6 +23,7 @@ import { createApp } from '../app.ts';
 import { searchLaws } from '../services/lawSearch.ts';
 import { buildPrompt } from '../services/promptBuilder.ts';
 import { askClaude } from '../services/claude.ts';
+import { ДИСКЛЕЙМЕР } from '../constants.ts';
 
 const mockSearchLaws = vi.mocked(searchLaws);
 const mockBuildPrompt = vi.mocked(buildPrompt);
@@ -37,7 +38,7 @@ describe('POST /api/chat', () => {
     // Стандартні відповіді моків
     mockSearchLaws.mockReturnValue([]);
     mockBuildPrompt.mockReturnValue('складений промпт');
-    mockAskClaude.mockResolvedValue('Відповідь від Claude ⚠️ дисклеймер');
+    mockAskClaude.mockResolvedValue(`Відповідь від Claude ${ДИСКЛЕЙМЕР}`);
   });
 
   it('повертає 200 та відповідь при валідному запиті', async () => {
@@ -52,13 +53,13 @@ describe('POST /api/chat', () => {
   });
 
   it('повертає answer з тексту Claude', async () => {
-    mockAskClaude.mockResolvedValue('Відповідь про пільги ⚠️ дисклеймер');
+    mockAskClaude.mockResolvedValue(`Відповідь про пільги ${ДИСКЛЕЙМЕР}`);
 
     const відповідь = await request(app)
       .post('/api/chat')
       .send({ message: 'Питання про пільги' });
 
-    expect(відповідь.body.answer).toBe('Відповідь про пільги ⚠️ дисклеймер');
+    expect(відповідь.body.answer).toBe(`Відповідь про пільги ${ДИСКЛЕЙМЕР}`);
   });
 
   it('повертає sources як масив', async () => {
@@ -178,12 +179,11 @@ describe('POST /api/chat', () => {
       .send({ message: 'Питання' });
 
     expect(відповідь.status).toBe(200);
-    expect(відповідь.body.answer).toContain('⚠️');
-    expect(відповідь.body.answer).toContain('Це не юридична консультація');
+    expect(відповідь.body.answer).toContain(ДИСКЛЕЙМЕР);
   });
 
   it('не дублює дисклеймер якщо AI його вже додав', async () => {
-    const відповідьЗДисклеймером = 'Відповідь.\n\n⚠️ Це не юридична консультація. Для прийняття рішень зверніться до військового адвоката.';
+    const відповідьЗДисклеймером = `Відповідь.\n\n${ДИСКЛЕЙМЕР}`;
     mockAskClaude.mockResolvedValue(відповідьЗДисклеймером);
 
     const відповідь = await request(app)
