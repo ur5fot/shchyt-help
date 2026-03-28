@@ -4,7 +4,7 @@ import { loadAllLaws } from '../../../laws/index.ts';
 import { searchLaws } from '../services/lawSearch.ts';
 import { buildPrompt } from '../services/promptBuilder.ts';
 import { askClaude } from '../services/claude.ts';
-import { МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ } from '../constants.ts';
+import { МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ, ДИСКЛЕЙМЕР } from '../constants.ts';
 
 const router = Router();
 
@@ -55,7 +55,12 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     const промпт = buildPrompt(message, чанки);
 
     // Запитуємо Claude
-    const відповідь = await askClaude(промпт);
+    let відповідь = await askClaude(промпт);
+
+    // Перевіряємо наявність дисклеймера — додаємо якщо AI пропустив
+    if (!відповідь.includes('⚠️')) {
+      відповідь = відповідь.trimEnd() + '\n\n' + ДИСКЛЕЙМЕР;
+    }
 
     // Формуємо джерела для клієнта (дедуплікуємо по унікальному ключу)
     const seen = new Set<string>();
@@ -77,6 +82,13 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     res.json({ answer: відповідь, sources: джерела });
   } catch (помилка) {
     console.error('Помилка при обробці запиту:', помилка);
+
+    // Зрозуміле повідомлення при відсутньому API ключі
+    if (помилка instanceof Error && помилка.message.includes('ANTHROPIC_API_KEY')) {
+      res.status(503).json({ error: 'API ключ не налаштований. Додайте ANTHROPIC_API_KEY у файл .env' });
+      return;
+    }
+
     res.status(500).json({ error: 'Внутрішня помилка сервера' });
   }
 });

@@ -162,7 +162,7 @@ export default function Chat({ initialMessage, onBack }: ChatProps) {
         {loading && (
           <div className="flex justify-start mb-3">
             <div className="bg-gray-800 text-gray-400 px-4 py-3 rounded-2xl rounded-bl-sm text-sm">
-              Завантаження...
+              AI друкує...
             </div>
           </div>
         )}

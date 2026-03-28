@@ -37,7 +37,7 @@ describe('POST /api/chat', () => {
     // Стандартні відповіді моків
     mockSearchLaws.mockReturnValue([]);
     mockBuildPrompt.mockReturnValue('складений промпт');
-    mockAskClaude.mockResolvedValue('Відповідь від Claude');
+    mockAskClaude.mockResolvedValue('Відповідь від Claude ⚠️ дисклеймер');
   });
 
   it('повертає 200 та відповідь при валідному запиті', async () => {
@@ -52,13 +52,13 @@ describe('POST /api/chat', () => {
   });
 
   it('повертає answer з тексту Claude', async () => {
-    mockAskClaude.mockResolvedValue('Відповідь про пільги');
+    mockAskClaude.mockResolvedValue('Відповідь про пільги ⚠️ дисклеймер');
 
     const відповідь = await request(app)
       .post('/api/chat')
       .send({ message: 'Питання про пільги' });
 
-    expect(відповідь.body.answer).toBe('Відповідь про пільги');
+    expect(відповідь.body.answer).toBe('Відповідь про пільги ⚠️ дисклеймер');
   });
 
   it('повертає sources як масив', async () => {
@@ -168,6 +168,41 @@ describe('POST /api/chat', () => {
       'Питання',
       expect.arrayContaining([expect.objectContaining({ id: 'c1' })])
     );
+  });
+
+  it('додає дисклеймер якщо AI його пропустив', async () => {
+    mockAskClaude.mockResolvedValue('Відповідь без попередження');
+
+    const відповідь = await request(app)
+      .post('/api/chat')
+      .send({ message: 'Питання' });
+
+    expect(відповідь.status).toBe(200);
+    expect(відповідь.body.answer).toContain('⚠️');
+    expect(відповідь.body.answer).toContain('Це не юридична консультація');
+  });
+
+  it('не дублює дисклеймер якщо AI його вже додав', async () => {
+    const відповідьЗДисклеймером = 'Відповідь.\n\n⚠️ Це не юридична консультація. Для прийняття рішень зверніться до військового адвоката.';
+    mockAskClaude.mockResolvedValue(відповідьЗДисклеймером);
+
+    const відповідь = await request(app)
+      .post('/api/chat')
+      .send({ message: 'Питання' });
+
+    expect(відповідь.body.answer).toBe(відповідьЗДисклеймером);
+  });
+
+  it('повертає 503 з зрозумілим повідомленням при відсутньому API ключі', async () => {
+    mockAskClaude.mockRejectedValue(new Error('API ключ ANTHROPIC_API_KEY не встановлений'));
+
+    const відповідь = await request(app)
+      .post('/api/chat')
+      .send({ message: 'Питання' });
+
+    expect(відповідь.status).toBe(503);
+    expect(відповідь.body.error).toContain('API ключ не налаштований');
+    expect(відповідь.body.error).toContain('.env');
   });
 
   it('source без частини має лише назву статті', async () => {

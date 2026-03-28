@@ -77,13 +77,13 @@ describe('Chat', () => {
     expect(input.value).toBe('');
   });
 
-  it('відображає стан завантаження під час очікування відповіді', async () => {
+  it('відображає "AI друкує..." під час очікування відповіді', async () => {
     mockSendMessage.mockImplementation(() => new Promise(() => {}));
     render(<Chat initialMessage="" onBack={vi.fn()} />);
     const input = screen.getByPlaceholderText(/Введіть ваше питання/i);
     await userEvent.type(input, 'Питання');
     await userEvent.click(screen.getByRole('button', { name: /Надіслати/i }));
-    expect(screen.getByText(/Завантаження/i)).toBeInTheDocument();
+    expect(screen.getByText(/AI друкує/i)).toBeInTheDocument();
   });
 
   it('автоматично надсилає initialMessage якщо він непорожній', async () => {
