@@ -79,12 +79,12 @@
 - [x] `npm run lint` — без помилок
 
 ### Task 7: Скрипт автооновлення законів (`scripts/update-laws.ts`)
-- [ ] приймає URL закону з zakon.rada.gov.ua як аргумент
-- [ ] парсить HTML → JSON чанки (використати логіку з `parse-law.ts`)
-- [ ] генерує ембеддинги для нових чанків
-- [ ] upsert в LanceDB
-- [ ] зберігає JSON файл у `laws/`
-- [ ] додати npm script: `"update-law": "tsx scripts/update-laws.ts"` в root `package.json`
+- [x] приймає URL закону з zakon.rada.gov.ua як аргумент
+- [x] парсить HTML → JSON чанки (використати логіку з `parse-law.ts`)
+- [x] генерує ембеддинги для нових чанків
+- [x] upsert в LanceDB
+- [x] зберігає JSON файл у `laws/`
+- [x] додати npm script: `"update-law": "tsx scripts/update-laws.ts"` в root `package.json`
 
 ### Task 8: Документація та фіналізація
 - [ ] оновити `CLAUDE.md` — нові команди, архітектура з LanceDB
