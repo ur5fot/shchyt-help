@@ -1,0 +1,16 @@
+// Спільні константи серверної частини
+
+// Claude API
+export const МОДЕЛЬ_CLAUDE = 'claude-sonnet-4-20250514';
+export const МАКС_ТОКЕНІВ = 2048;
+
+// Валідація запитів
+export const МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ = 2000;
+
+// Rate limiting
+export const RATE_LIMIT_ВІКНО_МС = 60 * 1000;
+export const RATE_LIMIT_МАКС_ЗАПИТІВ = 20;
+
+// Express
+export const JSON_ЛІМІТ = '10kb';
+export const ПОРТ = 3001;

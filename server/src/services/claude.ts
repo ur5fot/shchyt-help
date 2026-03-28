@@ -1,9 +1,7 @@
 // Обгортка навколо Anthropic SDK для спілкування з Claude
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT } from '../prompts/system.ts';
-
-const MODEL = 'claude-sonnet-4-20250514';
-const MAX_TOKENS = 2048;
+import { МОДЕЛЬ_CLAUDE, МАКС_ТОКЕНІВ } from '../constants.ts';
 
 /**
  * Відправляє промпт до Claude API та повертає текстову відповідь.
@@ -26,8 +24,8 @@ function getClient(): Anthropic {
 export async function askClaude(промпт: string): Promise<string> {
   const client = getClient();
   const відповідь = await client.messages.create({
-    model: MODEL,
-    max_tokens: MAX_TOKENS,
+    model: МОДЕЛЬ_CLAUDE,
+    max_tokens: МАКС_ТОКЕНІВ,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: промпт }],
   });

@@ -4,6 +4,7 @@ import { loadAllLaws } from '../../../laws/index.ts';
 import { searchLaws } from '../services/lawSearch.ts';
 import { buildPrompt } from '../services/promptBuilder.ts';
 import { askClaude } from '../services/claude.ts';
+import { МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ } from '../constants.ts';
 
 const router = Router();
 
@@ -40,8 +41,8 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     return;
   }
 
-  if (message.trim().length > 2000) {
-    res.status(400).json({ error: 'Повідомлення занадто довге (максимум 2000 символів)' });
+  if (message.trim().length > МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ) {
+    res.status(400).json({ error: `Повідомлення занадто довге (максимум ${МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ} символів)` });
     return;
   }
 

@@ -3,6 +3,7 @@ import Message, { type MessageRole } from './Message';
 import Sources from './Sources';
 import DocGenerator from './DocGenerator';
 import { sendMessage, type Source } from '../services/api';
+import { ПІДКАЗКИ } from '../constants';
 
 // Ключові слова, при наявності яких у відповіді пропонуємо рапорт про невиплату
 // Примітка: 'грошове забезпечення' навмисно виключено — занадто широке, спрацьовує на будь-яку відповідь про виплати
@@ -31,15 +32,6 @@ interface ChatProps {
   initialMessage: string;
   onBack: () => void;
 }
-
-const ПІДКАЗКИ = [
-  'Чи маю я право на відпустку під час служби?',
-  'Які виплати належать після поранення?',
-  'Як отримати статус учасника бойових дій?',
-  'Що робити якщо не виплачують грошове забезпечення?',
-  'Чи можна оскаржити наказ командира?',
-  'Які пільги мають члени сімей військовослужбовців?',
-];
 
 export default function Chat({ initialMessage, onBack }: ChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
