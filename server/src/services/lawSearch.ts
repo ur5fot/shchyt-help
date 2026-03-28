@@ -1,4 +1,11 @@
 import type { LawChunk } from '../../../laws/index';
+import { створитиЕмбеддинг } from './embeddings';
+import { пошукПоВектору, type VectorSearchResult } from './vectorStore';
+import {
+  ВАГА_КЛЮЧОВИХ_СЛІВ,
+  ВАГА_ВЕКТОРА,
+  МІНІМАЛЬНА_ГІБРИДНА_ОЦІНКА,
+} from '../constants';
 
 export interface SearchResult {
   chunk: LawChunk;
@@ -160,4 +167,109 @@ export function searchLaws(запит: string, чанки: LawChunk[]): SearchRe
   // Сортуємо за спаданням оцінки та обмежуємо кількість
   результати.sort((а, б) => б.score - а.score);
   return результати.slice(0, МАКС_РЕЗУЛЬТАТІВ);
+}
+
+/**
+ * Нормалізує оцінки keyword пошуку до діапазону [0, 1].
+ * Ділить кожну оцінку на максимальну оцінку в масиві.
+ */
+function нормалізуватиОцінки(результати: SearchResult[]): Map<string, number> {
+  const оцінки = new Map<string, number>();
+  if (результати.length === 0) return оцінки;
+
+  const макс = результати[0].score; // вже відсортовані за спаданням
+  if (макс === 0) return оцінки;
+
+  for (const р of результати) {
+    оцінки.set(р.chunk.id, р.score / макс);
+  }
+  return оцінки;
+}
+
+/**
+ * Конвертує cosine distance від LanceDB у similarity score [0, 1].
+ * LanceDB повертає distance (0 = ідентичні, 2 = протилежні для cosine).
+ */
+function distanceToSimilarity(distance: number): number {
+  return 1 - distance / 2;
+}
+
+/**
+ * Гібридний пошук: keyword (40%) + vector (60%).
+ * Комбінує існуючий keyword пошук з cosine similarity через LanceDB.
+ * Якщо LanceDB недоступна — fallback на keyword-only пошук.
+ */
+export async function hybridSearchLaws(
+  запит: string,
+  чанки: LawChunk[]
+): Promise<SearchResult[]> {
+  // Keyword пошук (без обмеження top-5, щоб мати повний набір для злиття)
+  const keywordРезультати = searchLaws(запит, чанки);
+
+  // Vector пошук
+  let vectorОцінки = new Map<string, number>();
+  let vectorЧанки = new Map<string, VectorSearchResult>();
+
+  try {
+    const queryVector = await створитиЕмбеддинг(запит, 'query');
+    const vectorРезультати = await пошукПоВектору(queryVector, 10);
+
+    // Нормалізуємо vector scores
+    for (const vr of vectorРезультати) {
+      const similarity = distanceToSimilarity(vr._distance);
+      vectorОцінки.set(vr.id, similarity);
+      vectorЧанки.set(vr.id, vr);
+    }
+  } catch {
+    // LanceDB недоступна — повертаємо тільки keyword результати
+    return keywordРезультати;
+  }
+
+  // Нормалізуємо keyword scores
+  const keywordОцінки = нормалізуватиОцінки(keywordРезультати);
+
+  // Збираємо всі унікальні ID
+  const всіІД = new Set([...keywordОцінки.keys(), ...vectorОцінки.keys()]);
+
+  // Індексуємо чанки для швидкого доступу
+  const чанкиМапа = new Map<string, LawChunk>();
+  for (const чанк of чанки) {
+    чанкиМапа.set(чанк.id, чанк);
+  }
+
+  // Комбінуємо оцінки
+  const гібриднеОцінки: SearchResult[] = [];
+
+  for (const id of всіІД) {
+    const kScore = keywordОцінки.get(id) ?? 0;
+    const vScore = vectorОцінки.get(id) ?? 0;
+    const гібриднаОцінка = ВАГА_КЛЮЧОВИХ_СЛІВ * kScore + ВАГА_ВЕКТОРА * vScore;
+
+    if (гібриднаОцінка < МІНІМАЛЬНА_ГІБРИДНА_ОЦІНКА) continue;
+
+    // Знаходимо чанк — спочатку у вхідних чанках, потім з vector результатів
+    let chunk = чанкиМапа.get(id);
+    if (!chunk) {
+      const vr = vectorЧанки.get(id);
+      if (vr) {
+        chunk = {
+          id: vr.id,
+          article: vr.article,
+          part: vr.part,
+          title: vr.title ?? undefined,
+          text: vr.text,
+          keywords: vr.keywords,
+          lawTitle: vr.lawTitle,
+          sourceUrl: vr.sourceUrl,
+        };
+      }
+    }
+
+    if (chunk) {
+      гібриднеОцінки.push({ chunk, score: гібриднаОцінка });
+    }
+  }
+
+  гібриднеОцінки.sort((а, б) => б.score - а.score);
+  return гібриднеОцінки.slice(0, МАКС_РЕЗУЛЬТАТІВ);
 }
