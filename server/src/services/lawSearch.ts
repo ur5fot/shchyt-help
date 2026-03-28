@@ -207,8 +207,8 @@ export async function hybridSearchLaws(
   const keywordРезультати = searchLaws(запит, чанки);
 
   // Vector пошук
-  let vectorОцінки = new Map<string, number>();
-  let vectorЧанки = new Map<string, VectorSearchResult>();
+  const vectorОцінки = new Map<string, number>();
+  const vectorЧанки = new Map<string, VectorSearchResult>();
 
   try {
     const queryVector = await створитиЕмбеддинг(запит, 'query');

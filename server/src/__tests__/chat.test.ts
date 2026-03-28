@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Мокаємо залежності до імпорту застосунку
 vi.mock('../services/lawSearch.ts', () => ({
   searchLaws: vi.fn(),
+  hybridSearchLaws: vi.fn(),
 }));
 
 vi.mock('../services/promptBuilder.ts', () => ({
@@ -18,14 +19,21 @@ vi.mock('../../../laws/index.ts', () => ({
   loadAllLaws: vi.fn().mockReturnValue([]),
 }));
 
+vi.mock('../services/vectorStore.ts', () => ({
+  ініціалізуватиБД: vi.fn().mockResolvedValue({}),
+  чиДоступнаБД: vi.fn().mockResolvedValue(false),
+}));
+
 import request from 'supertest';
 import { createApp } from '../app.ts';
-import { searchLaws } from '../services/lawSearch.ts';
+import { searchLaws, hybridSearchLaws } from '../services/lawSearch.ts';
 import { buildPrompt } from '../services/promptBuilder.ts';
 import { askClaude } from '../services/claude.ts';
 import { ДИСКЛЕЙМЕР } from '../constants.ts';
+import { _встановитиLanceDB } from '../routes/chat.ts';
 
 const mockSearchLaws = vi.mocked(searchLaws);
+const mockHybridSearchLaws = vi.mocked(hybridSearchLaws);
 const mockBuildPrompt = vi.mocked(buildPrompt);
 const mockAskClaude = vi.mocked(askClaude);
 
@@ -35,8 +43,12 @@ describe('POST /api/chat', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    // За замовчуванням LanceDB недоступна — keyword пошук
+    _встановитиLanceDB(false);
+
     // Стандартні відповіді моків
     mockSearchLaws.mockReturnValue([]);
+    mockHybridSearchLaws.mockResolvedValue([]);
     mockBuildPrompt.mockReturnValue('складений промпт');
     mockAskClaude.mockResolvedValue(`Відповідь від Claude ${ДИСКЛЕЙМЕР}`);
   });
@@ -203,6 +215,35 @@ describe('POST /api/chat', () => {
     expect(відповідь.status).toBe(503);
     expect(відповідь.body.error).toContain('API ключ не налаштований');
     expect(відповідь.body.error).toContain('.env');
+  });
+
+  it('використовує hybridSearchLaws коли LanceDB доступна', async () => {
+    _встановитиLanceDB(true);
+    mockHybridSearchLaws.mockResolvedValue([]);
+
+    await request(app)
+      .post('/api/chat')
+      .send({ message: 'відпустка' });
+
+    expect(mockHybridSearchLaws).toHaveBeenCalledWith(
+      'відпустка',
+      expect.any(Array)
+    );
+    expect(mockSearchLaws).not.toHaveBeenCalled();
+  });
+
+  it('використовує searchLaws коли LanceDB недоступна', async () => {
+    _встановитиLanceDB(false);
+
+    await request(app)
+      .post('/api/chat')
+      .send({ message: 'відпустка' });
+
+    expect(mockSearchLaws).toHaveBeenCalledWith(
+      'відпустка',
+      expect.any(Array)
+    );
+    expect(mockHybridSearchLaws).not.toHaveBeenCalled();
   });
 
   it('source без частини має лише назву статті', async () => {

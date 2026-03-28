@@ -71,12 +71,12 @@
 - [x] `npm test` — всі тести проходять
 
 ### Task 6: Інтеграція в `chat.ts`
-- [ ] спробувати ініціалізувати LanceDB при старті (graceful — якщо БД немає, працюємо без)
-- [ ] замінити `searchLaws()` на `hybridSearchLaws()` коли LanceDB доступна
-- [ ] fallback на `searchLaws()` якщо LanceDB не ініціалізована
-- [ ] додати логування: "Гібридний пошук" або "Keyword пошук (LanceDB не доступна)"
-- [ ] `npm test` — всі тести проходять
-- [ ] `npm run lint` — без помилок
+- [x] спробувати ініціалізувати LanceDB при старті (graceful — якщо БД немає, працюємо без)
+- [x] замінити `searchLaws()` на `hybridSearchLaws()` коли LanceDB доступна
+- [x] fallback на `searchLaws()` якщо LanceDB не ініціалізована
+- [x] додати логування: "Гібридний пошук" або "Keyword пошук (LanceDB не доступна)"
+- [x] `npm test` — всі тести проходять
+- [x] `npm run lint` — без помилок
 
 ### Task 7: Скрипт автооновлення законів (`scripts/update-laws.ts`)
 - [ ] приймає URL закону з zakon.rada.gov.ua як аргумент

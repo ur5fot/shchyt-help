@@ -4,6 +4,7 @@ import { describe, it, expect, vi } from 'vitest';
 // Мокаємо залежності
 vi.mock('../services/lawSearch.ts', () => ({
   searchLaws: vi.fn().mockReturnValue([]),
+  hybridSearchLaws: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock('../services/promptBuilder.ts', () => ({
@@ -16,6 +17,11 @@ vi.mock('../services/claude.ts', () => ({
 
 vi.mock('../../../laws/index.ts', () => ({
   loadAllLaws: vi.fn().mockReturnValue([]),
+}));
+
+vi.mock('../services/vectorStore.ts', () => ({
+  ініціалізуватиБД: vi.fn().mockResolvedValue({}),
+  чиДоступнаБД: vi.fn().mockResolvedValue(false),
 }));
 
 import request from 'supertest';

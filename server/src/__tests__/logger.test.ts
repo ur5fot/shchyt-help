@@ -14,6 +14,7 @@ vi.mock('../logger.ts', () => ({
 // Мокаємо залежності chat роуту
 vi.mock('../services/lawSearch.ts', () => ({
   searchLaws: vi.fn(),
+  hybridSearchLaws: vi.fn(),
 }));
 
 vi.mock('../services/promptBuilder.ts', () => ({
@@ -28,12 +29,18 @@ vi.mock('../../../laws/index.ts', () => ({
   loadAllLaws: vi.fn().mockReturnValue([]),
 }));
 
+vi.mock('../services/vectorStore.ts', () => ({
+  ініціалізуватиБД: vi.fn().mockResolvedValue({}),
+  чиДоступнаБД: vi.fn().mockResolvedValue(false),
+}));
+
 import request from 'supertest';
 import { createApp } from '../app.ts';
 import { logger } from '../logger.ts';
 import { searchLaws } from '../services/lawSearch.ts';
 import { buildPrompt } from '../services/promptBuilder.ts';
 import { askClaude } from '../services/claude.ts';
+import { _встановитиLanceDB } from '../routes/chat.ts';
 
 const mockSearchLaws = vi.mocked(searchLaws);
 const mockBuildPrompt = vi.mocked(buildPrompt);
@@ -45,6 +52,7 @@ describe('Структуроване логування', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    _встановитиLanceDB(false);
     mockSearchLaws.mockReturnValue([]);
     mockBuildPrompt.mockReturnValue('промпт');
     mockAskClaude.mockResolvedValue('Відповідь ⚠️ дисклеймер');

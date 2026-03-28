@@ -161,6 +161,19 @@ export async function оновитиЧанки(
 }
 
 /**
+ * Перевіряє чи LanceDB таблиця доступна для пошуку.
+ * Повертає true якщо БД підключена і таблиця існує.
+ */
+export async function чиДоступнаБД(): Promise<boolean> {
+  try {
+    const табл = await відкритиТаблицю();
+    return табл !== null;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Скидає singleton (для тестів).
  */
 export function _скинутиЗєднання(): void {

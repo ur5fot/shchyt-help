@@ -1,9 +1,10 @@
 // Роут POST /api/chat — основний ендпоінт чат-асистента
 import { Router, type Request, type Response } from 'express';
 import { loadAllLaws } from '../../../laws/index.ts';
-import { searchLaws } from '../services/lawSearch.ts';
+import { searchLaws, hybridSearchLaws } from '../services/lawSearch.ts';
 import { buildPrompt } from '../services/promptBuilder.ts';
 import { askClaude, summarizeHistory, type HistoryMessage } from '../services/claude.ts';
+import { ініціалізуватиБД, чиДоступнаБД } from '../services/vectorStore.ts';
 import { МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ, МАКС_ПОВІДОМЛЕНЬ_БЕЗ_СТИСНЕННЯ, ДИСКЛЕЙМЕР } from '../constants.ts';
 import { logger } from '../logger.ts';
 
@@ -18,6 +19,27 @@ try {
   logger.fatal({ помилка: e }, 'Не вдалося завантажити базу законів');
   throw e; // зупиняємо сервер — без бази законів відповіді будуть порожніми
 }
+
+// Спроба ініціалізації LanceDB — graceful, без неї працюємо з keyword пошуком
+let lanceDBДоступна = false;
+
+async function ініціалізуватиВекторнийПошук(): Promise<void> {
+  try {
+    await ініціалізуватиБД();
+    lanceDBДоступна = await чиДоступнаБД();
+    if (lanceDBДоступна) {
+      logger.info('LanceDB ініціалізована — гібридний пошук активний');
+    } else {
+      logger.warn('LanceDB таблиця не знайдена — використовується keyword пошук. Запустіть: npm run init-vector-db');
+    }
+  } catch (e) {
+    logger.warn({ помилка: e }, 'LanceDB недоступна — використовується keyword пошук');
+    lanceDBДоступна = false;
+  }
+}
+
+// Запускаємо ініціалізацію асинхронно (не блокуємо старт сервера)
+ініціалізуватиВекторнийПошук();
 
 interface ChatRequest {
   message?: string;
@@ -77,7 +99,14 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
 
   try {
     // Знаходимо релевантні чанки законів
-    const результатиПошуку = searchLaws(trimmed, всіЧанки);
+    let результатиПошуку;
+    if (lanceDBДоступна) {
+      logger.info('Гібридний пошук');
+      результатиПошуку = await hybridSearchLaws(trimmed, всіЧанки);
+    } else {
+      logger.info('Keyword пошук (LanceDB не доступна)');
+      результатиПошуку = searchLaws(trimmed, всіЧанки);
+    }
     const чанки = результатиПошуку.map(р => р.chunk);
 
     logger.info({ кількістьЧанків: чанки.length, довжинаЗапиту: trimmed.length }, 'Пошук законів завершено');
@@ -155,5 +184,12 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     res.status(500).json({ error: 'Внутрішня помилка сервера' });
   }
 });
+
+/**
+ * Встановлює доступність LanceDB (для тестів).
+ */
+export function _встановитиLanceDB(доступна: boolean): void {
+  lanceDBДоступна = доступна;
+}
 
 export default router;
