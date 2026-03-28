@@ -376,7 +376,7 @@ describe('hybridSearchLaws — гібридний пошук', () => {
         keywords: ['медицина', 'лікування', 'госпіталь'],
         lawTitle: 'Закон про соцзахист',
         sourceUrl: 'https://zakon.rada.gov.ua/laws/show/2011-12',
-        _distance: 0.2, // similarity = 1 - 0.2/2 = 0.9
+        _distance: 0.2, // similarity = 1 - 0.2 = 0.8
       },
       {
         id: 'test-st1-ch1',
@@ -387,7 +387,7 @@ describe('hybridSearchLaws — гібридний пошук', () => {
         keywords: ['грошове забезпечення', 'виплати', 'оклад'],
         lawTitle: 'Закон про соцзахист',
         sourceUrl: 'https://zakon.rada.gov.ua/laws/show/2011-12',
-        _distance: 0.8, // similarity = 1 - 0.8/2 = 0.6
+        _distance: 0.8, // similarity = 1 - 0.8 = 0.2
       },
     ]);
 
@@ -398,12 +398,12 @@ describe('hybridSearchLaws — гібридний пошук', () => {
     expect(медичний).toBeDefined();
     // Гібридна оцінка = 0.4 * keywordNorm + 0.6 * vectorSimilarity
     // Медичний чанк має і keyword, і vector — оцінка має включати обидві складові
-    // Vector складова: 0.6 * 0.9 = 0.54
+    // Vector складова: 0.6 * 0.8 = 0.48
     // Keyword складова: 0.4 * 1.0 = 0.4 (він найвищий за keyword, тому нормалізований = 1.0)
-    // Мінімум: більше ніж тільки vector (0.54) або тільки keyword (0.4)
-    expect(медичний!.score).toBeGreaterThan(0.54);
+    // Мінімум: більше ніж тільки vector (0.48) або тільки keyword (0.4)
+    expect(медичний!.score).toBeGreaterThan(0.48);
 
-    // test-st1-ch1 має тільки vector оцінку (0.6 * 0.6 = 0.36) — нижчу за медичний
+    // test-st1-ch1 має тільки vector оцінку (0.6 * 0.2 = 0.12) — нижчу за медичний
     const грошовий = результати.find(r => r.chunk.id === 'test-st1-ch1');
     if (грошовий) {
       expect(медичний!.score).toBeGreaterThan(грошовий.score);
@@ -435,7 +435,7 @@ describe('hybridSearchLaws — гібридний пошук', () => {
         keywords: ['відпустка', 'щорічна відпустка', 'відпочинок'],
         lawTitle: 'Закон про соцзахист',
         sourceUrl: 'https://zakon.rada.gov.ua/laws/show/2011-12',
-        _distance: 0.1, // similarity = 0.95
+        _distance: 0.1, // similarity = 0.9
       },
     ]);
 
@@ -460,14 +460,14 @@ describe('hybridSearchLaws — гібридний пошук', () => {
         keywords: ['пільги', 'ветеран'],
         lawTitle: 'Закон про ветеранів',
         sourceUrl: 'https://zakon.rada.gov.ua/laws/show/3551-12',
-        _distance: 1.8, // similarity = 0.1 — дуже низька
+        _distance: 1.8, // similarity = max(0, 1 - 1.8) = 0 — за межами
       },
     ]);
 
     // Запит без keyword збігів і з низьким vector score
     const результати = await hybridSearchLaws('космічна програма', тестовіЧанки);
 
-    // Жоден результат не має пройти мінімальний поріг (0.6 * 0.1 = 0.06 < 0.15)
+    // Жоден результат не має пройти мінімальний поріг (0.6 * 0 = 0 < 0.15)
     const пільговий = результати.find(r => r.chunk.id === 'test-st4-ch1');
     expect(пільговий).toBeUndefined();
   });

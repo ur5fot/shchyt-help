@@ -189,10 +189,10 @@ function нормалізуватиОцінки(результати: SearchResu
 
 /**
  * Конвертує cosine distance від LanceDB у similarity score [0, 1].
- * LanceDB повертає distance (0 = ідентичні, 2 = протилежні для cosine).
+ * LanceDB cosine distance = 1 - cosine_similarity, діапазон [0, 2].
  */
 function distanceToSimilarity(distance: number): number {
-  return 1 - distance / 2;
+  return Math.max(0, 1 - distance);
 }
 
 /**
