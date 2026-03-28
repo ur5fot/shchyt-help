@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l /Users/dim/code/shchyt_help/server/src/__tests__/*.test.ts)",
+      "Bash(wc -l /Users/dim/code/shchyt_help/client/src/**/*.test.tsx)",
+      "Bash(git -C /Users/dim/code/shchyt_help log --oneline -20)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}
