@@ -45,17 +45,17 @@
 - [x] Перевірити що всі expectedChunk ID реально існують у базі
 
 ### Task 2: Створити eval скрипт (`scripts/eval.ts`)
-- [ ] Завантажити golden set з `eval/golden-set.json`
-- [ ] Для кожного питання:
+- [x] Завантажити golden set з `eval/golden-set.json`
+- [x] Для кожного питання:
   - Запустити `searchLaws()` (keyword) — перевірити чи expectedChunks є в результатах
   - Запустити `hybridSearchLaws()` (якщо LanceDB доступна) — те саме
   - Записати retrieval recall: % питань де правильний чанк знайдено в top-8
-- [ ] Вивести підсумкову таблицю:
+- [x] Вивести підсумкову таблицю:
   - Overall recall (keyword / hybrid)
   - Recall по категоріях
   - Список питань де пошук не знайшов правильну статтю
-- [ ] Додати npm script: `"eval": "tsx scripts/eval.ts"` в root package.json
-- [ ] Запустити `npm run eval` — перевірити що працює
+- [x] Додати npm script: `"eval": "tsx scripts/eval.ts"` в root package.json
+- [x] Запустити `npm run eval` — перевірити що працює
 
 ### Task 3: Додати eval через Claude API (end-to-end)
 - [ ] Розширити eval скрипт: для кожного питання також відправити запит до Claude API (через `askClaude`)

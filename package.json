@@ -14,7 +14,8 @@
     "format": "prettier --write 'client/src/**/*.{ts,tsx}' 'server/src/**/*.ts'",
     "install:all": "npm install",
     "init-vector-db": "tsx scripts/init-vector-db.ts",
-    "update-law": "tsx scripts/update-laws.ts"
+    "update-law": "tsx scripts/update-laws.ts",
+    "eval": "tsx scripts/eval.ts"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
