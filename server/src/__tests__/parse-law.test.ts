@@ -403,3 +403,61 @@ describe('parseLaw', () => {
       .rejects.toThrow('Network error');
   });
 });
+
+describe('stripEditorialNotes (інлайн)', () => {
+  it('видаляє інлайн редакційну примітку з тексту', () => {
+    const html = `<html><body>
+      <h1>Тест</h1>
+      <p>Стаття 1. Тестова стаття</p>
+      <p>1. Текст статті {Статтю виключено на підставі Закону} продовження тексту.</p>
+    </body></html>`;
+    const result = parseLawHtml(html, 'https://test.ua', 'Тест');
+    const chunk = result.chunks[0];
+    expect(chunk).toBeDefined();
+    expect(chunk.text).not.toContain('{');
+    expect(chunk.text).toContain('продовження тексту');
+  });
+
+  it('видаляє кілька інлайн приміток', () => {
+    const html = `<html><body>
+      <h1>Тест</h1>
+      <p>Стаття 1. Тестова стаття</p>
+      <p>1. Перша {примітка один} середина {примітка два} кінець тексту.</p>
+    </body></html>`;
+    const result = parseLawHtml(html, 'https://test.ua', 'Тест');
+    const chunk = result.chunks[0];
+    expect(chunk).toBeDefined();
+    expect(chunk.text).not.toContain('{');
+    expect(chunk.text).toContain('Перша');
+    expect(chunk.text).toContain('кінець');
+  });
+});
+
+describe('splitLargeChunks', () => {
+  it('розбиває великий чанк по підпунктах', () => {
+    // Створюємо HTML з однією великою статтею з підпунктами 1) 2) 3)...
+    const longItems = Array.from({ length: 30 }, (_, i) =>
+      `${i + 1}) Підпункт номер ${i + 1} з достатньо довгим текстом щоб набрати потрібну кількість символів для розбивки.`
+    ).join(' ');
+    const html = `<html><body>
+      <h1>Тест</h1>
+      <p>Стаття 1. Велика стаття</p>
+      <p>1. ${longItems}</p>
+    </body></html>`;
+    const result = parseLawHtml(html, 'https://test.ua', 'Тест');
+    expect(result.chunks.length).toBeGreaterThan(1);
+    const splitChunks = result.chunks.filter(c => c.id.includes('-p'));
+    expect(splitChunks.length).toBeGreaterThan(0);
+  });
+
+  it('не розбиває маленький чанк', () => {
+    const html = `<html><body>
+      <h1>Тест</h1>
+      <p>Стаття 1. Коротка стаття</p>
+      <p>1. Короткий текст статті про військову службу в Україні.</p>
+    </body></html>`;
+    const result = parseLawHtml(html, 'https://test.ua', 'Тест');
+    expect(result.chunks.length).toBe(1);
+    expect(result.chunks[0].id).not.toContain('-p');
+  });
+});

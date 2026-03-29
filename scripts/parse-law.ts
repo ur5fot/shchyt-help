@@ -80,6 +80,12 @@ function isEditorialNote(text: string): boolean {
   return /^\{.*\}$/.test(text.trim());
 }
 
+// Видаляє інлайн редакційні примітки {…} з тексту
+// Не підтримує вкладені дужки (на zakon.rada.gov.ua не зустрічаються)
+function stripEditorialNotes(text: string): string {
+  return text.replace(/\{[^}]*\}/g, '').replace(/\s+/g, ' ').trim();
+}
+
 // Генерує baseId з short_title
 function makeBaseId(shortTitle: string): string {
   return shortTitle
@@ -119,13 +125,16 @@ function parseArticleBased(paragraphs: string[], baseId: string): LawChunkRaw[] 
     const articleTag = isPseudoArticle ? 'pp' : `st${currentArticleNum.replace(/[^0-9-]/g, '')}`;
     const id = `${baseId}-${articleTag}${partSuffix}`;
 
+    const cleanText = stripEditorialNotes(text);
+    if (!cleanText) return;
+
     chunks.push({
       id,
       article: isPseudoArticle ? currentArticleTitle : `Стаття ${currentArticleNum}`,
       part: partNum > 0 ? `Частина ${partNum}` : '',
       ...(currentArticleTitle ? { title: currentArticleTitle } : {}),
-      text,
-      keywords: extractKeywords(text),
+      text: cleanText,
+      keywords: extractKeywords(cleanText),
     });
 
     partBuffer = [];
@@ -205,12 +214,15 @@ function parsePunktBased(paragraphs: string[], baseId: string): LawChunkRaw[] {
     const sectionSuffix = currentSection ? `-r${currentSection.replace(/[^IVXLC0-9]/g, '')}` : '';
     const id = `${baseId}-${currentIdPrefix}${sectionSuffix}-ch0`;
 
+    const cleanText = stripEditorialNotes(text);
+    if (!cleanText) return;
+
     chunks.push({
       id,
       article: currentArticleLabel,
       part: currentSection ? `Розділ ${currentSection}` : '',
-      text,
-      keywords: extractKeywords(text),
+      text: cleanText,
+      keywords: extractKeywords(cleanText),
     });
 
     partBuffer = [];
@@ -260,7 +272,7 @@ function parsePunktBased(paragraphs: string[], baseId: string): LawChunkRaw[] {
 function splitEmbeddedStattyaChunks(chunks: LawChunkRaw[], baseId: string): LawChunkRaw[] {
   const STATTYA_NUM_RE = /^(\d+)\s+Стаття\s+\d+\s+(.*)/s;
   const SPLIT_RE = /\b\d+\s+Стаття\s+\d+\s+/;
-  const SIZE_THRESHOLD = 2000;
+  const SIZE_THRESHOLD = МАКС_РОЗМІР_ЧАНКА;
 
   const result: LawChunkRaw[] = [];
   for (const chunk of chunks) {
@@ -302,7 +314,7 @@ function splitEmbeddedStattyaChunks(chunks: LawChunkRaw[], baseId: string): LawC
     }
 
     // Текст до першої статті — залишається як оригінальний чанк
-    const prefixText = chunk.text.slice(0, boundaries[0]).trim();
+    const prefixText = stripEditorialNotes(chunk.text.slice(0, boundaries[0]).trim());
     if (prefixText.length >= 10) {
       result.push({
         ...chunk,
@@ -315,7 +327,7 @@ function splitEmbeddedStattyaChunks(chunks: LawChunkRaw[], baseId: string): LawC
     for (let i = 0; i < boundaries.length; i++) {
       const start = boundaries[i];
       const end = i + 1 < boundaries.length ? boundaries[i + 1] : chunk.text.length;
-      const segmentText = chunk.text.slice(start, end).trim();
+      const segmentText = stripEditorialNotes(chunk.text.slice(start, end).trim());
 
       const sm = STATTYA_NUM_RE.exec(segmentText);
       if (sm && segmentText.length >= 10) {
@@ -337,6 +349,61 @@ function splitEmbeddedStattyaChunks(chunks: LawChunkRaw[], baseId: string): LawC
       }
     }
   }
+  return result;
+}
+
+// Максимальний розмір чанка — більші розбиваються по підпунктах
+const МАКС_РОЗМІР_ЧАНКА = 2000;
+
+// Розбиває великі чанки по підпунктах (1), 2), 3) або 1., 2., 3.)
+function splitLargeChunks(chunks: LawChunkRaw[]): LawChunkRaw[] {
+  const result: LawChunkRaw[] = [];
+
+  for (const chunk of chunks) {
+    if (chunk.text.length <= МАКС_РОЗМІР_ЧАНКА) {
+      result.push(chunk);
+      continue;
+    }
+
+    // Шукаємо підпункти: "1) ...", "2) ..." або "21.1. ..."
+    const subItemRe = /\s(\d+\.\d+\.|\d+\)\s)/g;
+    const boundaries: number[] = [];
+    let m;
+    while ((m = subItemRe.exec(chunk.text)) !== null) {
+      boundaries.push(m.index + 1); // +1 щоб пропустити пробіл перед номером
+    }
+
+    // Якщо немає підпунктів або лише один — залишаємо як є
+    if (boundaries.length <= 1) {
+      result.push(chunk);
+      continue;
+    }
+
+    // Текст до першого підпункту (преамбула)
+    const preamble = chunk.text.slice(0, boundaries[0]).trim();
+
+    for (let i = 0; i < boundaries.length; i++) {
+      const start = boundaries[i];
+      const end = i + 1 < boundaries.length ? boundaries[i + 1] : chunk.text.length;
+      let segmentText = chunk.text.slice(start, end).trim();
+
+      // Додаємо преамбулу до першого підпункту для контексту
+      if (i === 0 && preamble) {
+        segmentText = preamble + ' ' + segmentText;
+      }
+
+      if (segmentText.length < 10) continue;
+
+      result.push({
+        ...chunk,
+        id: `${chunk.id}-p${i + 1}`,
+        part: chunk.part ? `${chunk.part}, п.${i + 1}` : `п.${i + 1}`,
+        text: segmentText,
+        keywords: extractKeywords(segmentText),
+      });
+    }
+  }
+
   return result;
 }
 
@@ -366,6 +433,9 @@ export function parseLawHtml(html: string, sourceUrl: string, shortTitle: string
 
   // Розбиваємо великі чанки з вбудованими табличними статтями
   chunks = splitEmbeddedStattyaChunks(chunks, baseId);
+
+  // Розбиваємо великі чанки по підпунктах
+  chunks = splitLargeChunks(chunks);
 
   // Дедуплікація ID (постанови з додатками мають однакові номери пунктів)
   const idCounts: Record<string, number> = {};
