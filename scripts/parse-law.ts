@@ -198,7 +198,7 @@ function parsePunktBased(paragraphs: string[], baseId: string): LawChunkRaw[] {
       return;
     }
 
-    const sectionSuffix = currentSection ? `-r${currentSection.replace(/[^IVX0-9]/g, '')}` : '';
+    const sectionSuffix = currentSection ? `-r${currentSection.replace(/[^IVXLC0-9]/g, '')}` : '';
     const id = `${baseId}-p${currentPunktNum.replace(/[^0-9-]/g, '')}${sectionSuffix}-ch0`;
 
     chunks.push({
