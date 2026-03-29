@@ -13,12 +13,7 @@ interface ChatMessage {
   suggestedTemplate?: string | null;
 }
 
-interface ChatProps {
-  initialMessage: string;
-  onBack: () => void;
-}
-
-export default function Chat({ initialMessage, onBack }: ChatProps) {
+export default function Chat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,14 +22,6 @@ export default function Chat({ initialMessage, onBack }: ChatProps) {
   const [summary, setSummary] = useState<string | null>(null);
   const [summarizedUpTo, setSummarizedUpTo] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const initialSent = useRef(false);
-
-  useEffect(() => {
-    if (initialMessage && !initialSent.current) {
-      initialSent.current = true;
-      void handleSend(initialMessage);
-    }
-  }, [initialMessage]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -101,14 +88,8 @@ export default function Chat({ initialMessage, onBack }: ChatProps) {
   return (
     <div className="flex flex-col h-screen max-w-2xl mx-auto">
       <header className="flex items-center gap-3 px-4 py-3 border-b border-gray-800">
-        <button
-          onClick={onBack}
-          className="text-gray-400 hover:text-gray-200 transition-colors"
-          aria-label="Назад"
-        >
-          ← Назад
-        </button>
         <span className="font-semibold text-gray-100">Shchyt ⚖️</span>
+        <span className="text-gray-500 text-sm">AI-асистент з прав військовослужбовців</span>
       </header>
 
       <div className="flex-1 overflow-y-auto px-4 py-4">
