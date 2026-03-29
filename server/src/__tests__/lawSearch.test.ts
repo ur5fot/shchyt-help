@@ -4,8 +4,9 @@ import type { LawChunk } from '../../../laws/index';
 import { створитиЕмбеддинг } from '../services/embeddings';
 import { пошукПоВектору } from '../services/vectorStore';
 import { rerank } from '../services/reranker';
+import { generateHypothesis } from '../services/hyde';
 
-// Мокаємо модулі embeddings, vectorStore, reranker та logger
+// Мокаємо модулі embeddings, vectorStore, reranker, hyde та logger
 vi.mock('../services/embeddings', () => ({
   створитиЕмбеддинг: vi.fn(),
 }));
@@ -18,13 +19,18 @@ vi.mock('../services/reranker', () => ({
   rerank: vi.fn(),
 }));
 
+vi.mock('../services/hyde', () => ({
+  generateHypothesis: vi.fn(),
+}));
+
 vi.mock('../logger', () => ({
-  logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
+  logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
 const mockСтворитиЕмбеддинг = vi.mocked(створитиЕмбеддинг);
 const mockПошукПоВектору = vi.mocked(пошукПоВектору);
 const mockRerank = vi.mocked(rerank);
+const mockGenerateHypothesis = vi.mocked(generateHypothesis);
 
 // Тестові дані — набір чанків для ізольованого тестування
 const тестовіЧанки: LawChunk[] = [
@@ -748,5 +754,145 @@ describe('hybridSearchLaws — re-ranking інтеграція', () => {
 
     const результати = await hybridSearchLaws('тест', багатоЧанків);
     expect(результати.length).toBeLessThanOrEqual(8);
+  });
+});
+
+describe('hybridSearchLaws — HyDE інтеграція', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRerank.mockImplementation(async (_запит, документи, topK = 8) => {
+      return документи.slice(0, topK).map((д, і) => ({
+        id: д.id,
+        score: документи.length - і,
+      }));
+    });
+  });
+
+  it('HyDE додає нові vector кандидати до результатів', async () => {
+    // Оригінальний vector пошук знаходить чанк 1
+    mockСтворитиЕмбеддинг.mockResolvedValue(new Array(384).fill(0.1));
+    let vectorCallCount = 0;
+    mockПошукПоВектору.mockImplementation(async () => {
+      vectorCallCount++;
+      if (vectorCallCount === 1) {
+        // Оригінальний пошук — знаходить чанк 1
+        return [{
+          id: 'test-st1-ch1',
+          article: 'Стаття 1', part: 'Частина 1', title: 'Грошове забезпечення',
+          text: 'Військовослужбовці мають право на грошове забезпечення та виплати.',
+          keywords: ['грошове забезпечення', 'виплати', 'оклад'],
+          lawTitle: 'Закон про соцзахист',
+          sourceUrl: 'https://zakon.rada.gov.ua/laws/show/2011-12',
+          _distance: 0.3,
+        }];
+      }
+      // HyDE пошук — знаходить чанк 3 (новий кандидат)
+      return [{
+        id: 'test-st3-ch1',
+        article: 'Стаття 3', part: 'Частина 1', title: 'Медичне забезпечення',
+        text: 'Медична допомога надається безоплатно у військових госпіталях.',
+        keywords: ['медицина', 'лікування', 'госпіталь'],
+        lawTitle: 'Закон про соцзахист',
+        sourceUrl: 'https://zakon.rada.gov.ua/laws/show/2011-12',
+        _distance: 0.2,
+      }];
+    });
+
+    // HyDE генерує hypothesis
+    mockGenerateHypothesis.mockResolvedValue(
+      'Відповідно до статті 9 Закону про соцзахист, грошове забезпечення включає посадовий оклад.'
+    );
+
+    const результати = await hybridSearchLaws('скільки платять солдату', тестовіЧанки);
+
+    // generateHypothesis має бути викликано
+    expect(mockGenerateHypothesis).toHaveBeenCalledWith('скільки платять солдату');
+    // Має бути 2 виклики пошукПоВектору (оригінальний + HyDE)
+    expect(mockПошукПоВектору).toHaveBeenCalledTimes(2);
+    // Має бути 2 виклики створитиЕмбеддинг (оригінальний запит + hypothesis)
+    expect(mockСтворитиЕмбеддинг).toHaveBeenCalledTimes(2);
+  });
+
+  it('HyDE зберігає кращу оцінку при дублікатах', async () => {
+    mockСтворитиЕмбеддинг.mockResolvedValue(new Array(384).fill(0.1));
+    let vectorCallCount = 0;
+    mockПошукПоВектору.mockImplementation(async () => {
+      vectorCallCount++;
+      if (vectorCallCount === 1) {
+        return [{
+          id: 'test-st1-ch1',
+          article: 'Стаття 1', part: 'Частина 1', title: 'Грошове забезпечення',
+          text: 'Військовослужбовці мають право на грошове забезпечення та виплати.',
+          keywords: ['грошове забезпечення', 'виплати', 'оклад'],
+          lawTitle: 'Закон про соцзахист',
+          sourceUrl: 'https://zakon.rada.gov.ua/laws/show/2011-12',
+          _distance: 0.5, // similarity = 0.5
+        }];
+      }
+      // HyDE знаходить той самий чанк з кращою оцінкою
+      return [{
+        id: 'test-st1-ch1',
+        article: 'Стаття 1', part: 'Частина 1', title: 'Грошове забезпечення',
+        text: 'Військовослужбовці мають право на грошове забезпечення та виплати.',
+        keywords: ['грошове забезпечення', 'виплати', 'оклад'],
+        lawTitle: 'Закон про соцзахист',
+        sourceUrl: 'https://zakon.rada.gov.ua/laws/show/2011-12',
+        _distance: 0.1, // similarity = 0.9 — краща
+        }];
+    });
+
+    mockGenerateHypothesis.mockResolvedValue('Грошове забезпечення визначається статтею 9.');
+
+    const результати = await hybridSearchLaws('зарплата військового', тестовіЧанки);
+
+    expect(результати.length).toBeGreaterThan(0);
+    // Результат має використовувати кращу оцінку від HyDE
+    const грошовий = результати.find(r => r.chunk.id === 'test-st1-ch1');
+    expect(грошовий).toBeDefined();
+  });
+
+  it('HyDE graceful fallback — hypothesis null не ламає пошук', async () => {
+    mockСтворитиЕмбеддинг.mockResolvedValue(new Array(384).fill(0.1));
+    mockПошукПоВектору.mockResolvedValue([{
+      id: 'test-st2-ch1',
+      article: 'Стаття 2', part: 'Частина 1', title: 'Відпустки',
+      text: 'Військовослужбовці мають право на щорічну відпустку тривалістю 30 днів.',
+      keywords: ['відпустка', 'щорічна відпустка', 'відпочинок'],
+      lawTitle: 'Закон про соцзахист',
+      sourceUrl: 'https://zakon.rada.gov.ua/laws/show/2011-12',
+      _distance: 0.3,
+    }]);
+
+    // HyDE повертає null (запит занадто короткий або API помилка)
+    mockGenerateHypothesis.mockResolvedValue(null);
+
+    const результати = await hybridSearchLaws('відпустка', тестовіЧанки);
+
+    expect(результати.length).toBeGreaterThan(0);
+    // Тільки 1 виклик vector пошуку (HyDE пропущено)
+    expect(mockПошукПоВектору).toHaveBeenCalledTimes(1);
+  });
+
+  it('HyDE graceful fallback — помилка hypothesis не ламає пошук', async () => {
+    mockСтворитиЕмбеддинг.mockResolvedValue(new Array(384).fill(0.1));
+    mockПошукПоВектору.mockResolvedValue([{
+      id: 'test-st2-ch1',
+      article: 'Стаття 2', part: 'Частина 1', title: 'Відпустки',
+      text: 'Військовослужбовці мають право на щорічну відпустку тривалістю 30 днів.',
+      keywords: ['відпустка', 'щорічна відпустка', 'відпочинок'],
+      lawTitle: 'Закон про соцзахист',
+      sourceUrl: 'https://zakon.rada.gov.ua/laws/show/2011-12',
+      _distance: 0.3,
+    }]);
+
+    // HyDE кидає помилку
+    mockGenerateHypothesis.mockRejectedValue(new Error('API timeout'));
+
+    const результати = await hybridSearchLaws('відпустка', тестовіЧанки);
+
+    // Пошук все одно працює
+    expect(результати.length).toBeGreaterThan(0);
+    const відпустковий = результати.find(r => r.chunk.id === 'test-st2-ch1');
+    expect(відпустковий).toBeDefined();
   });
 });

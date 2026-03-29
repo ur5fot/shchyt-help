@@ -24,6 +24,9 @@ export const ВАГА_КЛЮЧОВИХ_СЛІВ = 0.4;
 export const ВАГА_ВЕКТОРА = 0.6;
 export const МІНІМАЛЬНА_ГІБРИДНА_ОЦІНКА = 0.15;
 
+// HyDE (Hypothetical Document Embeddings)
+export const HYDE_УВІМКНЕНИЙ = true;
+
 // Express
 export const JSON_ЛІМІТ = '10kb';
 export const ПОРТ = 3001;

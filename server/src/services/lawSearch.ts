@@ -6,7 +6,9 @@ import {
   ВАГА_КЛЮЧОВИХ_СЛІВ,
   ВАГА_ВЕКТОРА,
   МІНІМАЛЬНА_ГІБРИДНА_ОЦІНКА,
+  HYDE_УВІМКНЕНИЙ,
 } from '../constants';
+import { generateHypothesis } from './hyde';
 import { logger } from '../logger';
 
 export interface SearchResult {
@@ -311,6 +313,35 @@ export async function hybridSearchLaws(
       const similarity = distanceToSimilarity(vr._distance);
       vectorОцінки.set(vr.id, similarity);
       vectorЧанки.set(vr.id, vr);
+    }
+
+    // HyDE: додатковий vector пошук по гіпотетичній відповіді
+    if (HYDE_УВІМКНЕНИЙ) {
+      try {
+        const hypothesis = await generateHypothesis(запит);
+        if (hypothesis) {
+          const hydeVector = await створитиЕмбеддинг(hypothesis, 'query');
+          const hydeРезультати = await пошукПоВектору(hydeVector, КАНДИДАТІВ_ДЛЯ_RERANKING);
+
+          for (const vr of hydeРезультати) {
+            const similarity = distanceToSimilarity(vr._distance);
+            // Зберігаємо кращу оцінку з оригінального та HyDE пошуку
+            const існуюча = vectorОцінки.get(vr.id) ?? 0;
+            if (similarity > існуюча) {
+              vectorОцінки.set(vr.id, similarity);
+              vectorЧанки.set(vr.id, vr);
+            }
+          }
+
+          logger.info(
+            { hydeРезультатів: hydeРезультати.length },
+            'HyDE: додано %d vector кандидатів',
+            hydeРезультати.length
+          );
+        }
+      } catch (помилка) {
+        logger.warn({ помилка }, 'HyDE: помилка, продовжуємо без hypothesis');
+      }
     }
   } catch (помилка) {
     logger.warn({ помилка }, 'Vector пошук недоступний — fallback на keyword-only');
