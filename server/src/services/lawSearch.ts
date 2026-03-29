@@ -1,6 +1,7 @@
 import type { LawChunk } from '../../../laws/index';
 import { створитиЕмбеддинг } from './embeddings';
 import { пошукПоВектору, type VectorSearchResult } from './vectorStore';
+import { rerank } from './reranker';
 import {
   ВАГА_КЛЮЧОВИХ_СЛІВ,
   ВАГА_ВЕКТОРА,
@@ -27,6 +28,9 @@ const МІНІМАЛЬНА_ОЦІНКА = 3;
 
 // Максимальна кількість результатів
 const МАКС_РЕЗУЛЬТАТІВ = 8;
+
+// Кількість кандидатів для re-ranking (збільшена відносно МАКС_РЕЗУЛЬТАТІВ)
+const КАНДИДАТІВ_ДЛЯ_RERANKING = 20;
 
 // Типові українські закінчення для базової нормалізації слів
 // Сортовані за довжиною (від довших до коротших) — щоб "ування" видалялось раніше за "ння"
@@ -249,13 +253,13 @@ export async function hybridSearchLaws(
   // Keyword пошук без обмеження top-5, щоб мати повний набір для злиття
   const keywordРезультати = searchLaws(запит, чанки, Infinity);
 
-  // Vector пошук
+  // Vector пошук — збільшуємо до 20 кандидатів для re-ranking
   const vectorОцінки = new Map<string, number>();
   const vectorЧанки = new Map<string, VectorSearchResult>();
 
   try {
     const queryVector = await створитиЕмбеддинг(запит, 'query');
-    const vectorРезультати = await пошукПоВектору(queryVector, 10);
+    const vectorРезультати = await пошукПоВектору(queryVector, КАНДИДАТІВ_ДЛЯ_RERANKING);
 
     // Нормалізуємо vector scores
     for (const vr of vectorРезультати) {
@@ -314,5 +318,42 @@ export async function hybridSearchLaws(
   }
 
   гібриднеОцінки.sort((а, б) => б.score - а.score);
-  return гібриднеОцінки.slice(0, МАКС_РЕЗУЛЬТАТІВ);
+
+  // Обрізаємо до top-N кандидатів перед re-ranking
+  const кандидати = гібриднеОцінки.slice(0, КАНДИДАТІВ_ДЛЯ_RERANKING);
+
+  if (кандидати.length === 0) {
+    return [];
+  }
+
+  // Re-ranking через cross-encoder
+  try {
+    const документиДляRerank = кандидати.map(р => ({
+      id: р.chunk.id,
+      text: р.chunk.text,
+    }));
+
+    const rerankРезультати = await rerank(запит, документиДляRerank, МАКС_РЕЗУЛЬТАТІВ);
+
+    logger.info(
+      { кандидатів: кандидати.length, результатів: rerankРезультати.length },
+      'Re-ranking: %d кандидатів → %d результатів',
+      кандидати.length,
+      rerankРезультати.length
+    );
+
+    // Створюємо мапу чанків за id для швидкого доступу
+    const кандидатиМапа = new Map(кандидати.map(р => [р.chunk.id, р]));
+
+    return rerankРезультати
+      .map(rr => {
+        const кандидат = кандидатиМапа.get(rr.id);
+        if (!кандидат) return null;
+        return { chunk: кандидат.chunk, score: rr.score };
+      })
+      .filter((р): р is SearchResult => р !== null);
+  } catch (помилка) {
+    logger.warn({ помилка }, 'Re-ranking недоступний — повертаємо гібридні результати');
+    return кандидати.slice(0, МАКС_РЕЗУЛЬТАТІВ);
+  }
 }

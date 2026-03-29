@@ -28,13 +28,13 @@
 - [x] `npm test` — всі тести проходять
 
 ### Task 2: Інтегрувати re-ranking в hybridSearchLaws
-- [ ] В `server/src/services/lawSearch.ts` — після гібридного пошуку (top-20) пропустити через `rerank()`
-- [ ] Збільшити initial retrieval з top-8 до top-20 для гібридного пошуку (більше кандидатів для re-ranking)
-- [ ] Після re-ranking обрізати до top-8
-- [ ] Graceful fallback: якщо re-ranker недоступний — повернути результати без re-ranking
-- [ ] Логувати: "Re-ranking: N кандидатів → M результатів"
-- [ ] Написати тести
-- [ ] `npm test` — всі тести проходять
+- [x] В `server/src/services/lawSearch.ts` — після гібридного пошуку (top-20) пропустити через `rerank()`
+- [x] Збільшити initial retrieval з top-8 до top-20 для гібридного пошуку (більше кандидатів для re-ranking)
+- [x] Після re-ranking обрізати до top-8
+- [x] Graceful fallback: якщо re-ranker недоступний — повернути результати без re-ranking
+- [x] Логувати: "Re-ranking: N кандидатів → M результатів"
+- [x] Написати тести
+- [x] `npm test` — всі тести проходять
 
 ### Task 3: Запустити eval та порівняти
 - [ ] Запустити `npm run eval` — зафіксувати нові метрики
