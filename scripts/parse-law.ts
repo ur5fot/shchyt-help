@@ -58,38 +58,32 @@ function stripTags(html: string): string {
   return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
-// Парсить HTML закону та повертає структуру LawFile
-export function parseLawHtml(html: string, sourceUrl: string, shortTitle: string): LawFile {
-  if (!html || html.trim().length === 0) {
-    throw new Error('Порожня сторінка');
-  }
+// Перевіряє чи параграф є редакційною приміткою (не основний текст)
+function isEditorialNote(text: string): boolean {
+  return /^\{.*\}$/.test(text.trim());
+}
 
-  // Витягаємо заголовок закону
-  const titleMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/si);
-  const title = titleMatch ? stripTags(titleMatch[1]) : shortTitle;
-
-  // Знаходимо всі параграфи
-  const pMatches = [...html.matchAll(/<p[^>]*>(.*?)<\/p>/gsi)];
-  const paragraphs = pMatches.map(m => stripTags(m[1])).filter(t => t.length > 0);
-
-  const chunks: LawChunkRaw[] = [];
-  let currentArticleNum = '';
-  let currentArticleTitle = '';
-  let partBuffer: string[] = [];
-  let partNum = 0;
-
-  // Паттерн для статті: "Стаття 1.", "Стаття 10-1." тощо
-  const ARTICLE_RE = /^Стаття\s+([\d][\d-]*)\.\s*(.*)/;
-  // Паттерн для частини: "1. Текст"
-  const PART_RE = /^(\d{1,2})\.\s+(.+)/s;
-
-  const baseId = shortTitle
+// Генерує baseId з short_title
+function makeBaseId(shortTitle: string): string {
+  return shortTitle
     .toLowerCase()
     .replace(/«|»/g, '')
     .replace(/[^а-яіїєґa-z0-9]+/gi, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
     .slice(0, 20);
+}
+
+// Парсить закон зі "Стаття N" структурою
+function parseArticleBased(paragraphs: string[], baseId: string): LawChunkRaw[] {
+  const chunks: LawChunkRaw[] = [];
+  let currentArticleNum = '';
+  let currentArticleTitle = '';
+  let partBuffer: string[] = [];
+  let partNum = 0;
+
+  const ARTICLE_RE = /^Стаття\s+([\d][\d-]*)\.\s*(.*)/;
+  const PART_RE = /^(\d{1,2})\.\s+(.+)/s;
 
   function flushChunk() {
     if (!currentArticleNum || partBuffer.length === 0) return;
@@ -117,13 +111,11 @@ export function parseLawHtml(html: string, sourceUrl: string, shortTitle: string
 
   for (const rawText of paragraphs) {
     const text = rawText.trim();
-    if (!text) continue;
+    if (!text || isEditorialNote(text)) continue;
 
     const articleMatch = ARTICLE_RE.exec(text);
     if (articleMatch) {
-      // Зберігаємо попередній буфер
       flushChunk();
-
       currentArticleNum = articleMatch[1];
       currentArticleTitle = articleMatch[2].trim();
       partBuffer = [];
@@ -135,13 +127,10 @@ export function parseLawHtml(html: string, sourceUrl: string, shortTitle: string
 
     const partMatch = PART_RE.exec(text);
     if (partMatch) {
-      // Зберігаємо попередній буфер
       flushChunk();
-
       partNum = parseInt(partMatch[1]);
       partBuffer = [partMatch[2].trim()];
     } else {
-      // Продовження поточної частини або ненумерований текст
       if (partBuffer.length === 0) {
         partNum = 0;
         partBuffer = [text];
@@ -151,8 +140,93 @@ export function parseLawHtml(html: string, sourceUrl: string, shortTitle: string
     }
   }
 
-  // Зберігаємо останній буфер
   flushChunk();
+  return chunks;
+}
+
+// Парсить положення/постанову з "N. текст" структурою (пункти замість статей)
+function parsePunktBased(paragraphs: string[], baseId: string): LawChunkRaw[] {
+  const chunks: LawChunkRaw[] = [];
+  let currentSection = '';
+  let currentPunktNum = '';
+  let partBuffer: string[] = [];
+
+  // Паттерн для розділу: "I. Загальна частина", "II. Контракт" тощо
+  const SECTION_RE = /^(I{1,3}V?|VI{0,3}|IX|X{1,3}I{0,3}V?)\.\s+(.*)/;
+  // Паттерн для пункту: "1. Текст", "10-1. Текст"
+  const PUNKT_RE = /^(\d[\d-]*)\.\s+(.+)/s;
+
+  function flushChunk() {
+    if (!currentPunktNum || partBuffer.length === 0) return;
+
+    const text = partBuffer.join(' ').trim();
+    if (text.length < 10) {
+      partBuffer = [];
+      return;
+    }
+
+    const sectionSuffix = currentSection ? `-r${currentSection.replace(/[^IVX0-9]/g, '')}` : '';
+    const id = `${baseId}-p${currentPunktNum.replace(/[^0-9-]/g, '')}${sectionSuffix}-ch0`;
+
+    chunks.push({
+      id,
+      article: `Пункт ${currentPunktNum}`,
+      part: currentSection ? `Розділ ${currentSection}` : '',
+      text,
+      keywords: extractKeywords(text),
+    });
+
+    partBuffer = [];
+  }
+
+  for (const rawText of paragraphs) {
+    const text = rawText.trim();
+    if (!text || isEditorialNote(text)) continue;
+
+    const sectionMatch = SECTION_RE.exec(text);
+    if (sectionMatch) {
+      flushChunk();
+      currentSection = sectionMatch[1];
+      continue;
+    }
+
+    const punktMatch = PUNKT_RE.exec(text);
+    if (punktMatch) {
+      flushChunk();
+      currentPunktNum = punktMatch[1];
+      partBuffer = [punktMatch[2].trim()];
+    } else if (currentPunktNum) {
+      partBuffer.push(text);
+    }
+  }
+
+  flushChunk();
+  return chunks;
+}
+
+// Парсить HTML закону та повертає структуру LawFile
+export function parseLawHtml(html: string, sourceUrl: string, shortTitle: string): LawFile {
+  if (!html || html.trim().length === 0) {
+    throw new Error('Порожня сторінка');
+  }
+
+  // Витягаємо заголовок закону
+  const titleMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/si);
+  const title = titleMatch ? stripTags(titleMatch[1]) : shortTitle;
+
+  // Знаходимо всі параграфи
+  const pMatches = [...html.matchAll(/<p[^>]*>(.*?)<\/p>/gsi)];
+  const paragraphs = pMatches.map(m => stripTags(m[1])).filter(t => t.length > 0);
+
+  const baseId = makeBaseId(shortTitle);
+
+  // Спочатку пробуємо парсити як закон зі статтями
+  let chunks = parseArticleBased(paragraphs, baseId);
+
+  // Якщо статей не знайшли — пробуємо як положення/постанову з пунктами
+  if (chunks.length === 0) {
+    chunks = parsePunktBased(paragraphs, baseId);
+  }
 
   return {
     title,
@@ -172,7 +246,21 @@ export async function parseLaw(url: string, shortTitle: string): Promise<LawFile
   }
 
   const html = await response.text();
-  return parseLawHtml(html, url, shortTitle);
+  const law = parseLawHtml(html, url, shortTitle);
+
+  // Якщо 0 чанків — спробувати /print версію (повний текст без JS)
+  if (law.chunks.length === 0) {
+    const printUrl = url.replace(/\/?$/, '/print');
+    console.log(`Основна сторінка дала 0 чанків, спроба: ${printUrl}`);
+
+    const printResponse = await fetch(printUrl);
+    if (printResponse.ok) {
+      const printHtml = await printResponse.text();
+      return parseLawHtml(printHtml, url, shortTitle);
+    }
+  }
+
+  return law;
 }
 
 // CLI точка входу
