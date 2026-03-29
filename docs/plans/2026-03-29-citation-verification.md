@@ -28,12 +28,12 @@
 - [x] `npm test` — всі тести проходять
 
 ### Task 2: Створити сервіс верифікації цитат (`server/src/services/citationVerifier.ts`)
-- [ ] Функція `extractCitations(відповідь: string): Citation[]` — парсить блок `ЦИТАТИ:` з відповіді AI, повертає масив `{article, part, quote}`
-- [ ] Функція `verifyCitations(citations: Citation[], chunks: LawChunk[]): VerifiedCitation[]` — для кожної цитати перевіряє: чи є чанк з таким article/part, чи текст цитати міститься в тексті чанка (fuzzy match — допускає невеликі відмінності)
-- [ ] Функція `removeCitationBlock(відповідь: string): string` — видаляє блок `ЦИТАТИ:` з тексту відповіді (він для внутрішнього використання, користувач бачить sources)
-- [ ] Кожна Citation має поле `verified: boolean`
-- [ ] Написати тести: правильна цитата → verified=true, вигадана стаття → verified=false, цитата з дрібними відмінностями → verified=true (fuzzy)
-- [ ] `npm test` — всі тести проходять
+- [x] Функція `extractCitations(відповідь: string): Citation[]` — парсить блок `ЦИТАТИ:` з відповіді AI, повертає масив `{article, part, quote}`
+- [x] Функція `verifyCitations(citations: Citation[], chunks: LawChunk[]): VerifiedCitation[]` — для кожної цитати перевіряє: чи є чанк з таким article/part, чи текст цитати міститься в тексті чанка (fuzzy match — допускає невеликі відмінності)
+- [x] Функція `removeCitationBlock(відповідь: string): string` — видаляє блок `ЦИТАТИ:` з тексту відповіді (він для внутрішнього використання, користувач бачить sources)
+- [x] Кожна Citation має поле `verified: boolean`
+- [x] Написати тести: правильна цитата → verified=true, вигадана стаття → verified=false, цитата з дрібними відмінностями → verified=true (fuzzy)
+- [x] `npm test` — всі тести проходять
 
 ### Task 3: Інтегрувати верифікацію в `chat.ts`
 - [ ] Після отримання відповіді від Claude: витягти цитати через `extractCitations()`
