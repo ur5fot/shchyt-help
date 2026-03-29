@@ -33,7 +33,7 @@ export function extractCitations(response: string): Citation[] {
   const lines = block.split('\n').filter((line) => line.trim().startsWith('- '));
 
   for (const line of lines) {
-    const match = line.match(/^-\s+(.+?)\s*\|\s*[«"\u201C\u201E](.+?)[»"\u201D\u201F]\s*$/);
+    const match = line.trim().match(/^-\s+(.+?)\s*\|\s*[«"\u201C\u201E](.+?)[»"\u201D\u201F]\s*$/);
     if (match) {
       citations.push({
         article: match[1].trim(),
@@ -73,7 +73,7 @@ function fuzzyContains(chunkText: string, quote: string): boolean {
   if (normalizedChunk.includes(normalizedQuote)) return true;
 
   // Перевірка на часткове входження — якщо цитата довга,
-  // шукаємо чи більша частина слів цитати є в чанку в правильному порядку
+  // шукаємо чи більша частина слів цитати присутня в чанку (bag-of-words)
   const quoteWords = normalizedQuote.split(' ').filter((w) => w.length > 2);
   if (quoteWords.length < 3) return false;
 
@@ -86,7 +86,7 @@ function fuzzyContains(chunkText: string, quote: string): boolean {
 
 /**
  * Верифікує масив цитат проти наданих чанків.
- * Для кожної цитати шукає чанк з відповідним article/part та перевіряє текст.
+ * Для кожної цитати шукає чанк де текст цитати присутній (fuzzy match).
  */
 export function verifyCitations(
   citations: Citation[],

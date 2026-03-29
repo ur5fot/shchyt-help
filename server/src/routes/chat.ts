@@ -178,6 +178,8 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     const цитати = extractCitations(відповідь);
     const верифіковані = verifyCitations(цитати, чанки);
 
+    const кількістьВерифікованих = верифіковані.filter(ц => ц.verified).length;
+
     if (верифіковані.length > 0) {
       const невірні = верифіковані.filter(ц => !ц.verified);
       if (невірні.length > 0) {
@@ -187,7 +189,7 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
         );
       }
       logger.info(
-        { всього: верифіковані.length, підтверджено: верифіковані.length - невірні.length },
+        { всього: верифіковані.length, підтверджено: кількістьВерифікованих },
         'Результат верифікації цитат'
       );
     }
@@ -229,10 +231,9 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     const часВідповіді = Date.now() - початок;
     logger.info({ часВідповідіМс: часВідповіді, кількістьДжерел: джерела.length }, 'Запит оброблено');
 
-    const кількістьВерифікованих = верифіковані.filter(ц => ц.verified).length;
     const response: ChatResponse = { answer: відповідь, sources: джерела };
-    if (кількістьВерифікованих > 0) {
-      response.verifiedSources = кількістьВерифікованих;
+    if (верифікованіЧанкиIds.size > 0) {
+      response.verifiedSources = верифікованіЧанкиIds.size;
     }
     if (новеРезюме) {
       response.summary = новеРезюме;
