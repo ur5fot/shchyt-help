@@ -111,15 +111,15 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
       lanceDBДоступна = await чиДоступнаБД();
     }
 
-    // Для коротких повідомлень з історією (наприклад "1", "так", "детальніше")
-    // використовуємо останнє user-повідомлення з історії для пошуку
+    // Для follow-up повідомлень з історією (наприклад "1", "а скільки днів", "детальніше")
+    // комбінуємо поточне повідомлення з попереднім контекстом для кращого пошуку
     let пошуковийЗапит = trimmed;
-    if (trimmed.length < 10 && sanitizedHistory && sanitizedHistory.length > 0) {
-      const останнєПитання = [...sanitizedHistory].reverse().find(m => m.role === 'user');
-      if (останнєПитання) {
-        пошуковийЗапит = останнєПитання.content;
-        logger.info({ оригінал: trimmed, пошук: пошуковийЗапит.slice(0, 50) }, 'Короткий запит — використовуємо попереднє питання для пошуку');
-      }
+    if (sanitizedHistory && sanitizedHistory.length > 0) {
+      const останніПовідомлення = sanitizedHistory.slice(-2);
+      const контекст = останніПовідомлення.map(m => m.content).join(' ');
+      // Поточне питання + контекст останніх повідомлень (user + assistant)
+      пошуковийЗапит = `${trimmed} ${контекст}`.slice(0, 500);
+      logger.info({ оригінал: trimmed, пошук: пошуковийЗапит.slice(0, 80) }, 'Follow-up — пошук з контекстом');
     }
 
     // Знаходимо релевантні чанки законів
