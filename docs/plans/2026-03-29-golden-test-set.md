@@ -58,16 +58,16 @@
 - [x] Запустити `npm run eval` — перевірити що працює
 
 ### Task 3: Додати eval через Claude API (end-to-end)
-- [ ] Розширити eval скрипт: для кожного питання також відправити запит до Claude API (через `askClaude`)
-- [ ] Перевірити citation accuracy: чи цитати з відповіді AI збігаються з expectedArticles
-- [ ] Перевірити response quality: чи відповідь містить ключові факти (додати поле `expectedFacts` в golden set для 10-15 ключових питань)
-- [ ] Вивести метрики:
+- [x] Розширити eval скрипт: для кожного питання також відправити запит до Claude API (через `askClaude`)
+- [x] Перевірити citation accuracy: чи цитати з відповіді AI збігаються з expectedArticles
+- [x] Перевірити response quality: чи відповідь містить ключові факти (додати поле `expectedFacts` в golden set для 10-15 ключових питань)
+- [x] Вивести метрики:
   - Citation accuracy: % правильних цитат
   - Hallucination rate: % вигаданих цитат
   - Fact recall: % згаданих очікуваних фактів
-- [ ] Додати прапорець `--full` для повного eval з Claude API (за замовчуванням тільки retrieval)
-- [ ] `npm run eval` — тільки retrieval (швидко, без API)
-- [ ] `npm run eval -- --full` — повний eval з Claude API (повільно, коштує токени)
+- [x] Додати прапорець `--full` для повного eval з Claude API (за замовчуванням тільки retrieval)
+- [x] `npm run eval` — тільки retrieval (швидко, без API)
+- [x] `npm run eval -- --full` — повний eval з Claude API (повільно, коштує токени)
 
 ### Task 4: Тести та документація
 - [ ] Написати тести для eval скрипту (парсинг golden set, підрахунок метрик)

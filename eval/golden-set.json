@@ -4,7 +4,8 @@
     "question": "Чи маю я право на відпустку під час служби?",
     "expectedChunks": ["про-проходження-служ-p180-rVIII-ch0"],
     "expectedArticles": ["Пункт 180"],
-    "category": "відпустки"
+    "category": "відпустки",
+    "expectedFacts": ["щорічна основна відпустка", "30 календарних діб"]
   },
   {
     "id": "vacation-schedule",
@@ -60,7 +61,8 @@
     "question": "З чого складається грошове забезпечення військовослужбовця?",
     "expectedChunks": ["порядок-виплати-грош-p2-rI-ch0", "про-грошове-забезпеч-p2-ch0"],
     "expectedArticles": ["Пункт 2"],
-    "category": "грошове забезпечення"
+    "category": "грошове забезпечення",
+    "expectedFacts": ["посадовий оклад", "оклад за військовим званням", "надбавки", "додаткові види"]
   },
   {
     "id": "pay-salary-scale",
@@ -81,7 +83,8 @@
     "question": "Які бойові виплати передбачені для військовослужбовців?",
     "expectedChunks": ["порядок-виплати-грош-p2-rXXXIV-ch0"],
     "expectedArticles": ["Пункт 2"],
-    "category": "грошове забезпечення"
+    "category": "грошове забезпечення",
+    "expectedFacts": ["додаткова винагорода", "участь у бойових діях"]
   },
   {
     "id": "pay-combat-confirmation",
@@ -123,7 +126,8 @@
     "question": "На яких підставах можна звільнитися з військової служби?",
     "expectedChunks": ["viyskovyy-obov-st26-ch1", "viyskovyy-obov-st26-ch2"],
     "expectedArticles": ["Стаття 26"],
-    "category": "звільнення"
+    "category": "звільнення",
+    "expectedFacts": ["стан здоров'я", "вік", "закінчення строку контракту", "сімейні обставини"]
   },
   {
     "id": "discharge-early",
@@ -172,7 +176,8 @@
     "question": "Хто має право на відстрочку від мобілізації?",
     "expectedChunks": ["про-мобілізацію-st23-ch1-p1", "про-мобілізацію-st23-ch1-p3"],
     "expectedArticles": ["Стаття 23"],
-    "category": "мобілізація"
+    "category": "мобілізація",
+    "expectedFacts": ["заброньовані", "непридатні за станом здоров'я", "троє і більше дітей"]
   },
   {
     "id": "mobilization-deferment-children",
@@ -214,14 +219,16 @@
     "question": "Яке медичне забезпечення після поранення?",
     "expectedChunks": ["soczakhyst-st15-ch1", "soczakhyst-st15-ch2"],
     "expectedArticles": ["Стаття 15"],
-    "category": "поранення/ВЛК"
+    "category": "поранення/ВЛК",
+    "expectedFacts": ["безоплатне медичне забезпечення", "військово-медичні заклади"]
   },
   {
     "id": "vlk-purpose",
     "question": "Що таке ВЛК і для чого вона потрібна?",
     "expectedChunks": ["положення-про-влк-p1-rI-ch0-p2", "положення-про-влк-p1-rI-ch0-p3"],
     "expectedArticles": ["Пункт 1"],
-    "category": "поранення/ВЛК"
+    "category": "поранення/ВЛК",
+    "expectedFacts": ["військово-лікарська експертиза", "придатність до військової служби"]
   },
   {
     "id": "vlk-referral",
@@ -242,7 +249,8 @@
     "question": "Чи застраховані військовослужбовці і які виплати передбачені?",
     "expectedChunks": ["soczakhyst-st16-ch1"],
     "expectedArticles": ["Стаття 16"],
-    "category": "поранення/ВЛК"
+    "category": "поранення/ВЛК",
+    "expectedFacts": ["обов'язкове державне страхування", "загибель", "інвалідність", "поранення"]
   },
   {
     "id": "insurance-death",
@@ -256,7 +264,8 @@
     "question": "Хто має статус учасника бойових дій?",
     "expectedChunks": ["veterany-st4-ch1", "veterany-st4-ch2"],
     "expectedArticles": ["Стаття 4"],
-    "category": "статус УБД"
+    "category": "статус УБД",
+    "expectedFacts": ["безпосередня участь у бойових діях", "антитерористична операція", "захист незалежності"]
   },
   {
     "id": "veteran-certificate",
@@ -270,7 +279,8 @@
     "question": "Які пільги мають учасники бойових дій?",
     "expectedChunks": ["veterany-st12-ch1", "veterany-st12-ch2"],
     "expectedArticles": ["Стаття 12"],
-    "category": "статус УБД"
+    "category": "статус УБД",
+    "expectedFacts": ["безоплатний проїзд", "знижка на комунальні послуги", "першочергове працевлаштування"]
   },
   {
     "id": "veteran-disability",
@@ -319,14 +329,16 @@
     "question": "Що таке воєнний стан і коли він вводиться?",
     "expectedChunks": ["про-воєнний-стан-st1-ch1"],
     "expectedArticles": ["Стаття 1"],
-    "category": "воєнний стан"
+    "category": "воєнний стан",
+    "expectedFacts": ["збройна агресія", "загроза незалежності", "Указ Президента"]
   },
   {
     "id": "martial-law-restrictions",
     "question": "Які обмеження прав діють під час воєнного стану?",
     "expectedChunks": ["про-воєнний-стан-st8-ch1-p1", "про-воєнний-стан-st8-ch1-p5", "про-воєнний-стан-st8-ch1-p6"],
     "expectedArticles": ["Стаття 8"],
-    "category": "воєнний стан"
+    "category": "воєнний стан",
+    "expectedFacts": ["комендантська година", "обмеження пересування", "примусове відчуження майна"]
   },
   {
     "id": "martial-law-curfew",
