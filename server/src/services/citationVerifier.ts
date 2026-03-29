@@ -33,7 +33,7 @@ export function extractCitations(response: string): Citation[] {
   const lines = block.split('\n').filter((line) => line.trim().startsWith('- '));
 
   for (const line of lines) {
-    const match = line.match(/^-\s+(.+?)\s*\|\s*[«""](.+?)[»""]\s*$/);
+    const match = line.match(/^-\s+(.+?)\s*\|\s*[«"\u201C\u201E](.+?)[»"\u201D\u201F]\s*$/);
     if (match) {
       citations.push({
         article: match[1].trim(),

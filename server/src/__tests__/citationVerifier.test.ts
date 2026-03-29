@@ -200,6 +200,153 @@ describe('verifyCitations', () => {
   });
 });
 
+describe('edge cases', () => {
+  it('обробляє цитати з подвійними лапками різних типів у одному блоці', () => {
+    const response = `Відповідь.
+
+ЦИТАТИ:
+- Стаття 10 | "звичайні лапки"
+- Стаття 11 | «українські лапки»
+- Стаття 12 | “розумні лапки”`;
+
+    const citations = extractCitations(response);
+    expect(citations).toHaveLength(3);
+    expect(citations[0].quote).toBe('звичайні лапки');
+    expect(citations[1].quote).toBe('українські лапки');
+    expect(citations[2].quote).toBe('розумні лапки');
+  });
+
+  it('обробляє порожній рядок як вхід', () => {
+    expect(extractCitations('')).toEqual([]);
+    expect(removeCitationBlock('')).toBe('');
+  });
+
+  it('верифікація з цитатою що містить спецсимволи кирилиці (ʼ, -, —)', () => {
+    const chunks = [
+      createChunk({
+        id: 'spec-1',
+        text: "Військовослужбовець має право на зарахування до кадрів Збройних Сил Українʼи — згідно з наказом.",
+      }),
+    ];
+    const citations = [
+      {
+        article: 'Стаття 1',
+        quote: "Військовослужбовець має право на зарахування до кадрів Збройних Сил Українʼи згідно з наказом",
+        verified: false,
+      },
+    ];
+
+    const result = verifyCitations(citations, chunks);
+    expect(result[0].verified).toBe(true);
+  });
+
+  it('відхиляє цитату з менше 80% співпадіння слів', () => {
+    const chunks = [
+      createChunk({
+        id: 'low-match',
+        text: 'Грошове забезпечення виплачується щомісяця у порядку встановленому законодавством України.',
+      }),
+    ];
+    const citations = [
+      {
+        article: 'Стаття 1',
+        quote: 'Відпустка надається щорічно у порядку черги встановленої командиром частини',
+        verified: false,
+      },
+    ];
+
+    const result = verifyCitations(citations, chunks);
+    expect(result[0].verified).toBe(false);
+  });
+
+  it('верифікує кілька цитат з різних чанків одночасно', () => {
+    const chunks = [
+      createChunk({
+        id: 'chunk-a',
+        article: 'Стаття 5',
+        text: 'Право на відпустку мають усі військовослужбовці.',
+      }),
+      createChunk({
+        id: 'chunk-b',
+        article: 'Стаття 10',
+        text: 'Грошове забезпечення нараховується щомісяця.',
+      }),
+    ];
+    const citations = [
+      { article: 'Стаття 5', quote: 'Право на відпустку мають усі військовослужбовці', verified: false },
+      { article: 'Стаття 10', quote: 'Грошове забезпечення нараховується щомісяця', verified: false },
+      { article: 'Стаття 999', quote: 'Повністю вигадана цитата', verified: false },
+    ];
+
+    const result = verifyCitations(citations, chunks);
+    expect(result[0].verified).toBe(true);
+    expect(result[0].matchedChunkId).toBe('chunk-a');
+    expect(result[1].verified).toBe(true);
+    expect(result[1].matchedChunkId).toBe('chunk-b');
+    expect(result[2].verified).toBe(false);
+  });
+});
+
+describe('інтеграційний тест: повний цикл парсинг → верифікація → очищення', () => {
+  it('парсить, верифікує та очищує відповідь AI', () => {
+    const чанки = [
+      createChunk({
+        id: 'int-1',
+        article: 'Стаття 10',
+        part: 'Частина 2',
+        text: 'Військовослужбовці мають право на щорічну основну відпустку тривалістю 30 календарних днів.',
+      }),
+      createChunk({
+        id: 'int-2',
+        article: 'Стаття 15',
+        part: 'Частина 1',
+        text: 'Грошове забезпечення виплачується не пізніше ніж через 10 днів після закінчення місяця.',
+      }),
+    ];
+
+    const відповідьAI = `Військовослужбовці мають право на 30 днів відпустки (Стаття 10). Грошове забезпечення виплачується щомісяця (Стаття 15).
+
+⚠️ Це не юридична консультація. Для прийняття рішень зверніться до військового адвоката.
+
+ЦИТАТИ:
+- Стаття 10, Частина 2 | "Військовослужбовці мають право на щорічну основну відпустку тривалістю 30 календарних днів"
+- Стаття 15, Частина 1 | "Грошове забезпечення виплачується не пізніше ніж через 10 днів"
+- Стаття 999 | "Вигадана стаття яку Claude вигадав з навчальних даних"`;
+
+    // Крок 1: витягуємо цитати
+    const цитати = extractCitations(відповідьAI);
+    expect(цитати).toHaveLength(3);
+
+    // Крок 2: верифікуємо проти чанків
+    const верифіковані = verifyCitations(цитати, чанки);
+    expect(верифіковані[0].verified).toBe(true);
+    expect(верифіковані[0].matchedChunkId).toBe('int-1');
+    expect(верифіковані[1].verified).toBe(true);
+    expect(верифіковані[1].matchedChunkId).toBe('int-2');
+    expect(верифіковані[2].verified).toBe(false);
+
+    // Крок 3: очищуємо відповідь
+    const очищена = removeCitationBlock(відповідьAI);
+    expect(очищена).not.toContain('ЦИТАТИ:');
+    expect(очищена).not.toContain('Стаття 999');
+    expect(очищена).toContain('Військовослужбовці мають право на 30 днів відпустки');
+    expect(очищена).toContain('⚠️ Це не юридична консультація');
+  });
+
+  it('graceful: працює коректно коли блоку ЦИТАТИ немає', () => {
+    const відповідь = 'Відповідь без блоку цитат. ⚠️ Це не юридична консультація.';
+
+    const цитати = extractCitations(відповідь);
+    expect(цитати).toEqual([]);
+
+    const верифіковані = verifyCitations(цитати, [createChunk()]);
+    expect(верифіковані).toEqual([]);
+
+    const очищена = removeCitationBlock(відповідь);
+    expect(очищена).toBe(відповідь);
+  });
+});
+
 describe('removeCitationBlock', () => {
   it('видаляє блок ЦИТАТИ з відповіді', () => {
     const response = `Відповідь на питання.
