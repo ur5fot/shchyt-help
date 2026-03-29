@@ -133,7 +133,7 @@ function romanToArabic(roman: string): number {
 function extractArticleNumbers(text: string): string[] {
   const results: string[] = [];
   // Шукаємо арабські числа (з можливим суфіксом -N) та римські числа (великі та малі)
-  const regex = /\d+(?:-\d+)*|(?<![А-ЯA-Zа-яa-z])[IVXLivxl]+(?![А-ЯA-Zа-яa-z])/g;
+  const regex = /\d+(?:-\d+)*|(?<![А-ЯA-Zа-яa-zІіЇїЄєҐґ])[IVXLivxl]+(?![А-ЯA-Zа-яa-zІіЇїЄєҐґ])/g;
   let match;
   while ((match = regex.exec(text)) !== null) {
     const token = match[0].toUpperCase();
@@ -202,7 +202,12 @@ export function verifyCitations(
  */
 function hasCitationFormattedLines(blockContent: string): boolean {
   const lines = blockContent.split('\n').filter((l) => l.trim().length > 0);
-  return lines.some((l) => l.trim().startsWith('- '));
+  // Перевіряємо наявність рядків у повному форматі цитат: "- ... | «цитата»"
+  // Просто "- " недостатньо — може бути звичайний маркований список у прозі
+  return lines.some((l) => {
+    const trimmed = l.trim();
+    return trimmed.startsWith('- ') && /\|\s*[«"\u201C\u201E]/.test(trimmed);
+  });
 }
 
 /**
