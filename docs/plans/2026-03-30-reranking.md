@@ -20,12 +20,12 @@
 ## Implementation Steps
 
 ### Task 1: Додати re-ranker модуль (`server/src/services/reranker.ts`)
-- [ ] Створити модуль з lazy singleton завантаженням моделі `Xenova/bge-reranker-v2-m3` (або `cross-encoder/ms-marco-MiniLM-L-6-v2` якщо bge не працює з @xenova/transformers)
-- [ ] Функція `завантажитиReranker()` — lazy singleton, pipeline для text-classification або custom cross-encoder
-- [ ] Функція `rerank(query: string, documents: {id: string, text: string}[], topK?: number): Promise<{id: string, score: number}[]>` — приймає запит і масив документів, повертає відсортований масив з scores
-- [ ] Обробка помилок — якщо модель не завантажилась, повертати документи без зміни порядку (graceful fallback)
-- [ ] Написати тести з мок-моделлю
-- [ ] `npm test` — всі тести проходять
+- [x] Створити модуль з lazy singleton завантаженням моделі `Xenova/bge-reranker-v2-m3` (або `cross-encoder/ms-marco-MiniLM-L-6-v2` якщо bge не працює з @xenova/transformers)
+- [x] Функція `завантажитиReranker()` — lazy singleton, pipeline для text-classification або custom cross-encoder
+- [x] Функція `rerank(query: string, documents: {id: string, text: string}[], topK?: number): Promise<{id: string, score: number}[]>` — приймає запит і масив документів, повертає відсортований масив з scores
+- [x] Обробка помилок — якщо модель не завантажилась, повертати документи без зміни порядку (graceful fallback)
+- [x] Написати тести з мок-моделлю
+- [x] `npm test` — всі тести проходять
 
 ### Task 2: Інтегрувати re-ranking в hybridSearchLaws
 - [ ] В `server/src/services/lawSearch.ts` — після гібридного пошуку (top-20) пропустити через `rerank()`
