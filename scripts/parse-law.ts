@@ -84,6 +84,9 @@ function parseArticleBased(paragraphs: string[], baseId: string): LawChunkRaw[] 
 
   const ARTICLE_RE = /^Стаття\s+([\d][\d-]*)\.\s*(.*)/;
   const PART_RE = /^(\d{1,2})\.\s+(.+)/s;
+  // Розділи типу "Прикінцеві положення", "Перехідні положення" — окремий псевдо-артикль
+  // Може бути як "Прикінцеві положення", так і "Розділ VII ПРИКІНЦЕВІ ПОЛОЖЕННЯ"
+  const SECTION_HEADER_RE = /^(?:Розділ\s+[IVXLC\d]+\s+)?((?:Прикінцеві|Перехідні|Прикінцеві та перехідні)\s+положення)\s*$/i;
 
   function flushChunk() {
     if (!currentArticleNum || partBuffer.length === 0) return;
@@ -95,11 +98,13 @@ function parseArticleBased(paragraphs: string[], baseId: string): LawChunkRaw[] 
     }
 
     const partSuffix = partNum > 0 ? `-ch${partNum}` : `-ch0`;
-    const id = `${baseId}-st${currentArticleNum.replace(/[^0-9-]/g, '')}${partSuffix}`;
+    const isPseudoArticle = currentArticleNum === 'pp';
+    const articleTag = isPseudoArticle ? 'pp' : `st${currentArticleNum.replace(/[^0-9-]/g, '')}`;
+    const id = `${baseId}-${articleTag}${partSuffix}`;
 
     chunks.push({
       id,
-      article: `Стаття ${currentArticleNum}`,
+      article: isPseudoArticle ? currentArticleTitle : `Стаття ${currentArticleNum}`,
       part: partNum > 0 ? `Частина ${partNum}` : '',
       ...(currentArticleTitle ? { title: currentArticleTitle } : {}),
       text,
@@ -112,6 +117,17 @@ function parseArticleBased(paragraphs: string[], baseId: string): LawChunkRaw[] 
   for (const rawText of paragraphs) {
     const text = rawText.trim();
     if (!text || isEditorialNote(text)) continue;
+
+    // Секція "Прикінцеві положення" тощо — окремий псевдо-артикль
+    const sectionHeaderMatch = SECTION_HEADER_RE.exec(text);
+    if (sectionHeaderMatch) {
+      flushChunk();
+      currentArticleNum = 'pp';
+      currentArticleTitle = sectionHeaderMatch[1];
+      partBuffer = [];
+      partNum = 0;
+      continue;
+    }
 
     const articleMatch = ARTICLE_RE.exec(text);
     if (articleMatch) {
