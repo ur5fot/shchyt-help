@@ -139,8 +139,8 @@ async function оцінитиПитанняЧерезAPI(
   чанки: ReturnType<typeof loadAllLaws>,
   retrievalFound: boolean
 ): Promise<FullEvalResult> {
-  // Шукаємо чанки для промпту
-  const знайдені = searchLaws(питання.question, чанки);
+  // Шукаємо чанки для промпту (hybrid + re-ranking, як у production)
+  const знайдені = await hybridSearchLaws(питання.question, чанки);
   const знайденіЧанки = знайдені.map(р => р.chunk);
 
   // Складаємо промпт і запитуємо Claude

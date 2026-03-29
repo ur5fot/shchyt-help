@@ -1,13 +1,15 @@
 # Cross-encoder re-ranking для покращення пошуку
 
+## Status: Завершено
+
 ## Overview
-Додати cross-encoder re-ranking після гібридного пошуку. Retrieve top-20 → re-rank через `BAAI/bge-reranker-v2-m3` → top-8. Cross-encoder бачить запит І документ разом, що дає значно кращу релевантність. Мета: підняти retrieval recall з 42.9% (keyword) до 60-70%.
+Додати cross-encoder re-ranking після гібридного пошуку. Retrieve top-20 → re-rank через `Xenova/bge-reranker-base` → top-8. Cross-encoder бачить запит І документ разом, що дає значно кращу релевантність. Мета: підняти retrieval recall з 42.9% (keyword) до 60-70%. Результат: 87.5%.
 
 ## Context
 - Golden test set показав: overall recall 42.9%, грошове забезп. 9%, мобілізація 13%
 - Поточний пошук: keyword (стемінг + синоніми) + vector (LanceDB cosine similarity)
 - Проблема: bi-encoder ембеддинги порівнюють запит і документ окремо, cross-encoder бачить їх разом
-- `bge-reranker-v2-m3` — мультимовна модель, підтримує українську, працює локально через `@xenova/transformers`
+- `Xenova/bge-reranker-base` — cross-encoder модель, працює локально через `@xenova/transformers`
 
 ## Development Approach
 - **Testing approach**: Regular (code first, then tests)
@@ -20,7 +22,7 @@
 ## Implementation Steps
 
 ### Task 1: Додати re-ranker модуль (`server/src/services/reranker.ts`)
-- [x] Створити модуль з lazy singleton завантаженням моделі `Xenova/bge-reranker-v2-m3` (або `cross-encoder/ms-marco-MiniLM-L-6-v2` якщо bge не працює з @xenova/transformers)
+- [x] Створити модуль з lazy singleton завантаженням моделі `Xenova/bge-reranker-base`
 - [x] Функція `завантажитиReranker()` — lazy singleton, pipeline для text-classification або custom cross-encoder
 - [x] Функція `rerank(query: string, documents: {id: string, text: string}[], topK?: number): Promise<{id: string, score: number}[]>` — приймає запит і масив документів, повертає відсортований масив з scores
 - [x] Обробка помилок — якщо модель не завантажилась, повертати документи без зміни порядку (graceful fallback)

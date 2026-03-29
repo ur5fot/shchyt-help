@@ -2,7 +2,7 @@ import { pipeline, type TextClassificationPipeline } from '@xenova/transformers'
 import { logger } from '../logger';
 
 // Cross-encoder модель для re-ranking
-// bge-reranker — мультимовна модель, підтримує українську
+// bge-reranker-base — English-primary, але працює достатньо для українського RAG
 const НАЗВА_МОДЕЛІ = 'Xenova/bge-reranker-base';
 
 // Lazy singleton — модель завантажується один раз при першому виклику
@@ -36,8 +36,8 @@ export function завантажитиReranker(): Promise<TextClassificationPipe
       logger.error({ помилка, модель: НАЗВА_МОДЕЛІ }, 'Не вдалося завантажити re-ranker модель');
       модельНедоступна = true;
       модельPromise = null;
-      return null as unknown as TextClassificationPipeline;
-    });
+      return null;
+    }) as Promise<TextClassificationPipeline | null>;
   }
   return модельPromise as Promise<TextClassificationPipeline | null>;
 }
