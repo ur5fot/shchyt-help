@@ -244,6 +244,17 @@ export function parseLawHtml(html: string, sourceUrl: string, shortTitle: string
     chunks = parsePunktBased(paragraphs, baseId);
   }
 
+  // Дедуплікація ID (постанови з додатками мають однакові номери пунктів)
+  const idCounts: Record<string, number> = {};
+  for (const chunk of chunks) {
+    const origId = chunk.id;
+    const count = idCounts[origId] || 0;
+    if (count > 0) {
+      chunk.id = `${origId}-d${count}`;
+    }
+    idCounts[origId] = count + 1;
+  }
+
   return {
     title,
     short_title: shortTitle,
