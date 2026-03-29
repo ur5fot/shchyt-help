@@ -268,4 +268,99 @@ describe('POST /api/chat', () => {
 
     expect(відповідь.body.sources[0].article).toBe('Стаття 15');
   });
+
+  describe('верифікація цитат', () => {
+    const чанкЗТекстом = {
+      id: 'chunk-v1',
+      article: 'Стаття 10',
+      part: 'Частина 2',
+      title: 'Грошове забезпечення',
+      text: 'Військовослужбовцям виплачується грошове забезпечення в розмірі, встановленому законодавством.',
+      keywords: ['грошове забезпечення'],
+      lawTitle: 'Про соціальний захист',
+      sourceUrl: 'https://zakon.rada.gov.ua/laws/show/2011-12',
+    };
+
+    it('видаляє блок ЦИТАТИ з відповіді для користувача', async () => {
+      mockSearchLaws.mockReturnValue([{ chunk: чанкЗТекстом, score: 5 }]);
+      mockAskClaude.mockResolvedValue(
+        `Відповідь про грошове забезпечення. ${ДИСКЛЕЙМЕР}\nЦИТАТИ:\n- Стаття 10, Частина 2 | "Військовослужбовцям виплачується грошове забезпечення"`
+      );
+
+      const відповідь = await request(app)
+        .post('/api/chat')
+        .send({ message: 'грошове забезпечення' });
+
+      expect(відповідь.status).toBe(200);
+      expect(відповідь.body.answer).not.toContain('ЦИТАТИ:');
+      expect(відповідь.body.answer).toContain('Відповідь про грошове забезпечення');
+    });
+
+    it('залишає sources тільки для верифікованих цитат', async () => {
+      const невірнийЧанк = {
+        id: 'chunk-fake',
+        article: 'Стаття 999',
+        part: '',
+        text: 'Якийсь інший текст.',
+        keywords: [],
+        lawTitle: 'Інший закон',
+        sourceUrl: 'https://zakon.rada.gov.ua/laws/show/999',
+      };
+
+      mockSearchLaws.mockReturnValue([
+        { chunk: чанкЗТекстом, score: 5 },
+        { chunk: невірнийЧанк, score: 3 },
+      ]);
+      mockAskClaude.mockResolvedValue(
+        `Відповідь. ${ДИСКЛЕЙМЕР}\nЦИТАТИ:\n- Стаття 10, Частина 2 | "Військовослужбовцям виплачується грошове забезпечення"`
+      );
+
+      const відповідь = await request(app)
+        .post('/api/chat')
+        .send({ message: 'грошове забезпечення' });
+
+      expect(відповідь.body.sources).toHaveLength(1);
+      expect(відповідь.body.sources[0].law).toBe('Про соціальний захист');
+    });
+
+    it('повертає всі sources якщо Claude не додав блок ЦИТАТИ (graceful)', async () => {
+      mockSearchLaws.mockReturnValue([
+        { chunk: чанкЗТекстом, score: 5 },
+        {
+          chunk: {
+            id: 'chunk-2',
+            article: 'Стаття 5',
+            part: '',
+            text: 'Інший текст',
+            keywords: [],
+            lawTitle: 'Інший закон',
+            sourceUrl: 'https://zakon.rada.gov.ua/laws/show/555',
+          },
+          score: 3,
+        },
+      ]);
+      mockAskClaude.mockResolvedValue(`Відповідь без блоку цитат. ${ДИСКЛЕЙМЕР}`);
+
+      const відповідь = await request(app)
+        .post('/api/chat')
+        .send({ message: 'питання' });
+
+      expect(відповідь.body.sources).toHaveLength(2);
+    });
+
+    it('залишає всі sources якщо жодна цитата не верифікована (graceful)', async () => {
+      mockSearchLaws.mockReturnValue([{ chunk: чанкЗТекстом, score: 5 }]);
+      mockAskClaude.mockResolvedValue(
+        `Відповідь. ${ДИСКЛЕЙМЕР}\nЦИТАТИ:\n- Стаття 999, Частина 1 | "Вигадана цитата якої немає в чанках"`
+      );
+
+      const відповідь = await request(app)
+        .post('/api/chat')
+        .send({ message: 'питання' });
+
+      expect(відповідь.status).toBe(200);
+      // Жодна цитата не верифікована — фільтрація не застосовується, всі sources залишаються
+      expect(відповідь.body.sources).toHaveLength(1);
+    });
+  });
 });

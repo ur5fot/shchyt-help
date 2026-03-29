@@ -5,6 +5,7 @@ import { searchLaws, hybridSearchLaws } from '../services/lawSearch.ts';
 import { buildPrompt } from '../services/promptBuilder.ts';
 import { askClaude, summarizeHistory, type HistoryMessage } from '../services/claude.ts';
 import { ініціалізуватиБД, чиДоступнаБД } from '../services/vectorStore.ts';
+import { extractCitations, verifyCitations, removeCitationBlock } from '../services/citationVerifier.ts';
 import { МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ, МАКС_ПОВІДОМЛЕНЬ_БЕЗ_СТИСНЕННЯ, МАКС_ПОВІДОМЛЕНЬ_ІСТОРІЇ, МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ_ІСТОРІЇ, ДИСКЛЕЙМЕР } from '../constants.ts';
 import { logger } from '../logger.ts';
 
@@ -172,14 +173,44 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     // Запитуємо Claude
     let відповідь = await askClaude(промпт, актуальнаІсторія, актуальнеРезюме);
 
+    // Верифікація цитат — перевіряємо чи Claude не вигадав посилання
+    const цитати = extractCitations(відповідь);
+    const верифіковані = verifyCitations(цитати, чанки);
+
+    if (верифіковані.length > 0) {
+      const невірні = верифіковані.filter(ц => !ц.verified);
+      if (невірні.length > 0) {
+        logger.warn(
+          { неверифіковані: невірні.map(ц => ({ article: ц.article, quote: ц.quote.slice(0, 50) })) },
+          'Знайдено неверифіковані цитати у відповіді AI'
+        );
+      }
+      logger.info(
+        { всього: верифіковані.length, підтверджено: верифіковані.length - невірні.length },
+        'Результат верифікації цитат'
+      );
+    }
+
+    // Видаляємо блок ЦИТАТИ з відповіді (він для внутрішнього використання)
+    відповідь = removeCitationBlock(відповідь);
+
     // Перевіряємо наявність дисклеймера — додаємо якщо AI пропустив
     if (!відповідь.includes(ДИСКЛЕЙМЕР)) {
       відповідь = відповідь.trimEnd() + '\n\n' + ДИСКЛЕЙМЕР;
     }
 
+    // Збираємо ID чанків підтверджених цитатами
+    const верифікованіЧанкиIds = new Set(
+      верифіковані.filter(ц => ц.verified && ц.matchedChunkId).map(ц => ц.matchedChunkId)
+    );
+
     // Формуємо джерела для клієнта (дедуплікуємо по унікальному ключу)
+    // Якщо є верифіковані цитати — залишаємо тільки підтверджені джерела
+    // Якщо цитат не було (Claude не додав блок) — повертаємо всі джерела як раніше (graceful)
+    const фільтруватиДжерела = верифікованіЧанкиIds.size > 0;
     const seen = new Set<string>();
     const джерела: SourceItem[] = результатиПошуку
+      .filter(р => !фільтруватиДжерела || верифікованіЧанкиIds.has(р.chunk.id))
       .map(р => ({
         law: р.chunk.lawTitle,
         article: р.chunk.part
