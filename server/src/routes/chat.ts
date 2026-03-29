@@ -111,14 +111,25 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
       lanceDBДоступна = await чиДоступнаБД();
     }
 
+    // Для коротких повідомлень з історією (наприклад "1", "так", "детальніше")
+    // використовуємо останнє user-повідомлення з історії для пошуку
+    let пошуковийЗапит = trimmed;
+    if (trimmed.length < 10 && sanitizedHistory && sanitizedHistory.length > 0) {
+      const останнєПитання = [...sanitizedHistory].reverse().find(m => m.role === 'user');
+      if (останнєПитання) {
+        пошуковийЗапит = останнєПитання.content;
+        logger.info({ оригінал: trimmed, пошук: пошуковийЗапит.slice(0, 50) }, 'Короткий запит — використовуємо попереднє питання для пошуку');
+      }
+    }
+
     // Знаходимо релевантні чанки законів
     let результатиПошуку;
     if (lanceDBДоступна) {
       logger.info('Гібридний пошук');
-      результатиПошуку = await hybridSearchLaws(trimmed, всіЧанки);
+      результатиПошуку = await hybridSearchLaws(пошуковийЗапит, всіЧанки);
     } else {
       logger.info('Keyword пошук (LanceDB не доступна)');
-      результатиПошуку = searchLaws(trimmed, всіЧанки);
+      результатиПошуку = searchLaws(пошуковийЗапит, всіЧанки);
     }
     const чанки = результатиПошуку.map(р => р.chunk);
 
