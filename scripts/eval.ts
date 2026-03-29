@@ -23,8 +23,10 @@ import {
   type RetrievalResult,
   type FullEvalResult,
   чиФактЗгаданий,
+  чиСтаттяОчікувана,
   обчислитиRetrievalRecall,
   обчислитиПовніМетрики,
+  валідуватиGoldenSet,
 } from '../server/src/services/evalMetrics';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -32,7 +34,16 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 function завантажитиGoldenSet(): GoldenQuestion[] {
   const шлях = join(__dirname, '..', 'eval', 'golden-set.json');
   const вміст = readFileSync(шлях, 'utf-8');
-  return JSON.parse(вміст) as GoldenQuestion[];
+  const дані = JSON.parse(вміст);
+  const результат = валідуватиGoldenSet(дані);
+  if (!результат.valid) {
+    console.error('Помилки валідації golden set:');
+    for (const помилка of результат.errors) {
+      console.error(`  - ${помилка}`);
+    }
+    process.exit(1);
+  }
+  return результат.questions;
 }
 
 function оцінитиKeywordПошук(
@@ -114,7 +125,7 @@ async function оцінитиПитанняЧерезAPI(
   const верифіковані = verifyCitations(цитати, знайденіЧанки);
 
   // Перевіряємо citation accuracy
-  const citedArticles = верифіковані.map(ц => ц.article);
+  const citedArticles = верифіковані.filter(ц => ц.verified).map(ц => ц.article);
   const correctCitations = верифіковані.filter(ц => ц.verified).length;
   const hallucinatedCitations = верифіковані.filter(ц => !ц.verified).length;
 

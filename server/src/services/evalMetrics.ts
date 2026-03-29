@@ -54,7 +54,12 @@ export function чиСтаттяОчікувана(citedArticle: string, expecte
   const нормЦитата = нормалізуватиСтаттю(citedArticle);
   return expectedArticles.some(очікувана => {
     const нормОчікувана = нормалізуватиСтаттю(очікувана);
-    return нормЦитата.includes(нормОчікувана) || нормОчікувана.includes(нормЦитата);
+    // Точний збіг або один є початком іншого з роздільником (кома, пробіл після номера)
+    if (нормЦитата === нормОчікувана) return true;
+    // "стаття 26, ч.3" містить "стаття 26" — але не "стаття 2" у "стаття 26"
+    if (нормЦитата.startsWith(нормОчікувана + ',') || нормЦитата.startsWith(нормОчікувана + ' ч.')) return true;
+    if (нормОчікувана.startsWith(нормЦитата + ',') || нормОчікувана.startsWith(нормЦитата + ' ч.')) return true;
+    return false;
   });
 }
 
@@ -150,7 +155,9 @@ export function валідуватиGoldenSet(data: unknown): {
     }
     if (!item.category) errors.push(`Питання [${i}] (${item.id ?? '?'}): відсутній category`);
 
-    if (errors.length === 0 || item.id) {
+    if (!item.id || !item.question || !Array.isArray(item.expectedChunks) || item.expectedChunks.length === 0 || !Array.isArray(item.expectedArticles) || !item.category) {
+      // Пропускаємо невалідні елементи
+    } else {
       questions.push(item as GoldenQuestion);
     }
   }

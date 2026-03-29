@@ -56,6 +56,14 @@ describe('чиСтаттяОчікувана', () => {
   it('повертає false для порожнього масиву', () => {
     expect(чиСтаттяОчікувана('Стаття 26', [])).toBe(false);
   });
+
+  it('не плутає "Стаття 1" з "Стаття 10"', () => {
+    expect(чиСтаттяОчікувана('Стаття 1', ['Стаття 10'])).toBe(false);
+  });
+
+  it('не плутає "Стаття 2" з "Стаття 26"', () => {
+    expect(чиСтаттяОчікувана('Стаття 2', ['Стаття 26'])).toBe(false);
+  });
 });
 
 describe('чиФактЗгаданий', () => {
@@ -223,6 +231,7 @@ describe('валідуватиGoldenSet', () => {
     const result = валідуватиGoldenSet(data);
     expect(result.valid).toBe(false);
     expect(result.errors.some(e => e.includes('відсутній id'))).toBe(true);
+    expect(result.questions).toHaveLength(0);
   });
 
   it('відхиляє питання з порожнім expectedChunks', () => {
@@ -230,6 +239,7 @@ describe('валідуватиGoldenSet', () => {
     const result = валідуватиGoldenSet(data);
     expect(result.valid).toBe(false);
     expect(result.errors.some(e => e.includes('expectedChunks'))).toBe(true);
+    expect(result.questions).toHaveLength(0);
   });
 
   it('приймає питання з expectedFacts', () => {
