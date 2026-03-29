@@ -16,7 +16,8 @@
       "Bash(node -e \":*)",
       "Bash(diffstat)",
       "Bash(git log:*)",
-      "Bash(npx tsx -e \":*)"
+      "Bash(npx tsx -e \":*)",
+      "Bash(git rm:*)"
     ]
   }
 }
