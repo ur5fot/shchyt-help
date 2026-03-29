@@ -110,7 +110,7 @@
   {
     "id": "pay-injury-bonus",
     "question": "Яка виплата за поранення на службі?",
-    "expectedChunks": ["порядок-виплати-грош-p12-rXXXIV-ch0", "порядок-виплати-грош-p11-rXXXIV-ch0"],
+    "expectedChunks": ["порядок-виплати-грош-p12-rXXXIV-ch0", "порядок-виплати-грош-p11-rXXXIV-ch0", "soczakhyst-st16-ch1"],
     "expectedArticles": ["Пункт 12", "Пункт 11"],
     "category": "грошове забезпечення"
   },
@@ -139,7 +139,7 @@
   {
     "id": "discharge-health",
     "question": "Як звільнитися за станом здоровʼя?",
-    "expectedChunks": ["viyskovyy-obov-st26-ch2", "про-проходження-служ-p35-rII-ch0"],
+    "expectedChunks": ["viyskovyy-obov-st26-ch2", "про-проходження-служ-p35-rII-ch0", "про-проходження-служ-p240-rXII-ch0", "зміни-щодо-мобілізац-st27-ch2-d9"],
     "expectedArticles": ["Стаття 26", "Пункт 35"],
     "category": "звільнення"
   },
@@ -174,7 +174,7 @@
   {
     "id": "mobilization-deferment",
     "question": "Хто має право на відстрочку від мобілізації?",
-    "expectedChunks": ["про-мобілізацію-st23-ch1-p1", "про-мобілізацію-st23-ch1-p3"],
+    "expectedChunks": ["про-мобілізацію-st23-ch1-p1", "про-мобілізацію-st23-ch1-p3", "viyskovyy-obov-st40-ch2"],
     "expectedArticles": ["Стаття 23"],
     "category": "мобілізація",
     "expectedFacts": ["заброньовані", "непридатні за станом здоров'я", "троє і більше дітей"]
@@ -320,7 +320,7 @@
   {
     "id": "transfer-conscript",
     "question": "В яких випадках строковика переводять до іншої частини?",
-    "expectedChunks": ["про-проходження-служ-p203-rIX-ch0"],
+    "expectedChunks": ["про-проходження-служ-p203-rIX-ch0", "viyskovyy-obov-st32-ch1"],
     "expectedArticles": ["Пункт 203"],
     "category": "переведення"
   },
@@ -350,7 +350,7 @@
   {
     "id": "russian-vacation",
     "question": "Положен ли мне отпуск на военной службе?",
-    "expectedChunks": ["про-проходження-служ-p180-rVIII-ch0"],
+    "expectedChunks": ["про-проходження-служ-p180-rVIII-ch0", "soczakhyst-st10-1"],
     "expectedArticles": ["Пункт 180"],
     "category": "запити російською"
   },
@@ -392,7 +392,7 @@
   {
     "id": "pay-level-guarantee",
     "question": "Чи гарантує держава достатній рівень грошового забезпечення?",
-    "expectedChunks": ["soczakhyst-st9-ch1"],
+    "expectedChunks": ["soczakhyst-st9-ch1", "soczakhyst-st9-ch3"],
     "expectedArticles": ["Стаття 9"],
     "category": "грошове забезпечення"
   },
