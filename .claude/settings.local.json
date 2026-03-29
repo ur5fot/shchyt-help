@@ -32,7 +32,9 @@
       "Bash(lsof -ti:5173,5174)",
       "Bash(ralphex -s --max-iterations 50 docs/plans/2026-03-29-golden-test-set.md)",
       "Bash(ralphex -s --review --max-iterations 50 docs/plans/2026-03-29-golden-test-set.md)",
-      "Bash(ralphex -s --max-iterations 50 docs/plans/2026-03-30-reranking.md)"
+      "Bash(ralphex -s --max-iterations 50 docs/plans/2026-03-30-reranking.md)",
+      "Bash(ralphex -s --max-iterations 50 docs/plans/2026-03-30-golden-fix-hyde.md)",
+      "Bash(find .ralphex -name *golden-fix* -o -name *hyde*)"
     ]
   }
 }
