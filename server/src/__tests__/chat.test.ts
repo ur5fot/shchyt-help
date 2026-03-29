@@ -364,7 +364,7 @@ describe('POST /api/chat', () => {
       expect(відповідь.body.verifiedSources).toBe(1);
     });
 
-    it('не повертає verifiedSources якщо немає верифікованих цитат', async () => {
+    it('повертає verifiedSources=0 якщо цитати є але жодна не верифікована', async () => {
       mockSearchLaws.mockReturnValue([{ chunk: чанкЗТекстом, score: 5 }]);
       mockAskClaude.mockResolvedValue(
         `Відповідь. ${ДИСКЛЕЙМЕР}\nЦИТАТИ:\n- Стаття 999, Частина 1 | "Вигадана цитата якої немає в чанках"`
@@ -374,7 +374,8 @@ describe('POST /api/chat', () => {
         .post('/api/chat')
         .send({ message: 'питання' });
 
-      expect(відповідь.body.verifiedSources).toBeUndefined();
+      // Блок ЦИТАТИ був — фільтрація активна, 0 підтверджених
+      expect(відповідь.body.verifiedSources).toBe(0);
     });
 
     it('не повертає verifiedSources якщо Claude не додав блок ЦИТАТИ', async () => {
@@ -388,7 +389,24 @@ describe('POST /api/chat', () => {
       expect(відповідь.body.verifiedSources).toBeUndefined();
     });
 
-    it('залишає всі sources якщо жодна цитата не верифікована (graceful)', async () => {
+    it('не фільтрує sources при малформованому блоці ЦИТАТИ без рядків цитат (graceful degradation)', async () => {
+      mockSearchLaws.mockReturnValue([{ chunk: чанкЗТекстом, score: 5 }]);
+      // Блок ЦИТАТИ є, але рядки не починаються з "- " — не розпізнається як блок цитат
+      mockAskClaude.mockResolvedValue(
+        `Відповідь. ${ДИСКЛЕЙМЕР}\nЦИТАТИ:\nСтаття 10 Частина 2 — грошове забезпечення\nякийсь інший текст`
+      );
+
+      const відповідь = await request(app)
+        .post('/api/chat')
+        .send({ message: 'грошове забезпечення' });
+
+      expect(відповідь.status).toBe(200);
+      // Блок без рядків цитат не активує фільтрацію — всі sources повертаються (graceful degradation)
+      expect(відповідь.body.sources).toHaveLength(1);
+      expect(відповідь.body.verifiedSources).toBeUndefined();
+    });
+
+    it('повертає порожні sources якщо жодна цитата не верифікована (анти-галюцінація)', async () => {
       mockSearchLaws.mockReturnValue([{ chunk: чанкЗТекстом, score: 5 }]);
       mockAskClaude.mockResolvedValue(
         `Відповідь. ${ДИСКЛЕЙМЕР}\nЦИТАТИ:\n- Стаття 999, Частина 1 | "Вигадана цитата якої немає в чанках"`
@@ -399,8 +417,8 @@ describe('POST /api/chat', () => {
         .send({ message: 'питання' });
 
       expect(відповідь.status).toBe(200);
-      // Жодна цитата не верифікована — фільтрація не застосовується, всі sources залишаються
-      expect(відповідь.body.sources).toHaveLength(1);
+      // Жодна цитата не верифікована — sources фільтруються до порожнього (захист від галюцінацій)
+      expect(відповідь.body.sources).toHaveLength(0);
     });
   });
 });

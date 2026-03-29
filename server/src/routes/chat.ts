@@ -5,7 +5,7 @@ import { searchLaws, hybridSearchLaws } from '../services/lawSearch.ts';
 import { buildPrompt } from '../services/promptBuilder.ts';
 import { askClaude, summarizeHistory, type HistoryMessage } from '../services/claude.ts';
 import { ініціалізуватиБД, чиДоступнаБД } from '../services/vectorStore.ts';
-import { extractCitations, verifyCitations, removeCitationBlock } from '../services/citationVerifier.ts';
+import { extractCitations, verifyCitations, removeCitationBlock, hasCitationBlock } from '../services/citationVerifier.ts';
 import { МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ, МАКС_ПОВІДОМЛЕНЬ_БЕЗ_СТИСНЕННЯ, МАКС_ПОВІДОМЛЕНЬ_ІСТОРІЇ, МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ_ІСТОРІЇ, ДИСКЛЕЙМЕР } from '../constants.ts';
 import { logger } from '../logger.ts';
 
@@ -175,12 +175,15 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     let відповідь = await askClaude(промпт, актуальнаІсторія, актуальнеРезюме);
 
     // Верифікація цитат — перевіряємо чи Claude не вигадав посилання
+    const блокЦитатПрисутній = hasCitationBlock(відповідь);
     const цитати = extractCitations(відповідь);
     const верифіковані = verifyCitations(цитати, чанки);
 
     const кількістьВерифікованих = верифіковані.filter(ц => ц.verified).length;
 
-    if (верифіковані.length > 0) {
+    if (блокЦитатПрисутній && верифіковані.length === 0) {
+      logger.warn('Блок ЦИТАТИ присутній, але жодна цитата не розпарсена — можливий format drift');
+    } else if (верифіковані.length > 0) {
       const невірні = верифіковані.filter(ц => !ц.verified);
       if (невірні.length > 0) {
         logger.warn(
@@ -208,9 +211,10 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     );
 
     // Формуємо джерела для клієнта (дедуплікуємо по унікальному ключу)
-    // Якщо є верифіковані цитати — залишаємо тільки підтверджені джерела
-    // Якщо цитат не було (Claude не додав блок) — повертаємо всі джерела як раніше (graceful)
-    const фільтруватиДжерела = верифікованіЧанкиIds.size > 0;
+    // Якщо Claude додав блок ЦИТАТИ з рядками цитат — фільтруємо до підтверджених джерел
+    // Якщо блоку ЦИТАТИ не було або він без рядків цитат — повертаємо всі джерела (graceful degradation)
+    // hasCitationBlock вимагає рядки формату "- ..." щоб уникнути хибного спрацювання на прозовому "Цитати:"
+    const фільтруватиДжерела = блокЦитатПрисутній;
     const seen = new Set<string>();
     const джерела: SourceItem[] = результатиПошуку
       .filter(р => !фільтруватиДжерела || верифікованіЧанкиIds.has(р.chunk.id))

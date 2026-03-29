@@ -13,7 +13,7 @@ export default function Sources({ sources, verifiedSources }: SourcesProps) {
       <div className="flex items-center justify-between mb-2">
         <p className="font-semibold text-gray-500 uppercase tracking-wide">Джерела</p>
         {verifiedSources != null && verifiedSources > 0 && (
-          <span className="text-green-500">&#10003; Перевірено: {verifiedSources} {verifiedSources === 1 ? 'джерело' : verifiedSources < 5 ? 'джерела' : 'джерел'}</span>
+          <span className="text-green-500">&#10003; Перевірено: {verifiedSources} {(() => { const n = verifiedSources % 100; const d = n % 10; if (n >= 11 && n <= 19) return 'джерел'; if (d === 1) return 'джерело'; if (d >= 2 && d <= 4) return 'джерела'; return 'джерел'; })()}</span>
         )}
       </div>
       <ul className="flex flex-col gap-1">
