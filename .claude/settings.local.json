@@ -17,7 +17,8 @@
       "Bash(diffstat)",
       "Bash(git log:*)",
       "Bash(npx tsx -e \":*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(lsof -ti:3001)"
     ]
   }
 }
