@@ -111,26 +111,33 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
       lanceDBДоступна = await чиДоступнаБД();
     }
 
-    // Якщо є історія чату — завжди додаємо контекст останніх повідомлень до пошуку,
-    // щоб пошук розумів тему розмови незалежно від того як сформульовано поточне питання
-    let пошуковийЗапит = trimmed;
+    // Знаходимо релевантні чанки законів
+    // При наявності історії — робимо два пошуки (поточний + з контекстом) і обʼєднуємо
+    const пошук = lanceDBДоступна
+      ? (q: string) => hybridSearchLaws(q, всіЧанки)
+      : (q: string) => Promise.resolve(searchLaws(q, всіЧанки));
+
+    let результатиПошуку = await пошук(trimmed);
+
     if (sanitizedHistory && sanitizedHistory.length > 0) {
-      // Беремо останнє user-повідомлення (без assistant — вони довгі і зашумлюють пошук)
       const останнєПитання = [...sanitizedHistory].reverse().find(m => m.role === 'user');
       if (останнєПитання) {
-        пошуковийЗапит = `${trimmed} ${останнєПитання.content}`.slice(0, 300);
-        logger.info({ оригінал: trimmed, пошук: пошуковийЗапит.slice(0, 80) }, 'Follow-up — пошук з контекстом');
-      }
-    }
+        // Додатковий пошук з контекстом попереднього питання
+        const контекстнийЗапит = `${trimmed} ${останнєПитання.content}`.slice(0, 300);
+        const контекстніРезультати = await пошук(контекстнийЗапит);
 
-    // Знаходимо релевантні чанки законів
-    let результатиПошуку;
-    if (lanceDBДоступна) {
-      logger.info('Гібридний пошук');
-      результатиПошуку = await hybridSearchLaws(пошуковийЗапит, всіЧанки);
-    } else {
-      logger.info('Keyword пошук (LanceDB не доступна)');
-      результатиПошуку = searchLaws(пошуковийЗапит, всіЧанки);
+        // Обʼєднуємо результати: унікальні чанки, сортовані за найкращим score
+        const seen = new Set(результатиПошуку.map(r => r.chunk.id));
+        for (const r of контекстніРезультати) {
+          if (!seen.has(r.chunk.id)) {
+            результатиПошуку.push(r);
+            seen.add(r.chunk.id);
+          }
+        }
+        результатиПошуку.sort((а, б) => б.score - а.score);
+        результатиПошуку = результатиПошуку.slice(0, 8);
+        logger.info({ оригінал: trimmed, контекст: останнєПитання.content.slice(0, 50) }, 'Пошук з контекстом');
+      }
     }
     const чанки = результатиПошуку.map(р => р.chunk);
 

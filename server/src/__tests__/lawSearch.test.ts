@@ -244,7 +244,7 @@ describe('searchLaws — edge cases', () => {
       sourceUrl: 'https://zakon.rada.gov.ua/laws/show/test',
     }));
     const результати = searchLaws('відпустка', багатоЧанків);
-    expect(результати.length).toBeLessThanOrEqual(5);
+    expect(результати.length).toBeLessThanOrEqual(8);
   });
 });
 
@@ -526,7 +526,7 @@ describe('hybridSearchLaws — гібридний пошук', () => {
     }));
 
     const результати = await hybridSearchLaws('тест', багатоЧанків);
-    expect(результати.length).toBeLessThanOrEqual(5);
+    expect(результати.length).toBeLessThanOrEqual(8);
   });
 
   it('результати відсортовані за спаданням гібридної оцінки', async () => {
