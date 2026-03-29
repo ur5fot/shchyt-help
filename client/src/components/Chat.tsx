@@ -140,6 +140,9 @@ export default function Chat() {
                 </li>
               ))}
             </ul>
+            <p className="mt-6 text-center text-xs text-gray-600">
+              ⚠️ Це не юридична консультація. Для прийняття рішень зверніться до військового адвоката.
+            </p>
           </div>
         )}
 
