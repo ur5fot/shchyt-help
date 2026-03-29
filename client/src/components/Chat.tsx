@@ -10,6 +10,7 @@ interface ChatMessage {
   role: MessageRole;
   text: string;
   sources?: Source[];
+  verifiedSources?: number;
   suggestedTemplate?: string | null;
 }
 
@@ -59,6 +60,7 @@ export default function Chat() {
           role: 'assistant',
           text: response.answer,
           sources: response.sources,
+          verifiedSources: response.verifiedSources,
           suggestedTemplate: detectTemplate(response.answer),
         },
       ]);
@@ -97,7 +99,7 @@ export default function Chat() {
           <div key={i}>
             <Message role={msg.role} text={msg.text} />
             {msg.role === 'assistant' && msg.sources && msg.sources.length > 0 && (
-              <Sources sources={msg.sources} />
+              <Sources sources={msg.sources} verifiedSources={msg.verifiedSources} />
             )}
             {msg.role === 'assistant' && msg.suggestedTemplate && (
               <div className="mb-3">

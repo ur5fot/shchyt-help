@@ -45,10 +45,10 @@
 - [x] `npm run lint` — без помилок
 
 ### Task 4: Додати індикатор верифікації на клієнті
-- [ ] Розширити `ChatResponse` в `client/src/services/api.ts` — додати поле `verifiedSources?: number` (кількість верифікованих джерел)
-- [ ] В `server/src/routes/chat.ts` повертати `verifiedSources` у відповіді
-- [ ] В `client/src/components/Sources.tsx` — показати індикатор "✓ Перевірено: N джерел" якщо `verifiedSources > 0`
-- [ ] `npm test` — всі тести проходять
+- [x] Розширити `ChatResponse` в `client/src/services/api.ts` — додати поле `verifiedSources?: number` (кількість верифікованих джерел)
+- [x] В `server/src/routes/chat.ts` повертати `verifiedSources` у відповіді
+- [x] В `client/src/components/Sources.tsx` — показати індикатор "✓ Перевірено: N джерел" якщо `verifiedSources > 0`
+- [x] `npm test` — всі тести проходять
 
 ### Task 5: Тести та фіналізація
 - [ ] Інтеграційні тести: повний цикл запит → відповідь → верифікація

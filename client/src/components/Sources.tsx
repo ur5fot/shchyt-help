@@ -2,14 +2,20 @@ import type { Source } from '../services/api';
 
 interface SourcesProps {
   sources: Source[];
+  verifiedSources?: number;
 }
 
-export default function Sources({ sources }: SourcesProps) {
+export default function Sources({ sources, verifiedSources }: SourcesProps) {
   if (!sources || sources.length === 0) return null;
 
   return (
     <div className="mt-2 px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-xs text-gray-400">
-      <p className="font-semibold text-gray-500 uppercase tracking-wide mb-2">Джерела</p>
+      <div className="flex items-center justify-between mb-2">
+        <p className="font-semibold text-gray-500 uppercase tracking-wide">Джерела</p>
+        {verifiedSources != null && verifiedSources > 0 && (
+          <span className="text-green-500">&#10003; Перевірено: {verifiedSources} {verifiedSources === 1 ? 'джерело' : verifiedSources < 5 ? 'джерела' : 'джерел'}</span>
+        )}
+      </div>
       <ul className="flex flex-col gap-1">
         {sources.map((джерело, i) => (
           <li key={i}>

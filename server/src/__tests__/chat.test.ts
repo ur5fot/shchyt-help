@@ -38,9 +38,11 @@ const mockBuildPrompt = vi.mocked(buildPrompt);
 const mockAskClaude = vi.mocked(askClaude);
 
 describe('POST /api/chat', () => {
-  const app = createApp();
+  // Створюємо новий app для кожного тесту щоб rate limiter не блокував запити
+  let app: ReturnType<typeof createApp>;
 
   beforeEach(() => {
+    app = createApp();
     vi.clearAllMocks();
 
     // За замовчуванням LanceDB недоступна — keyword пошук
@@ -346,6 +348,44 @@ describe('POST /api/chat', () => {
         .send({ message: 'питання' });
 
       expect(відповідь.body.sources).toHaveLength(2);
+    });
+
+    it('повертає verifiedSources у відповіді при верифікованих цитатах', async () => {
+      mockSearchLaws.mockReturnValue([{ chunk: чанкЗТекстом, score: 5 }]);
+      mockAskClaude.mockResolvedValue(
+        `Відповідь. ${ДИСКЛЕЙМЕР}\nЦИТАТИ:\n- Стаття 10, Частина 2 | "Військовослужбовцям виплачується грошове забезпечення"`
+      );
+
+      const відповідь = await request(app)
+        .post('/api/chat')
+        .send({ message: 'грошове забезпечення' });
+
+      expect(відповідь.status).toBe(200);
+      expect(відповідь.body.verifiedSources).toBe(1);
+    });
+
+    it('не повертає verifiedSources якщо немає верифікованих цитат', async () => {
+      mockSearchLaws.mockReturnValue([{ chunk: чанкЗТекстом, score: 5 }]);
+      mockAskClaude.mockResolvedValue(
+        `Відповідь. ${ДИСКЛЕЙМЕР}\nЦИТАТИ:\n- Стаття 999, Частина 1 | "Вигадана цитата якої немає в чанках"`
+      );
+
+      const відповідь = await request(app)
+        .post('/api/chat')
+        .send({ message: 'питання' });
+
+      expect(відповідь.body.verifiedSources).toBeUndefined();
+    });
+
+    it('не повертає verifiedSources якщо Claude не додав блок ЦИТАТИ', async () => {
+      mockSearchLaws.mockReturnValue([{ chunk: чанкЗТекстом, score: 5 }]);
+      mockAskClaude.mockResolvedValue(`Відповідь без цитат. ${ДИСКЛЕЙМЕР}`);
+
+      const відповідь = await request(app)
+        .post('/api/chat')
+        .send({ message: 'питання' });
+
+      expect(відповідь.body.verifiedSources).toBeUndefined();
     });
 
     it('залишає всі sources якщо жодна цитата не верифікована (graceful)', async () => {

@@ -61,4 +61,29 @@ describe('Sources', () => {
     const { container } = render(<Sources />);
     expect(container.firstChild).toBeNull();
   });
+
+  it('показує індикатор верифікації коли verifiedSources > 0', () => {
+    render(<Sources sources={джерела} verifiedSources={2} />);
+    expect(screen.getByText(/Перевірено: 2 джерела/)).toBeInTheDocument();
+  });
+
+  it('не показує індикатор верифікації коли verifiedSources не передано', () => {
+    render(<Sources sources={джерела} />);
+    expect(screen.queryByText(/Перевірено/)).not.toBeInTheDocument();
+  });
+
+  it('не показує індикатор верифікації коли verifiedSources = 0', () => {
+    render(<Sources sources={джерела} verifiedSources={0} />);
+    expect(screen.queryByText(/Перевірено/)).not.toBeInTheDocument();
+  });
+
+  it('правильно відмінює "джерело" для 1', () => {
+    render(<Sources sources={джерела} verifiedSources={1} />);
+    expect(screen.getByText(/Перевірено: 1 джерело/)).toBeInTheDocument();
+  });
+
+  it('правильно відмінює "джерел" для 5+', () => {
+    render(<Sources sources={джерела} verifiedSources={7} />);
+    expect(screen.getByText(/Перевірено: 7 джерел/)).toBeInTheDocument();
+  });
 });

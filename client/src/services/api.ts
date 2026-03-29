@@ -12,6 +12,7 @@ export interface HistoryMessage {
 export interface ChatResponse {
   answer: string;
   sources: Source[];
+  verifiedSources?: number;
   summary?: string;
 }
 

@@ -57,6 +57,7 @@ interface SourceItem {
 interface ChatResponse {
   answer: string;
   sources: SourceItem[];
+  verifiedSources?: number;
   summary?: string;
 }
 
@@ -228,7 +229,11 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     const часВідповіді = Date.now() - початок;
     logger.info({ часВідповідіМс: часВідповіді, кількістьДжерел: джерела.length }, 'Запит оброблено');
 
+    const кількістьВерифікованих = верифіковані.filter(ц => ц.verified).length;
     const response: ChatResponse = { answer: відповідь, sources: джерела };
+    if (кількістьВерифікованих > 0) {
+      response.verifiedSources = кількістьВерифікованих;
+    }
     if (новеРезюме) {
       response.summary = новеРезюме;
     }
