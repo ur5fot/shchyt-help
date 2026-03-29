@@ -64,9 +64,9 @@ export async function rerank(
   const модель = await завантажитиReranker();
 
   if (!модель) {
-    // Graceful fallback — повертаємо документи в оригінальному порядку
+    // Graceful fallback — повертаємо документи в оригінальному порядку, обрізаємо до topK
     logger.warn('Re-ranker недоступний — повертаємо оригінальний порядок');
-    return документи.map((д, індекс) => ({
+    return документи.slice(0, topK).map((д, індекс) => ({
       id: д.id,
       score: документи.length - індекс, // зберігаємо відносний порядок
     }));
@@ -74,17 +74,22 @@ export async function rerank(
 
   try {
     // Cross-encoder оцінює пари [запит, документ]
+    // TextClassificationPipeline не підтримує text_pair напряму,
+    // тому використовуємо tokenizer і model з pipeline окремо
+    const tokenizer = (модель as unknown as { tokenizer: { (...args: unknown[]): unknown } }).tokenizer;
+    const model = (модель as unknown as { model: { (...args: unknown[]): Promise<{ logits: { data: number[] } }> } }).model;
     const оцінки: RerankResult[] = [];
 
     for (const док of документи) {
-      const результат = await модель(
-        { text: запит, text_pair: док.text },
-        { topk: 1 }
-      );
-
-      // text-classification повертає масив [{label, score}]
-      const масив = Array.isArray(результат) ? результат : [результат];
-      const score = масив[0]?.score ?? 0;
+      const inputs = tokenizer(запит, {
+        text_pair: док.text,
+        padding: true,
+        truncation: true,
+      });
+      const output = await model(inputs);
+      // bge-reranker повертає logit — перетворюємо через sigmoid на [0, 1]
+      const logit = output.logits.data[0];
+      const score = 1 / (1 + Math.exp(-logit));
       оцінки.push({ id: док.id, score });
     }
 
@@ -94,7 +99,7 @@ export async function rerank(
     return оцінки.slice(0, topK);
   } catch (помилка) {
     logger.error({ помилка }, 'Помилка під час re-ranking — повертаємо оригінальний порядок');
-    return документи.map((д, індекс) => ({
+    return документи.slice(0, topK).map((д, індекс) => ({
       id: д.id,
       score: документи.length - індекс,
     }));

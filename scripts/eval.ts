@@ -271,8 +271,8 @@ async function main(): Promise<void> {
     console.log('Запуск повного eval через Claude API...');
     console.log(`(${питання.length} питань, це може зайняти кілька хвилин)\n`);
 
-    // Створюємо мапу retrieval результатів
-    const retrievalМапа = new Map(retrievalРезультати.map(р => [р.id, р.found]));
+    // Створюємо мапу retrieval результатів з hybrid пошуку (відповідає production flow)
+    const retrievalМапа = new Map(hybridРезультати.map(р => [р.id, р.found]));
 
     const повніРезультати: FullEvalResult[] = [];
     for (let i = 0; i < питання.length; i++) {
