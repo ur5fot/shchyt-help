@@ -30,7 +30,9 @@
       "Bash(curl -s -X POST http://localhost:3001/api/chat -H \"Content-Type: application/json\" -d '{\"\"\"\"message\"\"\"\":\"\"\"\"що таке ротація і коли мене мають замінити?\"\"\"\"}')",
       "Bash(curl -s -X POST http://localhost:3001/api/chat -H \"Content-Type: application/json\" -d '{\"\"\"\"message\"\"\"\":\"\"\"\"розкажи рецепт борщу\"\"\"\"}')",
       "Bash(lsof -ti:5173,5174)",
-      "Bash(ralphex -s --max-iterations 50 docs/plans/2026-03-29-golden-test-set.md)"
+      "Bash(ralphex -s --max-iterations 50 docs/plans/2026-03-29-golden-test-set.md)",
+      "Bash(ralphex -s --review --max-iterations 50 docs/plans/2026-03-29-golden-test-set.md)",
+      "Bash(ralphex -s --max-iterations 50 docs/plans/2026-03-30-reranking.md)"
     ]
   }
 }
