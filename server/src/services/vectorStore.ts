@@ -164,11 +164,21 @@ export async function оновитиЧанки(
     vector: ембеддинги[і],
   }));
 
-  await табл
+  // Визначаємо sourceUrl закону, щоб видалити старі чанки цього закону,
+  // яких більше немає у новій версії (зміна ID після перепарсингу)
+  const sourceUrl = чанки[0]?.sourceUrl;
+  let builder = табл
     .mergeInsert('id')
     .whenMatchedUpdateAll()
-    .whenNotMatchedInsertAll()
-    .execute(дані);
+    .whenNotMatchedInsertAll();
+
+  if (sourceUrl) {
+    builder = builder.whenNotMatchedBySourceDelete({
+      where: `sourceUrl = '${sourceUrl.replace(/'/g, "''")}'`,
+    });
+  }
+
+  await builder.execute(дані);
 }
 
 /**

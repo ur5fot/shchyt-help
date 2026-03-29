@@ -181,16 +181,20 @@ function parseArticleBased(paragraphs: string[], baseId: string): LawChunkRaw[] 
 function parsePunktBased(paragraphs: string[], baseId: string): LawChunkRaw[] {
   const chunks: LawChunkRaw[] = [];
   let currentSection = '';
-  let currentPunktNum = '';
   let partBuffer: string[] = [];
 
   // Паттерн для розділу: "I. Загальна частина", "II. Контракт" тощо
   const SECTION_RE = /^([IVXLC]+)\.\s+(.*)/;
   // Паттерн для пункту: "1. Текст", "10-1. Текст"
   const PUNKT_RE = /^(\d[\d-]*)\.\s+(.+)/s;
+  // Паттерн для табличних статей (ВЛК Розклад хвороб): "1 Стаття 1 Включено: ..."
+  const TABLE_STATTYA_RE = /^(\d+)\s+Стаття\s+\d+\s+(.*)/s;
+
+  let currentArticleLabel = ''; // "Пункт N" або "Стаття N (Розклад хвороб)"
+  let currentIdPrefix = '';     // "p40" або "st12"
 
   function flushChunk() {
-    if (!currentPunktNum || partBuffer.length === 0) return;
+    if (!currentArticleLabel || partBuffer.length === 0) return;
 
     const text = partBuffer.join(' ').trim();
     if (text.length < 10) {
@@ -199,11 +203,11 @@ function parsePunktBased(paragraphs: string[], baseId: string): LawChunkRaw[] {
     }
 
     const sectionSuffix = currentSection ? `-r${currentSection.replace(/[^IVXLC0-9]/g, '')}` : '';
-    const id = `${baseId}-p${currentPunktNum.replace(/[^0-9-]/g, '')}${sectionSuffix}-ch0`;
+    const id = `${baseId}-${currentIdPrefix}${sectionSuffix}-ch0`;
 
     chunks.push({
       id,
-      article: `Пункт ${currentPunktNum}`,
+      article: currentArticleLabel,
       part: currentSection ? `Розділ ${currentSection}` : '',
       text,
       keywords: extractKeywords(text),
@@ -226,15 +230,114 @@ function parsePunktBased(paragraphs: string[], baseId: string): LawChunkRaw[] {
     const punktMatch = PUNKT_RE.exec(text);
     if (punktMatch) {
       flushChunk();
-      currentPunktNum = punktMatch[1];
+      currentArticleLabel = `Пункт ${punktMatch[1]}`;
+      currentIdPrefix = `p${punktMatch[1].replace(/[^0-9-]/g, '')}`;
       partBuffer = [punktMatch[2].trim()];
-    } else if (currentPunktNum) {
+      continue;
+    }
+
+    // Табличні статті ВЛК: "1 Стаття 1 Включено: ..."
+    const stattyaMatch = TABLE_STATTYA_RE.exec(text);
+    if (stattyaMatch) {
+      flushChunk();
+      const num = stattyaMatch[1];
+      currentArticleLabel = `Стаття ${num} (Розклад хвороб)`;
+      currentIdPrefix = `st${num}`;
+      partBuffer = [stattyaMatch[2].trim()];
+      continue;
+    }
+
+    if (currentArticleLabel) {
       partBuffer.push(text);
     }
   }
 
   flushChunk();
   return chunks;
+}
+
+// Розбиває великі чанки, що містять вбудовані "N Стаття N" записи (таблиці ВЛК)
+function splitEmbeddedStattyaChunks(chunks: LawChunkRaw[], baseId: string): LawChunkRaw[] {
+  const STATTYA_NUM_RE = /^(\d+)\s+Стаття\s+\d+\s+(.*)/s;
+  const SPLIT_RE = /\b\d+\s+Стаття\s+\d+\s+/;
+  const SIZE_THRESHOLD = 2000;
+
+  const result: LawChunkRaw[] = [];
+  for (const chunk of chunks) {
+    if (!SPLIT_RE.test(chunk.text)) {
+      result.push(chunk);
+      continue;
+    }
+
+    // Малі чанки з одним "N Стаття N" на початку — лише оновлюємо метадані
+    if (chunk.text.length < SIZE_THRESHOLD) {
+      const sm = STATTYA_NUM_RE.exec(chunk.text);
+      if (sm) {
+        const num = sm[1];
+        const sectionSuffix = chunk.part ? `-r${chunk.part.replace(/[^IVXLC0-9]/g, '')}` : '';
+        result.push({
+          id: `${baseId}-st${num}${sectionSuffix}-ch0`,
+          article: `Стаття ${num} (Розклад хвороб)`,
+          part: chunk.part,
+          text: chunk.text,
+          keywords: chunk.keywords,
+        });
+      } else {
+        result.push(chunk);
+      }
+      continue;
+    }
+
+    // Знаходимо позиції "N Стаття N" у тексті
+    const boundaries: number[] = [];
+    const globalRe = /\b(\d+)\s+Стаття\s+\d+\s+/g;
+    let m;
+    while ((m = globalRe.exec(chunk.text)) !== null) {
+      boundaries.push(m.index);
+    }
+
+    if (boundaries.length === 0) {
+      result.push(chunk);
+      continue;
+    }
+
+    // Текст до першої статті — залишається як оригінальний чанк
+    const prefixText = chunk.text.slice(0, boundaries[0]).trim();
+    if (prefixText.length >= 10) {
+      result.push({
+        ...chunk,
+        text: prefixText,
+        keywords: extractKeywords(prefixText),
+      });
+    }
+
+    // Кожна "N Стаття N" стає окремим чанком
+    for (let i = 0; i < boundaries.length; i++) {
+      const start = boundaries[i];
+      const end = i + 1 < boundaries.length ? boundaries[i + 1] : chunk.text.length;
+      const segmentText = chunk.text.slice(start, end).trim();
+
+      const sm = STATTYA_NUM_RE.exec(segmentText);
+      if (sm && segmentText.length >= 10) {
+        const num = sm[1];
+        const sectionSuffix = chunk.part ? `-r${chunk.part.replace(/[^IVXLC0-9]/g, '')}` : '';
+        result.push({
+          id: `${baseId}-st${num}${sectionSuffix}-ch0`,
+          article: `Стаття ${num} (Розклад хвороб)`,
+          part: chunk.part,
+          text: segmentText,
+          keywords: extractKeywords(segmentText),
+        });
+      } else if (segmentText.length >= 10) {
+        result.push({
+          ...chunk,
+          text: segmentText,
+          keywords: extractKeywords(segmentText),
+        });
+      }
+    }
+  }
+  return result;
 }
 
 // Парсить HTML закону та повертає структуру LawFile
@@ -260,6 +363,9 @@ export function parseLawHtml(html: string, sourceUrl: string, shortTitle: string
   if (chunks.length === 0) {
     chunks = parsePunktBased(paragraphs, baseId);
   }
+
+  // Розбиваємо великі чанки з вбудованими табличними статтями
+  chunks = splitEmbeddedStattyaChunks(chunks, baseId);
 
   // Дедуплікація ID (постанови з додатками мають однакові номери пунктів)
   const idCounts: Record<string, number> = {};
