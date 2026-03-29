@@ -333,13 +333,16 @@ export async function hybridSearchLaws(
       text: р.chunk.text,
     }));
 
+    const rerankПочаток = Date.now();
     const rerankРезультати = await rerank(запит, документиДляRerank, МАКС_РЕЗУЛЬТАТІВ);
+    const rerankЧасМс = Date.now() - rerankПочаток;
 
     logger.info(
-      { кандидатів: кандидати.length, результатів: rerankРезультати.length },
-      'Re-ranking: %d кандидатів → %d результатів',
+      { кандидатів: кандидати.length, результатів: rerankРезультати.length, rerankЧасМс },
+      'Re-ranking: %d кандидатів → %d результатів за %dмс',
       кандидати.length,
-      rerankРезультати.length
+      rerankРезультати.length,
+      rerankЧасМс
     );
 
     // Створюємо мапу чанків за id для швидкого доступу

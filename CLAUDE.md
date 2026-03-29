@@ -65,7 +65,8 @@ eval/        → Golden test set (56 питань з очікуваними ча
 
 ## Сервіси та ключові модулі
 
-- **lawSearch.ts** — гібридний пошук по законах: keyword (стемінг, синоніми, поріг 3 бали) + vector similarity через LanceDB (0.4 keyword + 0.6 vector)
+- **lawSearch.ts** — гібридний пошук по законах: keyword (стемінг, синоніми, поріг 3 бали) + vector similarity через LanceDB (0.4 keyword + 0.6 vector) + cross-encoder re-ranking (top-20 → top-8)
+- **reranker.ts** (сервер) — cross-encoder re-ranking через `Xenova/bge-reranker-base`, lazy singleton завантаження, graceful fallback якщо модель недоступна
 - **embeddings.ts** (сервер) — генерація ембеддингів через `@xenova/transformers` (модель `Xenova/multilingual-e5-small`, 384d), lazy завантаження
 - **vectorStore.ts** (сервер) — робота з LanceDB: ініціалізація, створення таблиці, cosine similarity пошук, upsert чанків
 - **citationVerifier.ts** (сервер) — верифікація цитат AI: парсинг блоку `ЦИТАТИ:` з відповіді, fuzzy-перевірка кожної цитати проти наданих чанків (нормалізація + 80% порогове співпадіння слів), видалення блоку цитат з відповіді користувачу. Захист від галюцінацій — вигадані цитати не потрапляють у sources
@@ -99,8 +100,8 @@ eval/        → Golden test set (56 питань з очікуваними ча
 
 Пріоритезовані за впливом на якість відповідей:
 
-### 1. Cross-encoder re-ranking (найвищий пріоритет)
-Після гібридного пошуку (top-20) пропустити через re-ranker (`BAAI/bge-reranker-v2-m3`) щоб отримати top-5. Re-ranker бачить запит І документ разом, на відміну від bi-encoder ембеддингів. Очікуване покращення: +15-25% точності пошуку.
+### ~~1. Cross-encoder re-ranking~~ — РЕАЛІЗОВАНО
+Гібридний пошук (top-20) пропускається через cross-encoder `Xenova/bge-reranker-base` для отримання top-8. Re-ranker бачить запит І документ разом (`reranker.ts`). Retrieval recall покращився з 42.9% до 87.5%. Graceful fallback: якщо модель недоступна — працює без re-ranking.
 
 ### ~~2. Верифікація цитат (анти-галюцінація)~~ — РЕАЛІЗОВАНО
 System prompt інструктує Claude додавати блок `ЦИТАТИ:` з посиланнями у форматі `- Стаття N, Частина N | "точна цитата"`. Сервер програмно перевіряє кожну цитату проти наданих чанків через fuzzy match (`citationVerifier.ts`). Неверифіковані цитати логуються як warning, sources фільтруються до підтверджених. Graceful degradation: якщо Claude не додав блок ЦИТАТИ — все працює як раніше.
