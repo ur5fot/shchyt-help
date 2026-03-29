@@ -1,0 +1,394 @@
+[
+  {
+    "id": "vacation-basic",
+    "question": "Чи маю я право на відпустку під час служби?",
+    "expectedChunks": ["про-проходження-служ-p180-rVIII-ch0"],
+    "expectedArticles": ["Пункт 180"],
+    "category": "відпустки"
+  },
+  {
+    "id": "vacation-schedule",
+    "question": "Як складається графік відпусток для військовослужбовців?",
+    "expectedChunks": ["про-проходження-служ-p186-rVIII-ch0"],
+    "expectedArticles": ["Пункт 186"],
+    "category": "відпустки"
+  },
+  {
+    "id": "vacation-postpone",
+    "question": "В яких випадках відпустка може бути перенесена або продовжена?",
+    "expectedChunks": ["про-проходження-служ-p187-rVIII-ch0"],
+    "expectedArticles": ["Пункт 187"],
+    "category": "відпустки"
+  },
+  {
+    "id": "vacation-additional",
+    "question": "Чи можна використати додаткову відпустку окремо від основної?",
+    "expectedChunks": ["про-проходження-служ-p181-rVIII-ch0"],
+    "expectedArticles": ["Пункт 181"],
+    "category": "відпустки"
+  },
+  {
+    "id": "vacation-sick-leave",
+    "question": "Чи надається відпустка для лікування після поранення?",
+    "expectedChunks": ["про-проходження-служ-p208-rIX-ch0", "положення-про-влк-p6-rII-ch0-p5"],
+    "expectedArticles": ["Пункт 208", "Пункт 6"],
+    "category": "відпустки"
+  },
+  {
+    "id": "vacation-wartime",
+    "question": "Які відпустки надаються в особливий період?",
+    "expectedChunks": ["soczakhyst-st10-1"],
+    "expectedArticles": ["Стаття 10-1"],
+    "category": "відпустки"
+  },
+  {
+    "id": "vacation-recall",
+    "question": "Чи можуть мене відкликати з відпустки?",
+    "expectedChunks": ["про-проходження-служ-p191-rVIII-ch0", "про-проходження-служ-p192-rVIII-ch0"],
+    "expectedArticles": ["Пункт 191", "Пункт 192"],
+    "category": "відпустки"
+  },
+  {
+    "id": "vacation-conscript",
+    "question": "Які відпустки належать строковику?",
+    "expectedChunks": ["про-проходження-служ-p204-rIX-ch0"],
+    "expectedArticles": ["Пункт 204"],
+    "category": "відпустки"
+  },
+  {
+    "id": "pay-structure",
+    "question": "З чого складається грошове забезпечення військовослужбовця?",
+    "expectedChunks": ["порядок-виплати-грош-p2-rI-ch0", "про-грошове-забезпеч-p2-ch0"],
+    "expectedArticles": ["Пункт 2"],
+    "category": "грошове забезпечення"
+  },
+  {
+    "id": "pay-salary-scale",
+    "question": "Як визначається розмір посадового окладу?",
+    "expectedChunks": ["про-грошове-забезпеч-p1-ch0", "про-грошове-забезпеч-p4-ch0"],
+    "expectedArticles": ["Пункт 1", "Пункт 4"],
+    "category": "грошове забезпечення"
+  },
+  {
+    "id": "pay-seniority",
+    "question": "Яка надбавка за вислугу років?",
+    "expectedChunks": ["про-грошове-забезпеч-p6-ch0-p1"],
+    "expectedArticles": ["Пункт 6"],
+    "category": "грошове забезпечення"
+  },
+  {
+    "id": "pay-combat",
+    "question": "Які бойові виплати передбачені для військовослужбовців?",
+    "expectedChunks": ["порядок-виплати-грош-p2-rXXXIV-ch0"],
+    "expectedArticles": ["Пункт 2"],
+    "category": "грошове забезпечення"
+  },
+  {
+    "id": "pay-combat-confirmation",
+    "question": "Як підтверджується участь у бойових діях для виплати бойових?",
+    "expectedChunks": ["порядок-виплати-грош-p4-rXXXIV-ch0", "порядок-виплати-грош-p5-rXXXIV-ch0"],
+    "expectedArticles": ["Пункт 4", "Пункт 5"],
+    "category": "грошове забезпечення"
+  },
+  {
+    "id": "pay-delay",
+    "question": "Що робити якщо затримують виплату грошового забезпечення?",
+    "expectedChunks": ["soczakhyst-st9-ch3"],
+    "expectedArticles": ["Стаття 9"],
+    "category": "грошове забезпечення"
+  },
+  {
+    "id": "pay-overtime",
+    "question": "Чи оплачується служба у вихідні та святкові дні?",
+    "expectedChunks": ["порядок-виплати-грош-p7-rI-ch0"],
+    "expectedArticles": ["Пункт 7"],
+    "category": "грошове забезпечення"
+  },
+  {
+    "id": "pay-injury-bonus",
+    "question": "Яка виплата за поранення на службі?",
+    "expectedChunks": ["порядок-виплати-грош-p12-rXXXIV-ch0", "порядок-виплати-грош-p11-rXXXIV-ch0"],
+    "expectedArticles": ["Пункт 12", "Пункт 11"],
+    "category": "грошове забезпечення"
+  },
+  {
+    "id": "pay-dismissal-bonus",
+    "question": "Яка одноразова допомога при звільненні з військової служби?",
+    "expectedChunks": ["порядок-виплати-грош-p1-rXXXII-ch0"],
+    "expectedArticles": ["Пункт 1"],
+    "category": "грошове забезпечення"
+  },
+  {
+    "id": "discharge-grounds",
+    "question": "На яких підставах можна звільнитися з військової служби?",
+    "expectedChunks": ["viyskovyy-obov-st26-ch1", "viyskovyy-obov-st26-ch2"],
+    "expectedArticles": ["Стаття 26"],
+    "category": "звільнення"
+  },
+  {
+    "id": "discharge-early",
+    "question": "Чи можливе дострокове звільнення зі служби?",
+    "expectedChunks": ["viyskovyy-obov-st26-ch2", "viyskovyy-obov-st26-ch3"],
+    "expectedArticles": ["Стаття 26"],
+    "category": "звільнення"
+  },
+  {
+    "id": "discharge-health",
+    "question": "Як звільнитися за станом здоровʼя?",
+    "expectedChunks": ["viyskovyy-obov-st26-ch2", "про-проходження-служ-p35-rII-ch0"],
+    "expectedArticles": ["Стаття 26", "Пункт 35"],
+    "category": "звільнення"
+  },
+  {
+    "id": "discharge-contract-end",
+    "question": "Що відбувається після закінчення контракту під час воєнного стану?",
+    "expectedChunks": ["про-проходження-служ-p34-rII-ch0", "про-проходження-служ-p29-rII-ch0"],
+    "expectedArticles": ["Пункт 34", "Пункт 29"],
+    "category": "звільнення"
+  },
+  {
+    "id": "demobilization-basic",
+    "question": "Що таке демобілізація і коли вона проводиться?",
+    "expectedChunks": ["viyskovyy-obov-st43-ch1", "viyskovyy-obov-st43-ch2"],
+    "expectedArticles": ["Стаття 43"],
+    "category": "звільнення"
+  },
+  {
+    "id": "discharge-age-limit",
+    "question": "Який граничний вік перебування на військовій службі?",
+    "expectedChunks": ["viyskovyy-obov-st23-ch2"],
+    "expectedArticles": ["Стаття 23"],
+    "category": "звільнення"
+  },
+  {
+    "id": "mobilization-obligations",
+    "question": "Які обовʼязки громадян під час мобілізації?",
+    "expectedChunks": ["про-мобілізацію-st22-ch1", "про-мобілізацію-st22-ch6"],
+    "expectedArticles": ["Стаття 22"],
+    "category": "мобілізація"
+  },
+  {
+    "id": "mobilization-deferment",
+    "question": "Хто має право на відстрочку від мобілізації?",
+    "expectedChunks": ["про-мобілізацію-st23-ch1-p1", "про-мобілізацію-st23-ch1-p3"],
+    "expectedArticles": ["Стаття 23"],
+    "category": "мобілізація"
+  },
+  {
+    "id": "mobilization-deferment-children",
+    "question": "Чи надається відстрочка від мобілізації якщо є троє дітей?",
+    "expectedChunks": ["про-мобілізацію-st23-ch1-p3"],
+    "expectedArticles": ["Стаття 23"],
+    "category": "мобілізація"
+  },
+  {
+    "id": "mobilization-deferment-disability",
+    "question": "Чи звільняються від мобілізації особи з інвалідністю?",
+    "expectedChunks": ["про-мобілізацію-st23-ch1-p2"],
+    "expectedArticles": ["Стаття 23"],
+    "category": "мобілізація"
+  },
+  {
+    "id": "mobilization-booking",
+    "question": "Що таке бронювання від мобілізації?",
+    "expectedChunks": ["про-мобілізацію-st23-ch1-p1"],
+    "expectedArticles": ["Стаття 23"],
+    "category": "мобілізація"
+  },
+  {
+    "id": "mobilization-summons",
+    "question": "Як вручається повістка від ТЦК?",
+    "expectedChunks": ["про-мобілізацію-st22-ch3-p1", "зміни-щодо-мобілізац-st27-ch3"],
+    "expectedArticles": ["Стаття 22", "Стаття 27"],
+    "category": "мобілізація"
+  },
+  {
+    "id": "mobilization-requirement",
+    "question": "Що таке вимога від ТЦК і що буде якщо її не виконати?",
+    "expectedChunks": ["зміни-щодо-мобілізац-st27-ch1", "зміни-щодо-мобілізац-st27-ch4"],
+    "expectedArticles": ["Стаття 27"],
+    "category": "мобілізація"
+  },
+  {
+    "id": "injury-medical",
+    "question": "Яке медичне забезпечення після поранення?",
+    "expectedChunks": ["soczakhyst-st15-ch1", "soczakhyst-st15-ch2"],
+    "expectedArticles": ["Стаття 15"],
+    "category": "поранення/ВЛК"
+  },
+  {
+    "id": "vlk-purpose",
+    "question": "Що таке ВЛК і для чого вона потрібна?",
+    "expectedChunks": ["положення-про-влк-p1-rI-ch0-p2", "положення-про-влк-p1-rI-ch0-p3"],
+    "expectedArticles": ["Пункт 1"],
+    "category": "поранення/ВЛК"
+  },
+  {
+    "id": "vlk-referral",
+    "question": "Як направити військовослужбовця на медичний огляд ВЛК?",
+    "expectedChunks": ["положення-про-влк-p6-rII-ch0-p1", "положення-про-влк-p6-rII-ch0-p2"],
+    "expectedArticles": ["Пункт 6"],
+    "category": "поранення/ВЛК"
+  },
+  {
+    "id": "vlk-treatment-leave",
+    "question": "Чи надається відпустка для лікування за рішенням ВЛК?",
+    "expectedChunks": ["положення-про-влк-p6-rII-ch0-p5"],
+    "expectedArticles": ["Пункт 6"],
+    "category": "поранення/ВЛК"
+  },
+  {
+    "id": "insurance-basic",
+    "question": "Чи застраховані військовослужбовці і які виплати передбачені?",
+    "expectedChunks": ["soczakhyst-st16-ch1"],
+    "expectedArticles": ["Стаття 16"],
+    "category": "поранення/ВЛК"
+  },
+  {
+    "id": "insurance-death",
+    "question": "Яка допомога сімʼї загиблого військовослужбовця?",
+    "expectedChunks": ["soczakhyst-st16-ch3"],
+    "expectedArticles": ["Стаття 16"],
+    "category": "поранення/ВЛК"
+  },
+  {
+    "id": "veteran-status",
+    "question": "Хто має статус учасника бойових дій?",
+    "expectedChunks": ["veterany-st4-ch1", "veterany-st4-ch2"],
+    "expectedArticles": ["Стаття 4"],
+    "category": "статус УБД"
+  },
+  {
+    "id": "veteran-certificate",
+    "question": "Як отримати посвідчення учасника бойових дій?",
+    "expectedChunks": ["veterany-st5-ch1"],
+    "expectedArticles": ["Стаття 5"],
+    "category": "статус УБД"
+  },
+  {
+    "id": "veteran-benefits",
+    "question": "Які пільги мають учасники бойових дій?",
+    "expectedChunks": ["veterany-st12-ch1", "veterany-st12-ch2"],
+    "expectedArticles": ["Стаття 12"],
+    "category": "статус УБД"
+  },
+  {
+    "id": "veteran-disability",
+    "question": "Хто вважається інвалідом війни і які пільги йому належать?",
+    "expectedChunks": ["veterany-st7-ch1", "veterany-st14-ch1"],
+    "expectedArticles": ["Стаття 7", "Стаття 14"],
+    "category": "статус УБД"
+  },
+  {
+    "id": "veteran-family",
+    "question": "Які пільги мають члени сімей загиблих військовослужбовців?",
+    "expectedChunks": ["veterany-st17-ch1", "veterany-st17-ch2"],
+    "expectedArticles": ["Стаття 17"],
+    "category": "статус УБД"
+  },
+  {
+    "id": "transfer-demotion",
+    "question": "На яких підставах переміщують на нижчу посаду?",
+    "expectedChunks": ["про-проходження-служ-p94-rIV-ch0"],
+    "expectedArticles": ["Пункт 94"],
+    "category": "переведення"
+  },
+  {
+    "id": "transfer-contract",
+    "question": "Як укладається новий контракт при переведенні?",
+    "expectedChunks": ["про-проходження-служ-p27-rII-ch0"],
+    "expectedArticles": ["Пункт 27"],
+    "category": "переведення"
+  },
+  {
+    "id": "transfer-general",
+    "question": "Як здійснюється переведення військовослужбовця?",
+    "expectedChunks": ["viyskovyy-obov-st32-ch1"],
+    "expectedArticles": ["Стаття 32"],
+    "category": "переведення"
+  },
+  {
+    "id": "transfer-conscript",
+    "question": "В яких випадках строковика переводять до іншої частини?",
+    "expectedChunks": ["про-проходження-служ-p203-rIX-ch0"],
+    "expectedArticles": ["Пункт 203"],
+    "category": "переведення"
+  },
+  {
+    "id": "martial-law-definition",
+    "question": "Що таке воєнний стан і коли він вводиться?",
+    "expectedChunks": ["про-воєнний-стан-st1-ch1"],
+    "expectedArticles": ["Стаття 1"],
+    "category": "воєнний стан"
+  },
+  {
+    "id": "martial-law-restrictions",
+    "question": "Які обмеження прав діють під час воєнного стану?",
+    "expectedChunks": ["про-воєнний-стан-st8-ch1-p1", "про-воєнний-стан-st8-ch1-p5", "про-воєнний-стан-st8-ch1-p6"],
+    "expectedArticles": ["Стаття 8"],
+    "category": "воєнний стан"
+  },
+  {
+    "id": "martial-law-curfew",
+    "question": "Хто встановлює комендантську годину?",
+    "expectedChunks": ["про-воєнний-стан-st8-ch1-p5"],
+    "expectedArticles": ["Стаття 8"],
+    "category": "воєнний стан"
+  },
+  {
+    "id": "russian-vacation",
+    "question": "Положен ли мне отпуск на военной службе?",
+    "expectedChunks": ["про-проходження-служ-p180-rVIII-ch0"],
+    "expectedArticles": ["Пункт 180"],
+    "category": "запити російською"
+  },
+  {
+    "id": "russian-pay",
+    "question": "Из чего состоит денежное обеспечение военнослужащего?",
+    "expectedChunks": ["порядок-виплати-грош-p2-rI-ch0", "про-грошове-забезпеч-p2-ch0"],
+    "expectedArticles": ["Пункт 2"],
+    "category": "запити російською"
+  },
+  {
+    "id": "russian-mobilization",
+    "question": "Кому положена отсрочка от мобилизации?",
+    "expectedChunks": ["про-мобілізацію-st23-ch1-p1", "про-мобілізацію-st23-ch1-p3"],
+    "expectedArticles": ["Стаття 23"],
+    "category": "запити російською"
+  },
+  {
+    "id": "russian-discharge",
+    "question": "Как уволиться с военной службы?",
+    "expectedChunks": ["viyskovyy-obov-st26-ch1", "viyskovyy-obov-st26-ch2"],
+    "expectedArticles": ["Стаття 26"],
+    "category": "запити російською"
+  },
+  {
+    "id": "contract-first",
+    "question": "На який строк укладається перший контракт?",
+    "expectedChunks": ["viyskovyy-obov-st23-ch1"],
+    "expectedArticles": ["Стаття 23"],
+    "category": "звільнення"
+  },
+  {
+    "id": "mobilization-age",
+    "question": "До якого віку можуть мобілізувати?",
+    "expectedChunks": ["про-мобілізацію-st22-ch6", "про-мобілізацію-st23-ch5"],
+    "expectedArticles": ["Стаття 22", "Стаття 23"],
+    "category": "мобілізація"
+  },
+  {
+    "id": "pay-level-guarantee",
+    "question": "Чи гарантує держава достатній рівень грошового забезпечення?",
+    "expectedChunks": ["soczakhyst-st9-ch1"],
+    "expectedArticles": ["Стаття 9"],
+    "category": "грошове забезпечення"
+  },
+  {
+    "id": "housing-rights",
+    "question": "Чи мають військовослужбовці право на житло?",
+    "expectedChunks": ["soczakhyst-st18-ch1"],
+    "expectedArticles": ["Стаття 18"],
+    "category": "грошове забезпечення"
+  }
+]
