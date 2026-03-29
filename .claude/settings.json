@@ -16,7 +16,20 @@
       "Bash(node -e \"const fs=require\\(''fs''\\); const files=[''laws/pro-soczakhyst.json'',''laws/pro-status-veteraniv.json'',''laws/pro-viyskovyy-obovyazok.json'']; files.forEach\\(f=>{const d=JSON.parse\\(fs.readFileSync\\(f,''utf8''\\)\\); console.log\\(f, d.chunks.length, ''chunks, IDs:'', d.chunks.slice\\(0,2\\).map\\(c=>c.id\\)\\)}\\)\")",
       "WebSearch",
       "Bash(git merge:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(npx tsx -e \":*)",
+      "Bash(node -e \":*)",
+      "Bash(curl -s -X POST http://localhost:3001/api/chat -H \"Content-Type: application/json\" -d '{\"\"\"\"message\"\"\"\":\"\"\"\"Чи маю я право на відпустку під час служби?\"\"\"\"}')",
+      "Bash(curl -s -X POST http://localhost:3001/api/chat -H \"Content-Type: application/json\" -d '{\"\"\"\"message\"\"\"\":\"\"\"\"мені не платять бойові вже 3 місяці, що робити?\"\"\"\"}')",
+      "Bash(curl -s -X POST http://localhost:3001/api/chat -H \"Content-Type: application/json\" -d '{\"\"\"\"message\"\"\"\":\"\"\"\"як отримати статус УБД?\"\"\"\"}')",
+      "Bash(curl -s -X POST http://localhost:3001/api/chat -H \"Content-Type: application/json\" -d '{\"\"\"\"message\"\"\"\":\"\"\"\"как уволиться с армии?\"\"\"\"}')",
+      "Bash(curl -s -X POST http://localhost:3001/api/chat -H \"Content-Type: application/json\" -d '{\"\"\"\"message\"\"\"\":\"\"\"\"мене поранили, які мені виплати покладені?\"\"\"\"}')",
+      "Bash(curl -s -X POST http://localhost:3001/api/chat -H \"Content-Type: application/json\" -d '{\"\"\"\"message\"\"\"\":\"\"\"\"як пройти ВЛК?\"\"\"\"}')",
+      "Bash(curl -s -X POST http://localhost:3001/api/chat -H \"Content-Type: application/json\" -d '{\"\"\"\"message\"\"\"\":\"\"\"\"расскажи рецепт борща\"\"\"\"}')",
+      "Bash(node -e \"const d=require\\(''''fs''''\\).readFileSync\\(''''/dev/stdin'''',''''utf-8''''\\); const j=JSON.parse\\(d\\); console.log\\(''''ANSWER:'''', j.answer.slice\\(0,300\\)\\);\")",
+      "Bash(node -e \"const d=require\\(''''fs''''\\).readFileSync\\(''''/dev/stdin'''',''''utf-8''''\\); const j=JSON.parse\\(d\\); console.log\\(j.answer.slice\\(0,400\\)\\);\")",
+      "Bash(echo \"exit: $?\")",
+      "Bash(node -e \"console.log\\(''військовослужбовців''.includes\\(''військов''\\)\\)\")"
     ]
   }
 }

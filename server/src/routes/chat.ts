@@ -115,11 +115,12 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     // щоб пошук розумів тему розмови незалежно від того як сформульовано поточне питання
     let пошуковийЗапит = trimmed;
     if (sanitizedHistory && sanitizedHistory.length > 0) {
-      const останніПовідомлення = sanitizedHistory.slice(-2);
-      const контекст = останніПовідомлення.map(m => m.content).join(' ');
-      // Поточне питання + контекст останніх повідомлень (user + assistant)
-      пошуковийЗапит = `${trimmed} ${контекст}`.slice(0, 500);
-      logger.info({ оригінал: trimmed, пошук: пошуковийЗапит.slice(0, 80) }, 'Follow-up — пошук з контекстом');
+      // Беремо останнє user-повідомлення (без assistant — вони довгі і зашумлюють пошук)
+      const останнєПитання = [...sanitizedHistory].reverse().find(m => m.role === 'user');
+      if (останнєПитання) {
+        пошуковийЗапит = `${trimmed} ${останнєПитання.content}`.slice(0, 300);
+        logger.info({ оригінал: trimmed, пошук: пошуковийЗапит.slice(0, 80) }, 'Follow-up — пошук з контекстом');
+      }
     }
 
     // Знаходимо релевантні чанки законів

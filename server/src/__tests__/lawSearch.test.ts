@@ -563,3 +563,40 @@ describe('hybridSearchLaws — гібридний пошук', () => {
     }
   });
 });
+
+describe('searchLaws — пріоритизація військових законів', () => {
+  it('військовий закон отримує вищий score ніж цивільний при однаковому базовому збігу', () => {
+    const чанки: LawChunk[] = [
+      {
+        id: 'civil-1', article: 'Стаття 6', part: '',
+        text: 'Надається відпустка.',
+        keywords: ['відпустка'], lawTitle: 'Про відпустки',
+        sourceUrl: 'https://zakon.rada.gov.ua/laws/show/504',
+      },
+      {
+        id: 'mil-1', article: 'Стаття 10-1', part: '',
+        text: 'Надається відпустка.',
+        keywords: ['відпустка'], lawTitle: 'Закон про соціальний і правовий захист військовослужбовців',
+        sourceUrl: 'https://zakon.rada.gov.ua/laws/show/2011-12',
+      },
+    ];
+    const результати = searchLaws('відпустка', чанки);
+    expect(результати.length).toBe(2);
+    // Військовий закон має бути першим завдяки бонусу
+    expect(результати[0].chunk.id).toBe('mil-1');
+    expect(результати[0].score).toBeGreaterThan(результати[1].score);
+  });
+
+  it('чанк без жодного збігу не отримує бонус (0 * 1.5 = 0)', () => {
+    const чанки: LawChunk[] = [
+      {
+        id: 'mil-empty', article: 'Стаття 1', part: '', title: 'Загальні',
+        text: 'Цей закон регулює відносини.',
+        keywords: ['загальні'], lawTitle: 'Закон про військовий обовʼязок',
+        sourceUrl: 'https://zakon.rada.gov.ua/laws/show/2232-12',
+      },
+    ];
+    const результати = searchLaws('відпустка', чанки);
+    expect(результати.length).toBe(0);
+  });
+});
