@@ -1,0 +1,159 @@
+/**
+ * Утиліти для оцінки якості eval: нормалізація статей, перевірка фактів, підрахунок метрик.
+ * Виокремлено з scripts/eval.ts для тестування.
+ */
+
+export interface GoldenQuestion {
+  id: string;
+  question: string;
+  expectedChunks: string[];
+  expectedArticles: string[];
+  category: string;
+  expectedFacts?: string[];
+}
+
+export interface RetrievalResult {
+  id: string;
+  question: string;
+  category: string;
+  found: boolean;
+  expectedChunks: string[];
+  foundChunks: string[];
+}
+
+export interface FullEvalResult {
+  id: string;
+  question: string;
+  category: string;
+  retrievalFound: boolean;
+  expectedArticles: string[];
+  citedArticles: string[];
+  correctCitations: number;
+  totalCitations: number;
+  hallucinatedCitations: number;
+  expectedFacts: string[];
+  foundFacts: string[];
+  missedFacts: string[];
+}
+
+/**
+ * Нормалізує назву статті для порівняння.
+ */
+export function нормалізуватиСтаттю(article: string): string {
+  return article
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/частина\s+/g, 'ч.')
+    .trim();
+}
+
+/**
+ * Перевіряє чи цитована стаття AI збігається з однією з очікуваних.
+ */
+export function чиСтаттяОчікувана(citedArticle: string, expectedArticles: string[]): boolean {
+  const нормЦитата = нормалізуватиСтаттю(citedArticle);
+  return expectedArticles.some(очікувана => {
+    const нормОчікувана = нормалізуватиСтаттю(очікувана);
+    return нормЦитата.includes(нормОчікувана) || нормОчікувана.includes(нормЦитата);
+  });
+}
+
+/**
+ * Перевіряє чи факт згадується у відповіді (нечутливо до регістру).
+ */
+export function чиФактЗгаданий(відповідь: string, факт: string): boolean {
+  const нормВідповідь = відповідь.toLowerCase();
+  const нормФакт = факт.toLowerCase();
+  return нормВідповідь.includes(нормФакт);
+}
+
+/**
+ * Обчислює retrieval recall для набору результатів.
+ */
+export function обчислитиRetrievalRecall(результати: RetrievalResult[]): {
+  overall: { знайдено: number; всього: number; recall: number };
+  поКатегоріях: Map<string, { знайдено: number; всього: number; recall: number }>;
+} {
+  const всього = результати.length;
+  const знайдено = результати.filter(р => р.found).length;
+  const recall = всього > 0 ? (знайдено / всього) * 100 : 0;
+
+  const категорії = new Map<string, { знайдено: number; всього: number; recall: number }>();
+  for (const р of результати) {
+    const кат = категорії.get(р.category) ?? { знайдено: 0, всього: 0, recall: 0 };
+    кат.всього++;
+    if (р.found) кат.знайдено++;
+    кат.recall = кат.всього > 0 ? (кат.знайдено / кат.всього) * 100 : 0;
+    категорії.set(р.category, кат);
+  }
+
+  return { overall: { знайдено, всього, recall }, поКатегоріях: категорії };
+}
+
+/**
+ * Обчислює метрики цитат та фактів для повного eval.
+ */
+export function обчислитиПовніМетрики(результати: FullEvalResult[]): {
+  citationAccuracy: number;
+  hallucinationRate: number;
+  factRecall: number;
+  всьогоЦитат: number;
+  правильнихЦитат: number;
+  галюцинованихЦитат: number;
+  всьогоФактів: number;
+  знайденихФактів: number;
+} {
+  const всьогоЦитат = результати.reduce((с, р) => с + р.totalCitations, 0);
+  const правильнихЦитат = результати.reduce((с, р) => с + р.correctCitations, 0);
+  const галюцинованихЦитат = результати.reduce((с, р) => с + р.hallucinatedCitations, 0);
+
+  const зФактами = результати.filter(р => р.expectedFacts.length > 0);
+  const всьогоФактів = зФактами.reduce((с, р) => с + р.expectedFacts.length, 0);
+  const знайденихФактів = зФактами.reduce((с, р) => с + р.foundFacts.length, 0);
+
+  return {
+    citationAccuracy: всьогоЦитат > 0 ? (правильнихЦитат / всьогоЦитат) * 100 : 0,
+    hallucinationRate: всьогоЦитат > 0 ? (галюцинованихЦитат / всьогоЦитат) * 100 : 0,
+    factRecall: всьогоФактів > 0 ? (знайденихФактів / всьогоФактів) * 100 : 0,
+    всьогоЦитат,
+    правильнихЦитат,
+    галюцинованихЦитат,
+    всьогоФактів,
+    знайденихФактів,
+  };
+}
+
+/**
+ * Парсить та валідує golden set JSON.
+ */
+export function валідуватиGoldenSet(data: unknown): {
+  valid: boolean;
+  questions: GoldenQuestion[];
+  errors: string[];
+} {
+  const errors: string[] = [];
+
+  if (!Array.isArray(data)) {
+    return { valid: false, questions: [], errors: ['Golden set має бути масивом'] };
+  }
+
+  const questions: GoldenQuestion[] = [];
+  for (let i = 0; i < data.length; i++) {
+    const item = data[i];
+    if (!item.id) errors.push(`Питання [${i}]: відсутній id`);
+    if (!item.question) errors.push(`Питання [${i}]: відсутній question`);
+    if (!Array.isArray(item.expectedChunks) || item.expectedChunks.length === 0) {
+      errors.push(`Питання [${i}] (${item.id ?? '?'}): expectedChunks має бути непорожнім масивом`);
+    }
+    if (!Array.isArray(item.expectedArticles)) {
+      errors.push(`Питання [${i}] (${item.id ?? '?'}): expectedArticles має бути масивом`);
+    }
+    if (!item.category) errors.push(`Питання [${i}] (${item.id ?? '?'}): відсутній category`);
+
+    if (errors.length === 0 || item.id) {
+      questions.push(item as GoldenQuestion);
+    }
+  }
+
+  return { valid: errors.length === 0, questions, errors };
+}

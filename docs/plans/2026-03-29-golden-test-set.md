@@ -70,12 +70,12 @@
 - [x] `npm run eval -- --full` — повний eval з Claude API (повільно, коштує токени)
 
 ### Task 4: Тести та документація
-- [ ] Написати тести для eval скрипту (парсинг golden set, підрахунок метрик)
-- [ ] Оновити `CLAUDE.md` — додати опис `npm run eval` та golden test set
-- [ ] Оновити `README.md` — додати команду eval
-- [ ] `npm test` — всі тести проходять
-- [ ] `npm run lint` — без помилок
-- [ ] Запустити `npm run eval` — фінальний звіт з метриками
+- [x] Написати тести для eval скрипту (парсинг golden set, підрахунок метрик)
+- [x] Оновити `CLAUDE.md` — додати опис `npm run eval` та golden test set
+- [x] Оновити `README.md` — додати команду eval
+- [x] `npm test` — всі тести проходять
+- [x] `npm run lint` — без помилок
+- [x] Запустити `npm run eval` — фінальний звіт з метриками
 
 ## Verification
 1. `npm run eval` → таблиця з retrieval recall по категоріях

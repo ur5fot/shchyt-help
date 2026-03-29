@@ -18,44 +18,16 @@ import { searchLaws } from '../server/src/services/lawSearch';
 import { buildPrompt } from '../server/src/services/promptBuilder';
 import { askClaude } from '../server/src/services/claude';
 import { extractCitations, verifyCitations } from '../server/src/services/citationVerifier';
+import {
+  type GoldenQuestion,
+  type RetrievalResult,
+  type FullEvalResult,
+  чиФактЗгаданий,
+  обчислитиRetrievalRecall,
+  обчислитиПовніМетрики,
+} from '../server/src/services/evalMetrics';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-interface GoldenQuestion {
-  id: string;
-  question: string;
-  expectedChunks: string[];
-  expectedArticles: string[];
-  category: string;
-  expectedFacts?: string[];
-}
-
-interface RetrievalResult {
-  id: string;
-  question: string;
-  category: string;
-  found: boolean;
-  expectedChunks: string[];
-  foundChunks: string[];
-}
-
-interface FullEvalResult {
-  id: string;
-  question: string;
-  category: string;
-  // Retrieval
-  retrievalFound: boolean;
-  // Citation accuracy
-  expectedArticles: string[];
-  citedArticles: string[];
-  correctCitations: number;
-  totalCitations: number;
-  hallucinatedCitations: number;
-  // Fact recall
-  expectedFacts: string[];
-  foundFacts: string[];
-  missedFacts: string[];
-}
 
 function завантажитиGoldenSet(): GoldenQuestion[] {
   const шлях = join(__dirname, '..', 'eval', 'golden-set.json');
@@ -88,32 +60,20 @@ function оцінитиKeywordПошук(
 }
 
 function вивестиRetrievalЗвіт(результати: RetrievalResult[]): void {
-  const всього = результати.length;
-  const знайдено = результати.filter(р => р.found).length;
-  const recall = всього > 0 ? (знайдено / всього) * 100 : 0;
+  const { overall, поКатегоріях } = обчислитиRetrievalRecall(результати);
 
   console.log('\n========================================');
   console.log('  RETRIEVAL EVALUATION REPORT (keyword)');
   console.log('========================================\n');
-  console.log(`Overall recall: ${знайдено}/${всього} (${recall.toFixed(1)}%)\n`);
-
-  // По категоріях
-  const категорії = new Map<string, { всього: number; знайдено: number }>();
-  for (const р of результати) {
-    const кат = категорії.get(р.category) ?? { всього: 0, знайдено: 0 };
-    кат.всього++;
-    if (р.found) кат.знайдено++;
-    категорії.set(р.category, кат);
-  }
+  console.log(`Overall recall: ${overall.знайдено}/${overall.всього} (${overall.recall.toFixed(1)}%)\n`);
 
   console.log('Recall по категоріях:');
   console.log('─'.repeat(50));
 
-  const відсортовані = Array.from(категорії.entries()).sort((а, б) => а[0].localeCompare(б[0], 'uk'));
+  const відсортовані = Array.from(поКатегоріях.entries()).sort((а, б) => а[0].localeCompare(б[0], 'uk'));
   for (const [назва, дані] of відсортовані) {
-    const catRecall = дані.всього > 0 ? (дані.знайдено / дані.всього) * 100 : 0;
-    const бар = catRecall === 100 ? '██████████' : '█'.repeat(Math.round(catRecall / 10)) + '░'.repeat(10 - Math.round(catRecall / 10));
-    console.log(`  ${назва.padEnd(25)} ${дані.знайдено}/${дані.всього}  ${catRecall.toFixed(0).padStart(3)}%  ${бар}`);
+    const бар = дані.recall === 100 ? '██████████' : '█'.repeat(Math.round(дані.recall / 10)) + '░'.repeat(10 - Math.round(дані.recall / 10));
+    console.log(`  ${назва.padEnd(25)} ${дані.знайдено}/${дані.всього}  ${дані.recall.toFixed(0).padStart(3)}%  ${бар}`);
   }
 
   // Пропущені питання
@@ -131,39 +91,6 @@ function вивестиRetrievalЗвіт(результати: RetrievalResult[]
   }
 
   console.log('========================================\n');
-}
-
-/**
- * Перевіряє чи цитована стаття збігається з очікуваною.
- * Нормалізує формат: "Стаття 26" == "стаття 26", "Пункт 180" == "пункт 180"
- */
-function нормалізуватиСтаттю(article: string): string {
-  return article
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .replace(/частина\s+/g, 'ч.')
-    .trim();
-}
-
-/**
- * Перевіряє чи цитована стаття AI збігається з однією з очікуваних.
- */
-function чиСтаттяОчікувана(citedArticle: string, expectedArticles: string[]): boolean {
-  const нормЦитата = нормалізуватиСтаттю(citedArticle);
-  return expectedArticles.some(очікувана => {
-    const нормОчікувана = нормалізуватиСтаттю(очікувана);
-    // Пряме входження або навпаки
-    return нормЦитата.includes(нормОчікувана) || нормОчікувана.includes(нормЦитата);
-  });
-}
-
-/**
- * Перевіряє чи факт згадується у відповіді (нечутливо до регістру).
- */
-function чиФактЗгаданий(відповідь: string, факт: string): boolean {
-  const нормВідповідь = відповідь.toLowerCase();
-  const нормФакт = факт.toLowerCase();
-  return нормВідповідь.includes(нормФакт);
 }
 
 /**
@@ -213,35 +140,25 @@ async function оцінитиПитанняЧерезAPI(
 }
 
 function вивестиПовнийЗвіт(результати: FullEvalResult[]): void {
+  const метрики = обчислитиПовніМетрики(результати);
+
   console.log('\n========================================');
   console.log('  FULL EVALUATION REPORT (Claude API)');
   console.log('========================================\n');
 
-  // Citation accuracy
   const зЦитатами = результати.filter(р => р.totalCitations > 0);
-  const всьогоЦитат = результати.reduce((с, р) => с + р.totalCitations, 0);
-  const правильнихЦитат = результати.reduce((с, р) => с + р.correctCitations, 0);
-  const галюцинованихЦитат = результати.reduce((с, р) => с + р.hallucinatedCitations, 0);
-
-  const citAccuracy = всьогоЦитат > 0 ? (правильнихЦитат / всьогоЦитат) * 100 : 0;
-  const hallRate = всьогоЦитат > 0 ? (галюцинованихЦитат / всьогоЦитат) * 100 : 0;
+  const зФактами = результати.filter(р => р.expectedFacts.length > 0);
 
   console.log('Citation metrics:');
   console.log('─'.repeat(50));
   console.log(`  Питань з цитатами: ${зЦитатами.length}/${результати.length}`);
-  console.log(`  Citation accuracy:   ${правильнихЦитат}/${всьогоЦитат} (${citAccuracy.toFixed(1)}%)`);
-  console.log(`  Hallucination rate:  ${галюцинованихЦитат}/${всьогоЦитат} (${hallRate.toFixed(1)}%)`);
-
-  // Fact recall
-  const зФактами = результати.filter(р => р.expectedFacts.length > 0);
-  const всьогоФактів = зФактами.reduce((с, р) => с + р.expectedFacts.length, 0);
-  const знайденихФактів = зФактами.reduce((с, р) => с + р.foundFacts.length, 0);
-  const factRecall = всьогоФактів > 0 ? (знайденихФактів / всьогоФактів) * 100 : 0;
+  console.log(`  Citation accuracy:   ${метрики.правильнихЦитат}/${метрики.всьогоЦитат} (${метрики.citationAccuracy.toFixed(1)}%)`);
+  console.log(`  Hallucination rate:  ${метрики.галюцинованихЦитат}/${метрики.всьогоЦитат} (${метрики.hallucinationRate.toFixed(1)}%)`);
 
   console.log('\nFact recall:');
   console.log('─'.repeat(50));
   console.log(`  Питань з очікуваними фактами: ${зФактами.length}`);
-  console.log(`  Fact recall: ${знайденихФактів}/${всьогоФактів} (${factRecall.toFixed(1)}%)`);
+  console.log(`  Fact recall: ${метрики.знайденихФактів}/${метрики.всьогоФактів} (${метрики.factRecall.toFixed(1)}%)`);
 
   // Деталі галюцінацій
   const зГалюцинаціями = результати.filter(р => р.hallucinatedCitations > 0);
