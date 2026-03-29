@@ -10,9 +10,14 @@
  *   npm run eval -- --full — повний eval з Claude API (повільно, коштує токени)
  */
 
+import dotenv from 'dotenv';
 import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { join, dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: resolve(__dirname, '..', '.env') });
+
 import { loadAllLaws } from '../laws/index';
 import { searchLaws } from '../server/src/services/lawSearch';
 import { buildPrompt } from '../server/src/services/promptBuilder';
@@ -28,8 +33,6 @@ import {
   обчислитиПовніМетрики,
   валідуватиGoldenSet,
 } from '../server/src/services/evalMetrics';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 function завантажитиGoldenSet(): GoldenQuestion[] {
   const шлях = join(__dirname, '..', 'eval', 'golden-set.json');
