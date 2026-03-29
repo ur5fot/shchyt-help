@@ -14,7 +14,8 @@
       "Bash(grep -r \"embedding\\\\|vector\\\\|@xenova\\\\|transformers\" /Users/dim/code/shchyt_help/server --include=*.ts --include=*.json)",
       "Bash(wc -l /Users/dim/code/shchyt_help/laws/*.json)",
       "Bash(node -e \"const fs=require\\(''fs''\\); const files=[''laws/pro-soczakhyst.json'',''laws/pro-status-veteraniv.json'',''laws/pro-viyskovyy-obovyazok.json'']; files.forEach\\(f=>{const d=JSON.parse\\(fs.readFileSync\\(f,''utf8''\\)\\); console.log\\(f, d.chunks.length, ''chunks, IDs:'', d.chunks.slice\\(0,2\\).map\\(c=>c.id\\)\\)}\\)\")",
-      "WebSearch"
+      "WebSearch",
+      "Bash(git merge:*)"
     ]
   }
 }

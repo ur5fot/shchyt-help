@@ -12,7 +12,11 @@
       "Bash(xargs kill:*)",
       "Bash(git checkout:*)",
       "Bash(git branch:*)",
-      "Bash(ralphex -s --max-iterations 50 docs/plans/2026-03-29-add-laws.md)"
+      "Bash(ralphex -s --max-iterations 50 docs/plans/2026-03-29-add-laws.md)",
+      "Bash(node -e \":*)",
+      "Bash(diffstat)",
+      "Bash(git log:*)",
+      "Bash(npx tsx -e \":*)"
     ]
   }
 }
