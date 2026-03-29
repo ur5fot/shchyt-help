@@ -128,6 +128,10 @@ export function обчислитиПовніМетрики(результати:
   };
 }
 
+function масивРядків(arr: unknown[]): boolean {
+  return arr.every(el => typeof el === 'string');
+}
+
 /**
  * Парсить та валідує golden set JSON.
  */
@@ -145,20 +149,46 @@ export function валідуватиGoldenSet(data: unknown): {
   const questions: GoldenQuestion[] = [];
   for (let i = 0; i < data.length; i++) {
     const item = data[i];
-    if (!item.id) errors.push(`Питання [${i}]: відсутній id`);
-    if (!item.question) errors.push(`Питання [${i}]: відсутній question`);
-    if (!Array.isArray(item.expectedChunks) || item.expectedChunks.length === 0) {
-      errors.push(`Питання [${i}] (${item.id ?? '?'}): expectedChunks має бути непорожнім масивом`);
-    }
-    if (!Array.isArray(item.expectedArticles)) {
-      errors.push(`Питання [${i}] (${item.id ?? '?'}): expectedArticles має бути масивом`);
-    }
-    if (!item.category) errors.push(`Питання [${i}] (${item.id ?? '?'}): відсутній category`);
 
-    if (!item.id || !item.question || !Array.isArray(item.expectedChunks) || item.expectedChunks.length === 0 || !Array.isArray(item.expectedArticles) || !item.category) {
-      // Пропускаємо невалідні елементи
-    } else {
-      questions.push(item as GoldenQuestion);
+    if (typeof item !== 'object' || item === null) {
+      errors.push(`Питання [${i}]: має бути об'єктом`);
+      continue;
+    }
+
+    const obj = item as Record<string, unknown>;
+    const id = obj.id;
+    const label = typeof id === 'string' ? id : '?';
+
+    if (typeof obj.id !== 'string' || !obj.id) errors.push(`Питання [${i}]: відсутній або невалідний id`);
+    if (typeof obj.question !== 'string' || !obj.question) errors.push(`Питання [${i}]: відсутній або невалідний question`);
+    if (!Array.isArray(obj.expectedChunks) || obj.expectedChunks.length === 0) {
+      errors.push(`Питання [${i}] (${label}): expectedChunks має бути непорожнім масивом`);
+    } else if (!масивРядків(obj.expectedChunks)) {
+      errors.push(`Питання [${i}] (${label}): всі елементи expectedChunks мають бути рядками`);
+    }
+    if (!Array.isArray(obj.expectedArticles)) {
+      errors.push(`Питання [${i}] (${label}): expectedArticles має бути масивом`);
+    } else if (!масивРядків(obj.expectedArticles)) {
+      errors.push(`Питання [${i}] (${label}): всі елементи expectedArticles мають бути рядками`);
+    }
+    if (typeof obj.category !== 'string' || !obj.category) errors.push(`Питання [${i}] (${label}): відсутній або невалідний category`);
+    if (obj.expectedFacts !== undefined) {
+      if (!Array.isArray(obj.expectedFacts)) {
+        errors.push(`Питання [${i}] (${label}): expectedFacts має бути масивом`);
+      } else if (!масивРядків(obj.expectedFacts)) {
+        errors.push(`Питання [${i}] (${label}): всі елементи expectedFacts мають бути рядками`);
+      }
+    }
+
+    const valid = typeof obj.id === 'string' && !!obj.id
+      && typeof obj.question === 'string' && !!obj.question
+      && Array.isArray(obj.expectedChunks) && obj.expectedChunks.length > 0 && масивРядків(obj.expectedChunks)
+      && Array.isArray(obj.expectedArticles) && масивРядків(obj.expectedArticles)
+      && typeof obj.category === 'string' && !!obj.category
+      && (obj.expectedFacts === undefined || (Array.isArray(obj.expectedFacts) && масивРядків(obj.expectedFacts)));
+
+    if (valid) {
+      questions.push(obj as unknown as GoldenQuestion);
     }
   }
 

@@ -255,6 +255,9 @@ async function main(): Promise<void> {
 
     if (повніРезультати.length > 0) {
       вивестиПовнийЗвіт(повніРезультати);
+    } else {
+      console.error('\n✗ Жодне питання не було оцінено — всі API виклики завершилися помилкою');
+      process.exit(1);
     }
   }
 }

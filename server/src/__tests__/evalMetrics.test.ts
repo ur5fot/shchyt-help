@@ -230,7 +230,7 @@ describe('валідуватиGoldenSet', () => {
     const data = [{ question: 'Питання?', expectedChunks: ['c'], expectedArticles: [], category: 'x' }];
     const result = валідуватиGoldenSet(data);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.includes('відсутній id'))).toBe(true);
+    expect(result.errors.some(e => e.includes('відсутній або невалідний id'))).toBe(true);
     expect(result.questions).toHaveLength(0);
   });
 
@@ -240,6 +240,61 @@ describe('валідуватиGoldenSet', () => {
     expect(result.valid).toBe(false);
     expect(result.errors.some(e => e.includes('expectedChunks'))).toBe(true);
     expect(result.questions).toHaveLength(0);
+  });
+
+  it('відхиляє null елементи без TypeError', () => {
+    const data = [null, undefined, 42, 'string'];
+    const result = валідуватиGoldenSet(data);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toHaveLength(4);
+    expect(result.errors.every(e => e.includes("має бути об'єктом"))).toBe(true);
+    expect(result.questions).toHaveLength(0);
+  });
+
+  it('відхиляє id з невірним типом', () => {
+    const data = [{ id: 123, question: 'Q?', expectedChunks: ['c'], expectedArticles: [], category: 'x' }];
+    const result = валідуватиGoldenSet(data);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('невалідний id'))).toBe(true);
+  });
+
+  it('відхиляє expectedFacts що не є масивом', () => {
+    const data = [{
+      id: 'x', question: 'Q?', expectedChunks: ['c'], expectedArticles: [], category: 'y',
+      expectedFacts: 'not-array',
+    }];
+    const result = валідуватиGoldenSet(data);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('expectedFacts має бути масивом'))).toBe(true);
+    expect(result.questions).toHaveLength(0);
+  });
+
+  it('відхиляє нерядкові елементи в expectedChunks', () => {
+    const data = [{
+      id: 'x', question: 'Q?', expectedChunks: [123], expectedArticles: [], category: 'y',
+    }];
+    const result = валідуватиGoldenSet(data);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('expectedChunks мають бути рядками'))).toBe(true);
+  });
+
+  it('відхиляє нерядкові елементи в expectedArticles', () => {
+    const data = [{
+      id: 'x', question: 'Q?', expectedChunks: ['c'], expectedArticles: [456], category: 'y',
+    }];
+    const result = валідуватиGoldenSet(data);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('expectedArticles мають бути рядками'))).toBe(true);
+  });
+
+  it('відхиляє нерядкові елементи в expectedFacts', () => {
+    const data = [{
+      id: 'x', question: 'Q?', expectedChunks: ['c'], expectedArticles: [], category: 'y',
+      expectedFacts: [789],
+    }];
+    const result = валідуватиGoldenSet(data);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('expectedFacts мають бути рядками'))).toBe(true);
   });
 
   it('приймає питання з expectedFacts', () => {
