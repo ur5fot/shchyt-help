@@ -154,7 +154,7 @@ describe('verifyCitations', () => {
     ];
     const citations = [
       {
-        article: 'Пункт 1',
+        article: 'Стаття 10, Частина 2',
         quote: 'грошове забезпечення виплачується щомісяця',
         verified: false,
       },
@@ -177,6 +177,25 @@ describe('verifyCitations', () => {
     expect(result[0].verified).toBe(false);
   });
 
+  it('відхиляє цитату з невірним номером статті', () => {
+    const chunks = [
+      createChunk({
+        id: 'chunk-1',
+        text: 'Військовослужбовці мають право на щорічну основну відпустку тривалістю 30 календарних днів.',
+      }),
+    ];
+    const citations = [
+      {
+        article: 'Стаття 999',
+        quote: 'Військовослужбовці мають право на щорічну основну відпустку',
+        verified: false,
+      },
+    ];
+
+    const result = verifyCitations(citations, chunks);
+    expect(result[0].verified).toBe(false);
+  });
+
   it('знаходить цитату серед кількох чанків', () => {
     const chunks = [
       createChunk({ id: 'chunk-1', text: 'Перший чанк з іншим текстом.' }),
@@ -188,7 +207,7 @@ describe('verifyCitations', () => {
     ];
     const citations = [
       {
-        article: 'Стаття 7',
+        article: 'Стаття 10',
         quote: 'військовослужбовець має право на додаткову відпустку',
         verified: false,
       },
@@ -230,7 +249,7 @@ describe('edge cases', () => {
     ];
     const citations = [
       {
-        article: 'Стаття 1',
+        article: 'Стаття 10',
         quote: "Військовослужбовець має право на зарахування до кадрів Збройних Сил Українʼи згідно з наказом",
         verified: false,
       },

@@ -77,16 +77,38 @@ function fuzzyContains(chunkText: string, quote: string): boolean {
   const quoteWords = normalizedQuote.split(' ').filter((w) => w.length > 2);
   if (quoteWords.length < 3) return false;
 
-  // Мінімальний поріг — 80% слів мають бути присутні
-  const foundWords = quoteWords.filter((word) => normalizedChunk.includes(word));
+  // Мінімальний поріг — 80% слів мають бути присутні (порівнюємо цілі слова)
+  const chunkWordSet = new Set(normalizedChunk.split(' '));
+  const foundWords = quoteWords.filter((word) => chunkWordSet.has(word));
   const ratio = foundWords.length / quoteWords.length;
 
   return ratio >= 0.8;
 }
 
 /**
+ * Перевіряє чи посилання на статтю/частину цитати відповідає чанку.
+ * Нормалізує обидва тексти і перевіряє чи є спільні числові ідентифікатори.
+ */
+function articleMatches(citationArticle: string, chunk: LawChunk): boolean {
+  const normalizedCitation = normalizeForComparison(citationArticle);
+  const normalizedChunkArticle = normalizeForComparison(
+    chunk.part ? `${chunk.article} ${chunk.part}` : chunk.article
+  );
+
+  // Витягуємо числа зі статей для порівняння
+  const citationNumbers = normalizedCitation.match(/\d+/g);
+  const chunkNumbers = normalizedChunkArticle.match(/\d+/g);
+
+  if (!citationNumbers || !chunkNumbers) return true; // якщо немає чисел — не можемо перевірити, пропускаємо
+
+  // Перший номер (статті) повинен співпадати
+  return citationNumbers[0] === chunkNumbers[0];
+}
+
+/**
  * Верифікує масив цитат проти наданих чанків.
- * Для кожної цитати шукає чанк де текст цитати присутній (fuzzy match).
+ * Для кожної цитати шукає чанк де текст цитати присутній (fuzzy match)
+ * та номер статті відповідає.
  */
 export function verifyCitations(
   citations: Citation[],
@@ -95,9 +117,9 @@ export function verifyCitations(
   return citations.map((citation) => {
     const result: VerifiedCitation = { ...citation, verified: false };
 
-    // Шукаємо чанк де текст цитати міститься
+    // Шукаємо чанк де текст цитати міститься і стаття відповідає
     for (const chunk of chunks) {
-      if (fuzzyContains(chunk.text, citation.quote)) {
+      if (articleMatches(citation.article, chunk) && fuzzyContains(chunk.text, citation.quote)) {
         result.verified = true;
         result.matchedChunkId = chunk.id;
         break;

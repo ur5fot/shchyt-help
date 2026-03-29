@@ -232,8 +232,8 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     logger.info({ часВідповідіМс: часВідповіді, кількістьДжерел: джерела.length }, 'Запит оброблено');
 
     const response: ChatResponse = { answer: відповідь, sources: джерела };
-    if (верифікованіЧанкиIds.size > 0) {
-      response.verifiedSources = верифікованіЧанкиIds.size;
+    if (фільтруватиДжерела) {
+      response.verifiedSources = джерела.length;
     }
     if (новеРезюме) {
       response.summary = новеРезюме;
