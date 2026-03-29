@@ -26,7 +26,7 @@ export interface VerifiedCitation extends Citation {
  */
 function findLastCitationBlockStart(response: string): number {
   let lastIndex = -1;
-  const regex = /(?:^|\n)\s*ЦИТАТИ:/gi;
+  const regex = /(?:^|\n)\s*\*{0,2}ЦИТАТИ:\*{0,2}/gi;
   let match;
   while ((match = regex.exec(response)) !== null) {
     lastIndex = match.index;
@@ -44,7 +44,7 @@ export function extractCitations(response: string): Citation[] {
   if (blockStart === -1) return [];
 
   const blockText = response.slice(blockStart);
-  const contentMatch = blockText.match(/\s*ЦИТАТИ:\s*\n?([\s\S]*)$/i);
+  const contentMatch = blockText.match(/\s*\*{0,2}ЦИТАТИ:\*{0,2}\s*\n?([\s\S]*)$/i);
   if (!contentMatch) return [];
 
   const block = contentMatch[1];
@@ -219,7 +219,7 @@ export function hasCitationBlock(response: string): boolean {
   if (blockStart === -1) return false;
 
   const blockText = response.slice(blockStart);
-  const contentMatch = blockText.match(/\s*ЦИТАТИ:\s*\n?([\s\S]*)$/i);
+  const contentMatch = blockText.match(/\s*\*{0,2}ЦИТАТИ:\*{0,2}\s*\n?([\s\S]*)$/i);
   if (!contentMatch) return false;
 
   return hasCitationFormattedLines(contentMatch[1]);
@@ -236,7 +236,7 @@ export function removeCitationBlock(response: string): string {
   if (blockStart === -1) return response;
 
   const blockText = response.slice(blockStart);
-  const contentMatch = blockText.match(/\s*ЦИТАТИ:\s*\n?([\s\S]*)$/i);
+  const contentMatch = blockText.match(/\s*\*{0,2}ЦИТАТИ:\*{0,2}\s*\n?([\s\S]*)$/i);
   if (!contentMatch) return response;
 
   const content = contentMatch[1];
