@@ -364,7 +364,7 @@ describe('POST /api/chat', () => {
       expect(відповідь.body.verifiedSources).toBe(1);
     });
 
-    it('повертає verifiedSources=0 якщо цитати є але жодна не верифікована', async () => {
+    it('не фільтрує sources якщо цитати є але жодна не верифікована (graceful degradation)', async () => {
       mockSearchLaws.mockReturnValue([{ chunk: чанкЗТекстом, score: 5 }]);
       mockAskClaude.mockResolvedValue(
         `Відповідь. ${ДИСКЛЕЙМЕР}\nЦИТАТИ:\n- Стаття 999, Частина 1 | "Вигадана цитата якої немає в чанках"`
@@ -374,8 +374,10 @@ describe('POST /api/chat', () => {
         .post('/api/chat')
         .send({ message: 'питання' });
 
-      // Блок ЦИТАТИ був — фільтрація активна, 0 підтверджених
-      expect(відповідь.body.verifiedSources).toBe(0);
+      // Жодна цитата не верифікована — фільтрація не активується, всі sources повертаються
+      // Це безпечніше ніж показувати 0 джерел коли пошук знайшов релевантні чанки
+      expect(відповідь.body.sources).toHaveLength(1);
+      expect(відповідь.body.verifiedSources).toBeUndefined();
     });
 
     it('не повертає verifiedSources якщо Claude не додав блок ЦИТАТИ', async () => {
@@ -406,7 +408,7 @@ describe('POST /api/chat', () => {
       expect(відповідь.body.verifiedSources).toBeUndefined();
     });
 
-    it('повертає порожні sources якщо жодна цитата не верифікована (анти-галюцінація)', async () => {
+    it('повертає всі sources якщо жодна цитата не верифікована (graceful degradation замість порожніх джерел)', async () => {
       mockSearchLaws.mockReturnValue([{ chunk: чанкЗТекстом, score: 5 }]);
       mockAskClaude.mockResolvedValue(
         `Відповідь. ${ДИСКЛЕЙМЕР}\nЦИТАТИ:\n- Стаття 999, Частина 1 | "Вигадана цитата якої немає в чанках"`
@@ -417,8 +419,10 @@ describe('POST /api/chat', () => {
         .send({ message: 'питання' });
 
       expect(відповідь.status).toBe(200);
-      // Жодна цитата не верифікована — sources фільтруються до порожнього (захист від галюцінацій)
-      expect(відповідь.body.sources).toHaveLength(0);
+      // Жодна цитата не верифікована — показуємо всі знайдені джерела (безпечніше ніж 0 джерел)
+      // Пошук знайшов релевантні чанки — вони корисні для користувача навіть без верифікації
+      expect(відповідь.body.sources).toHaveLength(1);
+      expect(відповідь.body.verifiedSources).toBeUndefined();
     });
   });
 });
