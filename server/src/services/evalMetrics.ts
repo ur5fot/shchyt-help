@@ -147,6 +147,7 @@ export function валідуватиGoldenSet(data: unknown): {
   }
 
   const questions: GoldenQuestion[] = [];
+  const seenIds = new Set<string>();
   for (let i = 0; i < data.length; i++) {
     const item = data[i];
 
@@ -158,8 +159,15 @@ export function валідуватиGoldenSet(data: unknown): {
     const obj = item as Record<string, unknown>;
     const id = obj.id;
     const label = typeof id === 'string' ? id : '?';
+    const errorsBefore = errors.length;
 
-    if (typeof obj.id !== 'string' || !obj.id) errors.push(`Питання [${i}]: відсутній або невалідний id`);
+    if (typeof obj.id !== 'string' || !obj.id) {
+      errors.push(`Питання [${i}]: відсутній або невалідний id`);
+    } else if (seenIds.has(obj.id)) {
+      errors.push(`Питання [${i}] (${label}): дублікат id`);
+    } else {
+      seenIds.add(obj.id);
+    }
     if (typeof obj.question !== 'string' || !obj.question) errors.push(`Питання [${i}]: відсутній або невалідний question`);
     if (!Array.isArray(obj.expectedChunks) || obj.expectedChunks.length === 0) {
       errors.push(`Питання [${i}] (${label}): expectedChunks має бути непорожнім масивом`);
@@ -180,14 +188,7 @@ export function валідуватиGoldenSet(data: unknown): {
       }
     }
 
-    const valid = typeof obj.id === 'string' && !!obj.id
-      && typeof obj.question === 'string' && !!obj.question
-      && Array.isArray(obj.expectedChunks) && obj.expectedChunks.length > 0 && масивРядків(obj.expectedChunks)
-      && Array.isArray(obj.expectedArticles) && масивРядків(obj.expectedArticles)
-      && typeof obj.category === 'string' && !!obj.category
-      && (obj.expectedFacts === undefined || (Array.isArray(obj.expectedFacts) && масивРядків(obj.expectedFacts)));
-
-    if (valid) {
+    if (errors.length === errorsBefore) {
       questions.push(obj as unknown as GoldenQuestion);
     }
   }

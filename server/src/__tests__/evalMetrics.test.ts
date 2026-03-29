@@ -297,6 +297,19 @@ describe('валідуватиGoldenSet', () => {
     expect(result.errors.some(e => e.includes('expectedFacts мають бути рядками'))).toBe(true);
   });
 
+  it('відхиляє дублікати id', () => {
+    const data = [
+      { id: 'dup', question: 'Q1?', expectedChunks: ['c1'], expectedArticles: [], category: 'x' },
+      { id: 'dup', question: 'Q2?', expectedChunks: ['c2'], expectedArticles: [], category: 'y' },
+    ];
+    const result = валідуватиGoldenSet(data);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('дублікат id'))).toBe(true);
+    // Тільки перше питання з цим id має бути включене
+    expect(result.questions).toHaveLength(1);
+    expect(result.questions[0].id).toBe('dup');
+  });
+
   it('приймає питання з expectedFacts', () => {
     const data = [
       {
