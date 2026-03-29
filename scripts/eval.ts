@@ -19,7 +19,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(__dirname, '..', '.env') });
 
 import { loadAllLaws } from '../laws/index';
-import { searchLaws } from '../server/src/services/lawSearch';
+import { searchLaws, hybridSearchLaws } from '../server/src/services/lawSearch';
 import { buildPrompt } from '../server/src/services/promptBuilder';
 import { askClaude } from '../server/src/services/claude';
 import { extractCitations, verifyCitations, removeCitationBlock } from '../server/src/services/citationVerifier';
@@ -73,11 +73,35 @@ function оцінитиKeywordПошук(
   return результати;
 }
 
-function вивестиRetrievalЗвіт(результати: RetrievalResult[]): void {
+async function оцінитиHybridПошук(
+  питання: GoldenQuestion[],
+  чанки: ReturnType<typeof loadAllLaws>
+): Promise<RetrievalResult[]> {
+  const результати: RetrievalResult[] = [];
+
+  for (const п of питання) {
+    const знайдені = await hybridSearchLaws(п.question, чанки);
+    const знайденіІД = знайдені.map(р => р.chunk.id);
+    const found = п.expectedChunks.some(id => знайденіІД.includes(id));
+
+    результати.push({
+      id: п.id,
+      question: п.question,
+      category: п.category,
+      found,
+      expectedChunks: п.expectedChunks,
+      foundChunks: знайденіІД,
+    });
+  }
+
+  return результати;
+}
+
+function вивестиRetrievalЗвіт(результати: RetrievalResult[], назва: string = 'keyword'): void {
   const { overall, поКатегоріях } = обчислитиRetrievalRecall(результати);
 
   console.log('\n========================================');
-  console.log('  RETRIEVAL EVALUATION REPORT (keyword)');
+  console.log(`  RETRIEVAL EVALUATION REPORT (${назва})`);
   console.log('========================================\n');
   console.log(`Overall recall: ${overall.знайдено}/${overall.всього} (${overall.recall.toFixed(1)}%)\n`);
 
@@ -215,10 +239,27 @@ async function main(): Promise<void> {
   const питання = завантажитиGoldenSet();
   console.log(`Завантажено ${питання.length} питань`);
 
-  // Завжди запускаємо keyword retrieval
+  // Keyword retrieval (baseline)
   console.log('\nЗапуск keyword пошуку...');
   const retrievalРезультати = оцінитиKeywordПошук(питання, чанки);
-  вивестиRetrievalЗвіт(retrievalРезультати);
+  вивестиRetrievalЗвіт(retrievalРезультати, 'keyword');
+
+  // Hybrid retrieval з re-ranking
+  console.log('Запуск hybrid пошуку (vector + re-ranking)...');
+  const hybridРезультати = await оцінитиHybridПошук(питання, чанки);
+  вивестиRetrievalЗвіт(hybridРезультати, 'hybrid + re-ranking');
+
+  // Порівняння
+  const keywordRecall = обчислитиRetrievalRecall(retrievalРезультати).overall;
+  const hybridRecall = обчислитиRetrievalRecall(hybridРезультати).overall;
+  const різниця = hybridRecall.recall - keywordRecall.recall;
+  console.log('========================================');
+  console.log('  ПОРІВНЯННЯ');
+  console.log('========================================');
+  console.log(`  Keyword:              ${keywordRecall.recall.toFixed(1)}%`);
+  console.log(`  Hybrid + re-ranking:  ${hybridRecall.recall.toFixed(1)}%`);
+  console.log(`  Різниця:              ${різниця >= 0 ? '+' : ''}${різниця.toFixed(1)}%`);
+  console.log('========================================\n');
 
   // Повний eval з Claude API (тільки з --full)
   if (fullMode) {
