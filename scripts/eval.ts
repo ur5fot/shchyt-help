@@ -17,7 +17,7 @@ import { loadAllLaws } from '../laws/index';
 import { searchLaws } from '../server/src/services/lawSearch';
 import { buildPrompt } from '../server/src/services/promptBuilder';
 import { askClaude } from '../server/src/services/claude';
-import { extractCitations, verifyCitations } from '../server/src/services/citationVerifier';
+import { extractCitations, verifyCitations, removeCitationBlock } from '../server/src/services/citationVerifier';
 import {
   type GoldenQuestion,
   type RetrievalResult,
@@ -124,15 +124,17 @@ async function оцінитиПитанняЧерезAPI(
   const цитати = extractCitations(відповідь);
   const верифіковані = verifyCitations(цитати, знайденіЧанки);
 
-  // Перевіряємо citation accuracy
+  // Перевіряємо citation accuracy (верифіковані = цитати що мають реальний текст у чанках)
   const citedArticles = верифіковані.filter(ц => ц.verified).map(ц => ц.article);
-  const correctCitations = верифіковані.filter(ц => ц.verified).length;
+  // Додатково перевіряємо чи цитовані статті збігаються з очікуваними
+  const correctCitations = citedArticles.filter(а => чиСтаттяОчікувана(а, питання.expectedArticles)).length;
   const hallucinatedCitations = верифіковані.filter(ц => !ц.verified).length;
 
-  // Перевіряємо fact recall
+  // Перевіряємо fact recall (без блоку ЦИТАТИ, щоб не рахувати цитати як факти)
+  const чистаВідповідь = removeCitationBlock(відповідь);
   const expectedFacts = питання.expectedFacts ?? [];
-  const foundFacts = expectedFacts.filter(ф => чиФактЗгаданий(відповідь, ф));
-  const missedFacts = expectedFacts.filter(ф => !чиФактЗгаданий(відповідь, ф));
+  const foundFacts = expectedFacts.filter(ф => чиФактЗгаданий(чистаВідповідь, ф));
+  const missedFacts = expectedFacts.filter(ф => !чиФактЗгаданий(чистаВідповідь, ф));
 
   return {
     id: питання.id,
