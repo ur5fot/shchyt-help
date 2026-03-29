@@ -55,7 +55,24 @@ export function extractKeywords(text: string): string[] {
 
 // Витягає текстовий вміст тегу (без вкладених тегів)
 function stripTags(html: string): string {
-  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&quot;/g, '"')
+    .replace(/&ge;/g, '\u2265')
+    .replace(/&le;/g, '\u2264')
+    .replace(/&times;/g, '\u00D7')
+    .replace(/&mdash;/g, '\u2014')
+    .replace(/&ndash;/g, '\u2013')
+    .replace(/&laquo;/g, '\u00AB')
+    .replace(/&raquo;/g, '\u00BB')
+    .replace(/&copy;/g, '\u00A9')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n)))
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 // Перевіряє чи параграф є редакційною приміткою (не основний текст)
@@ -168,7 +185,7 @@ function parsePunktBased(paragraphs: string[], baseId: string): LawChunkRaw[] {
   let partBuffer: string[] = [];
 
   // Паттерн для розділу: "I. Загальна частина", "II. Контракт" тощо
-  const SECTION_RE = /^(I{1,3}V?|VI{0,3}|IX|X{1,3}I{0,3}V?)\.\s+(.*)/;
+  const SECTION_RE = /^([IVXLC]+)\.\s+(.*)/;
   // Паттерн для пункту: "1. Текст", "10-1. Текст"
   const PUNKT_RE = /^(\d[\d-]*)\.\s+(.+)/s;
 
@@ -277,7 +294,9 @@ export async function parseLaw(url: string, shortTitle: string): Promise<LawFile
 
   // Якщо 0 чанків — спробувати /print версію (повний текст без JS)
   if (law.chunks.length === 0) {
-    const printUrl = url.replace(/\/?$/, '/print');
+    const printUrlObj = new URL(url);
+    printUrlObj.pathname = printUrlObj.pathname.replace(/\/?$/, '/print');
+    const printUrl = printUrlObj.toString();
     console.log(`Основна сторінка дала 0 чанків, спроба: ${printUrl}`);
 
     const printResponse = await fetch(printUrl);
