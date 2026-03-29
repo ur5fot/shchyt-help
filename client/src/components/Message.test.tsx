@@ -31,4 +31,23 @@ describe('Message', () => {
     const wrapper = container.firstChild as HTMLElement;
     expect(wrapper.className).toContain('justify-start');
   });
+
+  it('асистент: рендерить Markdown (жирний текст)', () => {
+    render(<Message role="assistant" text="**важливо**" />);
+    const el = screen.getByText('важливо');
+    expect(el.tagName).toBe('STRONG');
+  });
+
+  it('користувач: не рендерить Markdown', () => {
+    render(<Message role="user" text="**не жирний**" />);
+    expect(screen.getByText('**не жирний**')).toBeInTheDocument();
+  });
+
+  it('асистент: посилання відкриваються у новій вкладці', () => {
+    render(<Message role="assistant" text="[посилання](https://example.com)" />);
+    const link = screen.getByText('посилання');
+    expect(link.tagName).toBe('A');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  });
 });
