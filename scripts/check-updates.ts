@@ -157,13 +157,6 @@ async function main(): Promise<void> {
         // Файл не існує або невалідний — пропускаємо
       }
 
-      // Зберігаємо JSON з document_id
-      const lawDataWithId = existingDocumentId
-        ? { ...lawData, document_id: existingDocumentId }
-        : lawData;
-      writeFileSync(outputPath, JSON.stringify(lawDataWithId, null, 2), 'utf-8');
-      console.log(`    → JSON оновлено: ${outputPath}`);
-
       // Генеруємо ембеддинги
       console.log('    → Генерація ембеддингів...');
       const чанкиДляВектора: LawChunk[] = lawData.chunks.map((чанк) => ({
@@ -185,6 +178,13 @@ async function main(): Promise<void> {
       }
       await оновитиЧанки(чанкиДляВектора, ембеддинги);
       console.log(`    → LanceDB оновлено: ${чанкиДляВектора.length} чанків`);
+
+      // Зберігаємо JSON з document_id (після LanceDB щоб не залишити неконсистентний стан)
+      const lawDataWithId = existingDocumentId
+        ? { ...lawData, document_id: existingDocumentId }
+        : lawData;
+      writeFileSync(outputPath, JSON.stringify(lawDataWithId, null, 2), 'utf-8');
+      console.log(`    → JSON оновлено: ${outputPath}`);
 
       // Оновлюємо хеш
       hashes[law.sourceUrl] = {

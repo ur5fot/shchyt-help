@@ -71,6 +71,8 @@ export function readLawFiles(): LawFileInfo[] {
           shortTitle: law.short_title || law.title || file,
           chunksCount: Array.isArray(law.chunks) ? law.chunks.length : 0,
         });
+      } else {
+        console.warn(`Пропущено ${file}: відсутній source_url`);
       }
     } catch (err) {
       console.warn(`Пропущено ${file}: помилка читання`);
