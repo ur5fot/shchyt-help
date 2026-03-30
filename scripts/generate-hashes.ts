@@ -46,11 +46,6 @@ export function saveHashes(hashes: LawHashes): void {
   writeFileSync(HASHES_PATH, JSON.stringify(hashes, null, 2), 'utf-8');
 }
 
-/** Повертає шлях до файлу хешів */
-export function getHashesPath(): string {
-  return HASHES_PATH;
-}
-
 interface LawFileInfo {
   filename: string;
   sourceUrl: string;
@@ -85,7 +80,7 @@ export function readLawFiles(): LawFileInfo[] {
 }
 
 /** Завантажує HTML за URL з таймаутом */
-async function fetchHtml(url: string): Promise<string | null> {
+export async function fetchHtml(url: string): Promise<string | null> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30_000);
@@ -113,7 +108,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const hashes: LawHashes = {};
+  const hashes = loadHashes();
   const today = new Date().toISOString().slice(0, 10);
   let успішних = 0;
   let пропущених = 0;

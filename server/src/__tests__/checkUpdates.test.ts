@@ -3,60 +3,57 @@ import { computeHash, type LawHashes } from '../../../scripts/generate-hashes';
 
 describe('checkUpdates — хешування та порівняння', () => {
   describe('computeHash', () => {
+    it('повертає правильний sha256 для відомого входу', () => {
+      // Відомий sha256('test') = 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+      expect(computeHash('test')).toBe(
+        '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
+      );
+    });
+
     it('повертає sha256 hex рядок довжиною 64 символи', () => {
       const hash = computeHash('тестовий текст');
       expect(hash).toHaveLength(64);
       expect(hash).toMatch(/^[0-9a-f]{64}$/);
     });
 
-    it('повертає однаковий хеш для однакового вмісту', () => {
+    it('детерміністичний — однаковий вхід дає однаковий хеш', () => {
       const hash1 = computeHash('Стаття 1. Право на відпустку');
       const hash2 = computeHash('Стаття 1. Право на відпустку');
       expect(hash1).toBe(hash2);
     });
 
-    it('повертає різні хеші для різного вмісту', () => {
+    it('різний вхід дає різний хеш', () => {
       const hash1 = computeHash('Стаття 1. Право на відпустку');
       const hash2 = computeHash('Стаття 2. Грошове забезпечення');
       expect(hash1).not.toBe(hash2);
     });
-
-    it('коректно обробляє порожній рядок', () => {
-      const hash = computeHash('');
-      expect(hash).toHaveLength(64);
-      expect(hash).toMatch(/^[0-9a-f]{64}$/);
-    });
-
-    it('коректно обробляє Unicode (кирилиця, спецсимволи)', () => {
-      const hash = computeHash('Закон України «Про мобілізацію» — стаття №5');
-      expect(hash).toHaveLength(64);
-    });
   });
 
-  describe('порівняння хешів', () => {
-    it('визначає зміну коли хеш відрізняється', () => {
-      const savedHash = computeHash('старий текст закону');
-      const newHash = computeHash('новий текст закону');
-      expect(savedHash !== newHash).toBe(true);
-    });
-
-    it('визначає відсутність змін коли хеш однаковий', () => {
-      const content = '<html>Стаття 1. Текст закону</html>';
-      const savedHash = computeHash(content);
-      const newHash = computeHash(content);
-      expect(savedHash === newHash).toBe(true);
-    });
-
-    it('визначає зміну коли запис відсутній (перший запуск)', () => {
-      const hashes: LawHashes = {};
-      const url = 'https://zakon.rada.gov.ua/laws/show/test';
+  describe('порівняння хешів (логіка з check-updates)', () => {
+    /**
+     * Функція порівняння з check-updates.ts:
+     * const changed = !savedEntry || savedEntry.hash !== newHash;
+     */
+    function hasLawChanged(hashes: LawHashes, url: string, newHash: string): boolean {
       const savedEntry = hashes[url];
-      const changed = !savedEntry || savedEntry.hash !== 'abc123';
-      expect(changed).toBe(true);
+      return !savedEntry || savedEntry.hash !== newHash;
+    }
+
+    it('виявляє зміну коли хеш відрізняється', () => {
+      const hashes: LawHashes = {
+        'https://zakon.rada.gov.ua/laws/show/test': {
+          hash: computeHash('старий текст'),
+          lastChecked: '2026-03-30',
+          chunksCount: 10,
+        },
+      };
+      const newHash = computeHash('новий текст');
+      expect(hasLawChanged(hashes, 'https://zakon.rada.gov.ua/laws/show/test', newHash)).toBe(true);
     });
 
     it('визначає відсутність змін коли хеш збігається', () => {
-      const hash = computeHash('текст закону');
+      const content = '<html>Стаття 1. Текст закону</html>';
+      const hash = computeHash(content);
       const hashes: LawHashes = {
         'https://zakon.rada.gov.ua/laws/show/test': {
           hash,
@@ -64,9 +61,23 @@ describe('checkUpdates — хешування та порівняння', () => 
           chunksCount: 50,
         },
       };
-      const savedEntry = hashes['https://zakon.rada.gov.ua/laws/show/test'];
-      const changed = !savedEntry || savedEntry.hash !== hash;
-      expect(changed).toBe(false);
+      expect(hasLawChanged(hashes, 'https://zakon.rada.gov.ua/laws/show/test', hash)).toBe(false);
+    });
+
+    it('виявляє зміну коли запис відсутній (перший запуск)', () => {
+      const hashes: LawHashes = {};
+      expect(hasLawChanged(hashes, 'https://zakon.rada.gov.ua/laws/show/test', 'abc123')).toBe(true);
+    });
+
+    it('виявляє зміну коли URL відсутній у хешах', () => {
+      const hashes: LawHashes = {
+        'https://zakon.rada.gov.ua/laws/show/other': {
+          hash: 'somehash',
+          lastChecked: '2026-03-30',
+          chunksCount: 20,
+        },
+      };
+      expect(hasLawChanged(hashes, 'https://zakon.rada.gov.ua/laws/show/test', 'abc123')).toBe(true);
     });
   });
 });

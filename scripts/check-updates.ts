@@ -9,7 +9,7 @@
  *   npm run check-updates -- --auto — автоматично оновити змінені закони
  */
 
-import { writeFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import {
@@ -17,6 +17,7 @@ import {
   loadHashes,
   saveHashes,
   readLawFiles,
+  fetchHtml,
   type LawHashes,
 } from './generate-hashes';
 import { parseLawHtml } from './parse-law';
@@ -29,26 +30,7 @@ import type { LawChunk } from '../laws/index';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LAWS_DIR = join(__dirname, '..', 'laws');
-
-/** Завантажує HTML за URL з таймаутом */
-async function fetchHtml(url: string): Promise<string | null> {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30_000);
-    const response = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      console.warn(`  ⚠ Помилка завантаження ${url}: ${response.status}`);
-      return null;
-    }
-    return await response.text();
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.warn(`  ⚠ Недоступно ${url}: ${message}`);
-    return null;
-  }
-}
+const ALLOWED_DOMAIN = 'zakon.rada.gov.ua';
 
 interface CheckResult {
   перевірено: number;
@@ -87,6 +69,20 @@ async function main(): Promise<void> {
 
   for (const law of laws) {
     process.stdout.write(`  ${law.shortTitle}... `);
+
+    // Перевірка домену для безпеки
+    try {
+      const urlObj = new URL(law.sourceUrl);
+      if (urlObj.hostname !== ALLOWED_DOMAIN) {
+        console.warn(`пропущено (недозволений домен: ${urlObj.hostname})`);
+        result.пропущено++;
+        continue;
+      }
+    } catch {
+      console.warn('пропущено (невалідний URL)');
+      result.пропущено++;
+      continue;
+    }
 
     const html = await fetchHtml(law.sourceUrl);
     if (!html) {
@@ -130,7 +126,20 @@ async function main(): Promise<void> {
     // Автоматичне оновлення
     try {
       console.log('    → Перепарсинг...');
-      const lawData = parseLawHtml(html, law.sourceUrl, law.shortTitle);
+      let lawData = parseLawHtml(html, law.sourceUrl, law.shortTitle);
+
+      // Fallback на /print версію якщо 0 чанків (як у parseLaw)
+      if (lawData.chunks.length === 0) {
+        const printUrlObj = new URL(law.sourceUrl);
+        printUrlObj.pathname = printUrlObj.pathname.replace(/\/?$/, '/print');
+        const printUrl = printUrlObj.toString();
+        console.log(`    → 0 чанків, спроба /print: ${printUrl}`);
+        const printHtml = await fetchHtml(printUrl);
+        if (printHtml) {
+          lawData = parseLawHtml(printHtml, law.sourceUrl, law.shortTitle);
+        }
+      }
+
       console.log(`    → Розпарсено ${lawData.chunks.length} чанків`);
 
       if (lawData.chunks.length === 0) {
@@ -138,9 +147,21 @@ async function main(): Promise<void> {
         continue;
       }
 
-      // Зберігаємо JSON
+      // Зберігаємо document_id з існуючого файлу
       const outputPath = join(LAWS_DIR, law.filename);
-      writeFileSync(outputPath, JSON.stringify(lawData, null, 2), 'utf-8');
+      let existingDocumentId: string | undefined;
+      try {
+        const existing = JSON.parse(readFileSync(outputPath, 'utf-8'));
+        existingDocumentId = existing.document_id;
+      } catch {
+        // Файл не існує або невалідний — пропускаємо
+      }
+
+      // Зберігаємо JSON з document_id
+      const lawDataWithId = existingDocumentId
+        ? { ...lawData, document_id: existingDocumentId }
+        : lawData;
+      writeFileSync(outputPath, JSON.stringify(lawDataWithId, null, 2), 'utf-8');
       console.log(`    → JSON оновлено: ${outputPath}`);
 
       // Генеруємо ембеддинги
@@ -149,6 +170,7 @@ async function main(): Promise<void> {
         ...чанк,
         lawTitle: lawData.title,
         sourceUrl: lawData.source_url,
+        documentId: existingDocumentId,
       }));
 
       const тексти = чанкиДляВектора.map(
