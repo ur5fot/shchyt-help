@@ -215,7 +215,9 @@ async function main(): Promise<void> {
   process.exit(result.невдалих > 0 ? 1 : 0);
 }
 
-main().catch((err) => {
-  console.error('Помилка перевірки оновлень:', err);
-  process.exit(1);
-});
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch((err) => {
+    console.error('Помилка перевірки оновлень:', err);
+    process.exit(1);
+  });
+}

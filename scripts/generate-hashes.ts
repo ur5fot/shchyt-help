@@ -83,9 +83,9 @@ export function readLawFiles(): LawFileInfo[] {
 
 /** Завантажує HTML за URL з таймаутом */
 export async function fetchHtml(url: string): Promise<string | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30_000);
     const response = await fetch(url, { signal: controller.signal });
     clearTimeout(timeout);
 
