@@ -82,7 +82,7 @@ export default function Chat() {
   }
 
   function handleПідказка(підказка: string) {
-    setInput(підказка);
+    void handleSend(підказка);
   }
 
   const isEmpty = messages.length === 0 && !loading;

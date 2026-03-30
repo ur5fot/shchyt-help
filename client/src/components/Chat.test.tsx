@@ -103,12 +103,11 @@ describe('Chat', () => {
       expect(підказки.length).toBeGreaterThanOrEqual(5);
     });
 
-    it('клік на підказку заповнює поле вводу', async () => {
+    it('клік на підказку одразу відправляє повідомлення', async () => {
       render(<Chat />);
       const підказка = screen.getByText(/Чи маю я право на відпустку/i);
       await userEvent.click(підказка);
-      const input = screen.getByPlaceholderText(/Введіть ваше питання/i) as HTMLInputElement;
-      expect(input.value).toBe('Чи маю я право на відпустку під час служби?');
+      expect(mockSendMessage).toHaveBeenCalledWith('Чи маю я право на відпустку під час служби?', [], undefined);
     });
 
     it('ховає підказки після надсилання повідомлення', async () => {
