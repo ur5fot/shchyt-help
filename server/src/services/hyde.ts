@@ -46,7 +46,7 @@ function запитЗанадтоКороткий(query: string): boolean {
  */
 export async function generateHypothesis(query: string): Promise<string | null> {
   if (запитЗанадтоКороткий(query)) {
-    logger.debug({ query }, 'HyDE: запит занадто короткий, пропускаємо');
+    logger.debug('HyDE: запит занадто короткий, пропускаємо');
     return null;
   }
 
