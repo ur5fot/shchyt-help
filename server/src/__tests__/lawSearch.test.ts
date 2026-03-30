@@ -803,7 +803,7 @@ describe('hybridSearchLaws — HyDE інтеграція', () => {
       'Відповідно до статті 9 Закону про соцзахист, грошове забезпечення включає посадовий оклад.'
     );
 
-    const результати = await hybridSearchLaws('скільки платять солдату', тестовіЧанки);
+    await hybridSearchLaws('скільки платять солдату', тестовіЧанки);
 
     // generateHypothesis має бути викликано
     expect(mockGenerateHypothesis).toHaveBeenCalledWith('скільки платять солдату');
