@@ -53,27 +53,27 @@ eval/        → Golden test set (56 питань з очікуваними ча
 
 **Потік запиту:** Питання користувача → `lawSearch.ts` знаходить релевантні чанки через гібридний пошук (keyword + vector similarity через LanceDB + HyDE hypothesis vector search) + cross-encoder re-ranking (top-20 → top-8) → `promptBuilder.ts` складає промпт з контекстом законів → `claude.ts` відправляє в Claude API → `citationVerifier.ts` перевіряє цитати AI проти наданих чанків → відповідь з верифікованими джерелами повертається клієнту. Якщо LanceDB не ініціалізована — автоматичний fallback на keyword пошук.
 
-**Генерація PDF** відбувається повністю на клієнті через pdf-lib. Жодні дані не надсилаються назовні.
+**Генерація PDF** відбувається повністю на клієнті через pdf-lib. Два режими: генерація рапорту/скарги з шаблону та експорт всієї бесіди в PDF. Жодні дані не надсилаються назовні.
 
 ## Ключові правила
 
 - Весь UI та відповіді — **українською**
 - System prompt вимагає цитувати конкретні статті закону — ніколи не вигадувати цитати
 - Кожна відповідь AI завершується: "⚠️ Це не юридична консультація. Для прийняття рішень зверніться до військового адвоката."
-- Формат JSON законів: кожен файл має `title`, `short_title`, `source_url`, `last_updated` та `chunks[]`, де кожен чанк має `id`, `article`, `part`, `title`, `text`, `keywords`
+- Формат JSON законів: кожен файл має `title`, `short_title`, `source_url`, `last_updated`, `document_id` та `chunks[]`, де кожен чанк має `id`, `article`, `part`, `title`, `text`, `keywords`
 - API ключ зберігається в `.env` як `ANTHROPIC_API_KEY` — ніколи не комітити цей файл
 
 ## Сервіси та ключові модулі
 
 - **lawSearch.ts** — гібридний пошук по законах: keyword (стемінг, синоніми, поріг 3 бали) + vector similarity через LanceDB (0.4 keyword + 0.6 vector) + HyDE (hypothesis vector search) + cross-encoder re-ranking (top-20 → top-8)
 - **hyde.ts** (сервер) — HyDE (Hypothetical Document Embeddings): генерує коротку гіпотетичну відповідь через Claude API (max_tokens: 200), ембеддинг гіпотези використовується для додаткового vector пошуку. Фільтрація коротких запитів (<15 символів), graceful fallback при помилці API
-- **reranker.ts** (сервер) — cross-encoder re-ranking через `Xenova/bge-reranker-base`, lazy singleton завантаження, graceful fallback якщо модель недоступна
-- **embeddings.ts** (сервер) — генерація ембеддингів через `@xenova/transformers` (модель `Xenova/multilingual-e5-small`, 384d), lazy завантаження
+- **reranker.ts** (сервер) — cross-encoder re-ranking через `Xenova/bge-reranker-base`, lazy singleton завантаження, `звільнитиReranker()` для dispose ONNX, graceful fallback
+- **embeddings.ts** (сервер) — генерація ембеддингів через `@xenova/transformers` (`Xenova/multilingual-e5-small`, 384d), lazy завантаження, `звільнитиМодельЕмбеддингів()` для dispose ONNX
 - **vectorStore.ts** (сервер) — робота з LanceDB: ініціалізація, створення таблиці, cosine similarity пошук, upsert чанків
 - **citationVerifier.ts** (сервер) — верифікація цитат AI: парсинг блоку `ЦИТАТИ:` з відповіді, fuzzy-перевірка кожної цитати проти наданих чанків (нормалізація + 80% порогове співпадіння слів), видалення блоку цитат з відповіді користувачу. Захист від галюцінацій — вигадані цитати не потрапляють у sources
 - **claude.ts** (сервер) — обгортка Claude API: `askClaude` з підтримкою історії, `summarizeHistory` для стиснення діалогу (>10 повідомлень)
 - **templateDetector.ts** (клієнт) — виявлення шаблонів документів у відповідях AI через масив паттернів
-- **pdfGenerator.ts** (клієнт) — генерація PDF з санітизацією полів (trim, видалення спецсимволів, обмеження довжини)
+- **pdfGenerator.ts** (клієнт) — генерація PDF: рапорти/скарги з шаблонів + `exportChatToPdf` для експорту бесіди (Markdown stripping, джерела з documentId, автопагінація A4)
 - **logger.ts** (сервер) — структуроване логування через pino (JSON в production, pretty в dev)
 - **app.ts** — Express з rate limiting (20 запитів/хвилину на IP)
 - **evalMetrics.ts** (сервер) — утиліти для eval: нормалізація статей, перевірка фактів, підрахунок retrieval recall, citation accuracy, hallucination rate

@@ -42,6 +42,13 @@ export function завантажитиReranker(): Promise<TextClassificationPipe
   return модельPromise as Promise<TextClassificationPipeline | null>;
 }
 
+/** Звільняє ONNX сесію reranker моделі */
+export async function звільнитиReranker(): Promise<void> {
+  if (!модельPromise) return;
+  try { const м = await модельPromise; if (м) await м.dispose(); } catch { /* cleanup */ }
+  модельPromise = null;
+}
+
 /**
  * Re-ranking документів через cross-encoder.
  * Cross-encoder бачить запит І документ разом, що дає кращу оцінку релевантності.

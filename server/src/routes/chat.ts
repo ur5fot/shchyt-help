@@ -52,6 +52,8 @@ interface SourceItem {
   law: string;
   article: string;
   sourceUrl: string;
+  documentId?: string;
+  quote?: string;
 }
 
 interface ChatResponse {
@@ -224,6 +226,10 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
           ? `${р.chunk.article}, ${р.chunk.part}`
           : р.chunk.article,
         sourceUrl: р.chunk.sourceUrl,
+        documentId: р.chunk.documentId,
+        quote: р.chunk.text.length > 120
+          ? р.chunk.text.slice(0, 120).replace(/\s+\S*$/, '') + '…'
+          : р.chunk.text || undefined,
       }))
       .filter(д => {
         const key = `${д.law}|${д.article}|${д.sourceUrl}`;

@@ -3,6 +3,7 @@ import Message, { type MessageRole } from './Message';
 import Sources from './Sources';
 import DocGenerator from './DocGenerator';
 import { sendMessage, type Source, type HistoryMessage } from '../services/api';
+import { exportChatToPdf } from '../services/pdfGenerator';
 import { detectTemplate } from '../services/templateDetector';
 import { ПІДКАЗКИ, МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ } from '../constants';
 
@@ -81,6 +82,19 @@ export default function Chat() {
     }
   }
 
+  async function handleExportPdf() {
+    try {
+      const pdfBytes = await exportChatToPdf(messages.map(m => ({ role: m.role, text: m.text, sources: m.sources })));
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `shchyt-${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch { setError('Не вдалося згенерувати PDF'); }
+  }
+
   function handleПідказка(підказка: string) {
     void handleSend(підказка);
   }
@@ -91,7 +105,10 @@ export default function Chat() {
     <div className="flex flex-col h-screen max-w-2xl mx-auto">
       <header className="flex items-center gap-3 px-4 py-3 border-b border-gray-800">
         <span className="font-semibold text-gray-100">Shchyt ⚖️</span>
-        <span className="text-gray-500 text-sm">AI-асистент з прав військовослужбовців</span>
+        <span className="text-gray-500 text-sm flex-1">AI-асистент з прав військовослужбовців</span>
+        {messages.length > 0 && (
+          <button onClick={() => void handleExportPdf()} className="text-xs text-gray-500 hover:text-gray-300 transition-colors cursor-pointer" title="Зберегти бесіду в PDF">PDF</button>
+        )}
       </header>
 
       <div className="flex-1 overflow-y-auto px-4 py-4">

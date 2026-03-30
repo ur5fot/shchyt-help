@@ -2,6 +2,8 @@ export interface Source {
   law: string;
   article: string;
   sourceUrl: string;
+  documentId?: string;
+  quote?: string;
 }
 
 export interface HistoryMessage {

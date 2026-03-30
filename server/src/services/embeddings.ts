@@ -21,6 +21,13 @@ export function завантажитиМодель(): Promise<FeatureExtractionP
   return модельPromise;
 }
 
+/** Звільняє ONNX сесію моделі ембеддингів */
+export async function звільнитиМодельЕмбеддингів(): Promise<void> {
+  if (!модельPromise) return;
+  try { const м = await модельPromise; await м.dispose(); } catch { /* cleanup */ }
+  модельPromise = null;
+}
+
 /**
  * Генерує ембеддинг для одного тексту.
  * @param текст — текст для ембеддингу

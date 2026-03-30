@@ -1,4 +1,4 @@
-import { PDFDocument, rgb } from 'pdf-lib';
+import { PDFDocument, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 
 // Максимальна довжина одного поля (символів)
@@ -143,5 +143,71 @@ export async function generatePdf(
     y -= lineHeight;
   }
 
+  return doc.save();
+}
+
+interface ChatMessageForPdf {
+  role: 'user' | 'assistant';
+  text: string;
+  sources?: { law: string; article: string; documentId?: string }[];
+}
+
+function drawBlock(
+  lines: string[], doc: PDFDocument, pg: { current: PDFPage; y: number },
+  font: PDFFont, fs: number, lh: number, ml: number, mt: number, clr?: ReturnType<typeof rgb>,
+) {
+  for (const line of lines) {
+    if (pg.y < mt + lh) { pg.current = doc.addPage([595, 842]); pg.y = pg.current.getSize().height - mt; }
+    pg.current.drawText(line, { x: ml, y: pg.y, size: fs, font, color: clr ?? rgb(0, 0, 0) });
+    pg.y -= lh;
+  }
+}
+
+function stripMd(text: string): string {
+  return text.replace(/\*\*/g, '').replace(/^#{1,6}\s+/gm, '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/^[-*]\s/gm, '  - ');
+}
+
+export async function exportChatToPdf(messages: ChatMessageForPdf[]): Promise<Uint8Array> {
+  const doc = await PDFDocument.create();
+  doc.registerFontkit(fontkit);
+  const fontBytes = await loadFont();
+  const font = await doc.embedFont(fontBytes);
+  const p1 = doc.addPage([595, 842]);
+  const { height, width } = p1.getSize();
+  const ml = 50, mt = 50, fs = 10, lh = 14, cw = width - ml * 2;
+  const pg = { current: p1, y: height - mt };
+  const grey = rgb(0.6, 0.6, 0.6);
+
+  drawBlock(wrapLines('SHCHYT — Консультацiя з прав вiйськовослужбовцiв\nДата: ' + new Date().toLocaleDateString('uk-UA'), font, 12, cw), doc, pg, font, 12, 18, ml, mt);
+  pg.y -= 10;
+  drawBlock(wrapLines('-'.repeat(80), font, fs, cw), doc, pg, font, fs, lh, ml, mt, grey);
+  pg.y -= 6;
+
+  for (let i = 0; i < messages.length; i++) {
+    const m = messages[i];
+    if (m.role === 'user') {
+      drawBlock(wrapLines('ПИТАННЯ:', font, fs, cw), doc, pg, font, fs, lh, ml, mt);
+      drawBlock(wrapLines(m.text, font, fs, cw), doc, pg, font, fs, lh, ml + 10, mt);
+      pg.y -= 4;
+    } else {
+      drawBlock(wrapLines('ВIДПОВIДЬ:', font, fs, cw), doc, pg, font, fs, lh, ml, mt);
+      drawBlock(wrapLines(stripMd(m.text), font, fs, cw), doc, pg, font, fs, lh, ml + 10, mt);
+      if (m.sources?.length) {
+        pg.y -= 4;
+        drawBlock(wrapLines('Джерела:', font, 9, cw), doc, pg, font, 9, 12, ml + 10, mt, rgb(0.4, 0.4, 0.4));
+        for (const s of m.sources) {
+          const t = '- ' + s.article + ' — ' + s.law + (s.documentId ? ' (' + s.documentId + ')' : '');
+          drawBlock(wrapLines(t, font, 8, cw - 10), doc, pg, font, 8, 11, ml + 20, mt, rgb(0.4, 0.4, 0.4));
+        }
+      }
+      if (i < messages.length - 1) {
+        pg.y -= 8;
+        drawBlock(wrapLines('-'.repeat(80), font, fs, cw), doc, pg, font, fs, lh, ml, mt, grey);
+        pg.y -= 6;
+      }
+    }
+  }
+  pg.y -= 16;
+  drawBlock(wrapLines('Це не юридична консультацiя. Для прийняття рiшень звернiться до вiйськового адвоката.', font, 8, cw), doc, pg, font, 8, 11, ml, mt, rgb(0.5, 0.5, 0.5));
   return doc.save();
 }

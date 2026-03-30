@@ -13,6 +13,7 @@ export interface LawChunk {
   keywords: string[];
   lawTitle: string;
   sourceUrl: string;
+  documentId?: string;
 }
 
 interface LawChunkRaw {
@@ -29,6 +30,7 @@ interface LawFile {
   short_title: string;
   source_url: string;
   last_updated: string;
+  document_id?: string;
   chunks: LawChunkRaw[];
 }
 
@@ -57,6 +59,7 @@ export function loadAllLaws(): LawChunk[] {
         ...chunk,
         lawTitle: law.title,
         sourceUrl: law.source_url,
+        documentId: law.document_id,
       });
     }
   }
