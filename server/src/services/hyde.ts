@@ -79,8 +79,3 @@ export async function generateHypothesis(query: string): Promise<string | null> 
     return null;
   }
 }
-
-// Для тестів — скидання singleton
-export function _resetClient(): void {
-  _client = null;
-}

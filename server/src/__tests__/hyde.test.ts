@@ -91,7 +91,7 @@ describe('generateHypothesis', () => {
     expect(результат).toBeNull();
   });
 
-  it('кидає помилку без API ключа (через getClient)', async () => {
+  it('повертає null без API ключа (graceful fallback)', async () => {
     delete process.env.ANTHROPIC_API_KEY;
     vi.resetModules();
 

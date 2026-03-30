@@ -320,7 +320,7 @@ export async function hybridSearchLaws(
       try {
         const hypothesis = await generateHypothesis(запит);
         if (hypothesis) {
-          const hydeVector = await створитиЕмбеддинг(hypothesis, 'query');
+          const hydeVector = await створитиЕмбеддинг(hypothesis, 'passage');
           const hydeРезультати = await пошукПоВектору(hydeVector, КАНДИДАТІВ_ДЛЯ_RERANKING);
 
           for (const vr of hydeРезультати) {

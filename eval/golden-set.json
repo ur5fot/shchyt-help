@@ -111,7 +111,7 @@
     "id": "pay-injury-bonus",
     "question": "Яка виплата за поранення на службі?",
     "expectedChunks": ["порядок-виплати-грош-p12-rXXXIV-ch0", "порядок-виплати-грош-p11-rXXXIV-ch0", "soczakhyst-st16-ch1"],
-    "expectedArticles": ["Пункт 12", "Пункт 11"],
+    "expectedArticles": ["Пункт 12", "Пункт 11", "Стаття 16"],
     "category": "грошове забезпечення"
   },
   {
@@ -140,7 +140,7 @@
     "id": "discharge-health",
     "question": "Як звільнитися за станом здоровʼя?",
     "expectedChunks": ["viyskovyy-obov-st26-ch2", "про-проходження-служ-p35-rII-ch0", "про-проходження-служ-p240-rXII-ch0", "зміни-щодо-мобілізац-st27-ch2-d9"],
-    "expectedArticles": ["Стаття 26", "Пункт 35"],
+    "expectedArticles": ["Стаття 26", "Пункт 35", "Пункт 240", "Стаття 27"],
     "category": "звільнення"
   },
   {
@@ -175,7 +175,7 @@
     "id": "mobilization-deferment",
     "question": "Хто має право на відстрочку від мобілізації?",
     "expectedChunks": ["про-мобілізацію-st23-ch1-p1", "про-мобілізацію-st23-ch1-p3", "viyskovyy-obov-st40-ch2"],
-    "expectedArticles": ["Стаття 23"],
+    "expectedArticles": ["Стаття 23", "Стаття 40"],
     "category": "мобілізація",
     "expectedFacts": ["заброньовані", "непридатні за станом здоров'я", "троє і більше дітей"]
   },
@@ -321,7 +321,7 @@
     "id": "transfer-conscript",
     "question": "В яких випадках строковика переводять до іншої частини?",
     "expectedChunks": ["про-проходження-служ-p203-rIX-ch0", "viyskovyy-obov-st32-ch1"],
-    "expectedArticles": ["Пункт 203"],
+    "expectedArticles": ["Пункт 203", "Стаття 32"],
     "category": "переведення"
   },
   {
@@ -351,7 +351,7 @@
     "id": "russian-vacation",
     "question": "Положен ли мне отпуск на военной службе?",
     "expectedChunks": ["про-проходження-служ-p180-rVIII-ch0", "soczakhyst-st10-1"],
-    "expectedArticles": ["Пункт 180"],
+    "expectedArticles": ["Пункт 180", "Стаття 10"],
     "category": "запити російською"
   },
   {
