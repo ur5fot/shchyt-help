@@ -44,9 +44,9 @@
 - [x] `npm test` — всі тести проходять
 
 ### Task 3: Ініціалізація хешів для існуючих законів
-- [ ] При першому запуску `npm run check-updates` — створити `data/law-hashes.json` з поточними хешами
-- [ ] Скрипт `npm run init-hashes` для примусової переініціалізації
-- [ ] Додати npm script в root package.json
+- [x] При першому запуску `npm run check-updates` — створити `data/law-hashes.json` з поточними хешами
+- [x] Скрипт `npm run init-hashes` для примусової переініціалізації
+- [x] Додати npm script в root package.json
 
 ### Task 4: Тести та документація
 - [ ] Написати тести для функцій хешування та порівняння
