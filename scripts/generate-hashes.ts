@@ -95,6 +95,7 @@ export async function fetchHtml(url: string): Promise<string | null> {
     }
     return await response.text();
   } catch (err) {
+    clearTimeout(timeout);
     const message = err instanceof Error ? err.message : String(err);
     console.warn(`  Недоступно ${url}: ${message}`);
     return null;
@@ -138,6 +139,7 @@ async function main(): Promise<void> {
   console.log(
     `\nГотово: ${успішних} хешів збережено, ${пропущених} пропущено → ${HASHES_PATH}`
   );
+  process.exit(0);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

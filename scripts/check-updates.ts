@@ -37,6 +37,7 @@ interface CheckResult {
   змінено: number;
   оновлено: number;
   пропущено: number;
+  невдалих: number;
 }
 
 async function main(): Promise<void> {
@@ -64,7 +65,7 @@ async function main(): Promise<void> {
     console.log('Файл хешів не знайдено — буде створено при першому запуску.\n');
   }
 
-  const result: CheckResult = { перевірено: 0, змінено: 0, оновлено: 0, пропущено: 0 };
+  const result: CheckResult = { перевірено: 0, змінено: 0, оновлено: 0, пропущено: 0, невдалих: 0 };
   let dbInitialized = false;
 
   for (const law of laws) {
@@ -197,6 +198,7 @@ async function main(): Promise<void> {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(`    → Помилка оновлення: ${message}`);
+      result.невдалих++;
     }
   }
 
@@ -205,11 +207,12 @@ async function main(): Promise<void> {
   console.log('');
   console.log(
     `Перевірено ${result.перевірено} законів, змінено ${result.змінено}, оновлено ${result.оновлено}` +
-      (result.пропущено > 0 ? `, пропущено ${result.пропущено} (недоступні)` : '')
+      (result.пропущено > 0 ? `, пропущено ${result.пропущено} (недоступні)` : '') +
+      (result.невдалих > 0 ? `, невдалих ${result.невдалих}` : '')
   );
 
   // Завершуємо процес явно — ONNX runtime тримає handles після --auto режиму
-  process.exit(0);
+  process.exit(result.невдалих > 0 ? 1 : 0);
 }
 
 main().catch((err) => {
