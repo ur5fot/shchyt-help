@@ -103,7 +103,7 @@ export default function Chat() {
     }
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       void handleSend(input);
@@ -223,14 +223,14 @@ export default function Chat() {
 
       <div className="px-4 py-3 border-t border-gray-800">
         <div className="flex gap-2">
-          <input
-            type="text"
+          <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             maxLength={МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ}
+            rows={input.includes('\n') ? Math.min(input.split('\n').length, 4) : 1}
             placeholder="Введіть ваше питання..."
-            className="flex-1 bg-gray-800 text-gray-100 placeholder-gray-500 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-600"
+            className="flex-1 bg-gray-800 text-gray-100 placeholder-gray-500 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-600 resize-none"
           />
           <button
             onClick={() => void handleSend(input)}
