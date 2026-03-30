@@ -19,10 +19,10 @@
 ## Implementation Steps
 
 ### Task 1: Створити файл хешів (`data/law-hashes.json`)
-- [ ] Формат: `{ "<source_url>": { "hash": "<sha256>", "lastChecked": "2026-03-30", "chunksCount": 185 } }`
-- [ ] Скрипт для початкової генерації хешів з існуючих законів
-- [ ] Завантажити HTML кожного закону, обчислити sha256, зберегти
-- [ ] Додати `data/law-hashes.json` в `.gitignore` (генерується локально)
+- [x] Формат: `{ "<source_url>": { "hash": "<sha256>", "lastChecked": "2026-03-30", "chunksCount": 185 } }`
+- [x] Скрипт для початкової генерації хешів з існуючих законів
+- [x] Завантажити HTML кожного закону, обчислити sha256, зберегти
+- [x] Додати `data/law-hashes.json` в `.gitignore` (генерується локально)
 
 ### Task 2: Створити скрипт перевірки оновлень (`scripts/check-updates.ts`)
 - [ ] Завантажити `data/law-hashes.json` (якщо немає — створити)
