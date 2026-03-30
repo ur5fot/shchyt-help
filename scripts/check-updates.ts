@@ -106,7 +106,7 @@ async function main(): Promise<void> {
       continue;
     }
 
-    if (firstRun) {
+    if (firstRun || !savedEntry) {
       console.log(`ініціалізовано (${law.chunksCount} чанків)`);
       hashes[law.sourceUrl] = {
         hash: newHash,
@@ -145,6 +145,7 @@ async function main(): Promise<void> {
 
       if (lawData.chunks.length === 0) {
         console.warn('    → 0 чанків — пропускаємо оновлення');
+        result.невдалих++;
         continue;
       }
 

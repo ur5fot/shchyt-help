@@ -15,6 +15,7 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LAWS_DIR = join(__dirname, '..', 'laws');
 const HASHES_PATH = join(__dirname, '..', 'data', 'law-hashes.json');
+const ALLOWED_DOMAIN = 'zakon.rada.gov.ua';
 
 export interface LawHashEntry {
   hash: string;
@@ -87,13 +88,15 @@ export async function fetchHtml(url: string): Promise<string | null> {
   const timeout = setTimeout(() => controller.abort(), 30_000);
   try {
     const response = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeout);
 
     if (!response.ok) {
+      clearTimeout(timeout);
       console.warn(`  Помилка завантаження ${url}: ${response.status}`);
       return null;
     }
-    return await response.text();
+    const text = await response.text();
+    clearTimeout(timeout);
+    return text;
   } catch (err) {
     clearTimeout(timeout);
     const message = err instanceof Error ? err.message : String(err);
@@ -118,6 +121,20 @@ async function main(): Promise<void> {
 
   for (const law of laws) {
     process.stdout.write(`  ${law.shortTitle}... `);
+
+    // Перевірка домену для безпеки
+    try {
+      const urlObj = new URL(law.sourceUrl);
+      if (urlObj.hostname !== ALLOWED_DOMAIN) {
+        console.warn(`пропущено (недозволений домен: ${urlObj.hostname})`);
+        пропущених++;
+        continue;
+      }
+    } catch {
+      console.warn('пропущено (невалідний URL)');
+      пропущених++;
+      continue;
+    }
 
     const html = await fetchHtml(law.sourceUrl);
     if (!html) {
