@@ -23,11 +23,39 @@ export default function Chat() {
   const [activeDocTemplate, setActiveDocTemplate] = useState<{ msgIndex: number; templateId: string } | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
   const [summarizedUpTo, setSummarizedUpTo] = useState(0);
+  const [quoteTooltip, setQuoteTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const chatAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
+
+  useEffect(() => {
+    const area = chatAreaRef.current;
+    if (!area) return;
+    function handleMouseUp() {
+      if (!area) return;
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !sel.toString().trim()) { setQuoteTooltip(null); return; }
+      const anchor = sel.anchorNode?.parentElement?.closest('[data-role="assistant"]');
+      const focus = sel.focusNode?.parentElement?.closest('[data-role="assistant"]');
+      if (!anchor || anchor !== focus) { setQuoteTooltip(null); return; }
+      const rect = sel.getRangeAt(0).getBoundingClientRect();
+      const chatRect = area.getBoundingClientRect();
+      setQuoteTooltip({ text: sel.toString().trim(), x: rect.left - chatRect.left + rect.width / 2, y: rect.top - chatRect.top + area.scrollTop - 8 });
+    }
+    function handleClear() { const s = window.getSelection(); if (!s || s.isCollapsed) setQuoteTooltip(null); }
+    area.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('selectionchange', handleClear);
+    return () => { area.removeEventListener('mouseup', handleMouseUp); document.removeEventListener('selectionchange', handleClear); };
+  }, []);
+
+  function handleQuote(text: string) {
+    setInput((prev) => (prev ? `${prev} > ${text}` : `> ${text} `));
+    setQuoteTooltip(null);
+    window.getSelection()?.removeAllRanges();
+  }
 
   async function handleSend(text: string) {
     if (loading) return;
@@ -111,7 +139,7 @@ export default function Chat() {
         )}
       </header>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+      <div className="flex-1 overflow-y-auto px-4 py-4 relative" ref={chatAreaRef}>
         {messages.map((msg, i) => (
           <div key={i}>
             <Message role={msg.role} text={msg.text} />
@@ -181,6 +209,15 @@ export default function Chat() {
           </div>
         )}
 
+        {quoteTooltip && (
+          <button
+            onClick={() => handleQuote(quoteTooltip.text)}
+            className="absolute z-10 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded-lg shadow-lg -translate-x-1/2 -translate-y-full cursor-pointer"
+            style={{ left: quoteTooltip.x, top: quoteTooltip.y }}
+          >
+            Цитувати
+          </button>
+        )}
         <div ref={bottomRef} />
       </div>
 
