@@ -207,6 +207,9 @@ async function main(): Promise<void> {
     `Перевірено ${result.перевірено} законів, змінено ${result.змінено}, оновлено ${result.оновлено}` +
       (result.пропущено > 0 ? `, пропущено ${result.пропущено} (недоступні)` : '')
   );
+
+  // Завершуємо процес явно — ONNX runtime тримає handles після --auto режиму
+  process.exit(0);
 }
 
 main().catch((err) => {

@@ -140,7 +140,9 @@ async function main(): Promise<void> {
   );
 }
 
-main().catch((err) => {
-  console.error('Помилка генерації хешів:', err);
-  process.exit(1);
-});
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch((err) => {
+    console.error('Помилка генерації хешів:', err);
+    process.exit(1);
+  });
+}
