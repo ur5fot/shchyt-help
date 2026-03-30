@@ -134,7 +134,7 @@ export default function Chat() {
                 <li key={підказка}>
                   <button
                     onClick={() => handleПідказка(підказка)}
-                    className="w-full text-left px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm transition-colors"
+                    className="w-full text-left px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm transition-colors cursor-pointer"
                     data-testid="підказка"
                   >
                     {підказка}
