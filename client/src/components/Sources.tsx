@@ -20,14 +20,18 @@ export default function Sources({ sources, verifiedSources }: SourcesProps) {
         {sources.map((джерело, i) => (
           <li key={i}>
             <div>
-              <a
-                href={джерело.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300 transition-colors"
-              >
-                {джерело.article}
-              </a>
+              {джерело.sourceUrl.startsWith('http') ? (
+                <a
+                  href={джерело.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  {джерело.article}
+                </a>
+              ) : (
+                <span className="text-blue-400">{джерело.article}</span>
+              )}
               <span className="text-gray-600"> — {джерело.law}</span>
               {джерело.documentId && (
                 <span className="text-gray-600"> ({джерело.documentId})</span>

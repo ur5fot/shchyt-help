@@ -219,7 +219,7 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     const фільтруватиДжерела = блокЦитатПрисутній && верифікованіЧанкиIds.size > 0;
     const seen = new Set<string>();
     const джерела: SourceItem[] = результатиПошуку
-      .filter(р => !фільтруватиДжерела || верифікованіЧанкиIds.has(р.chunk.id))
+      .filter(р => !фільтруватиДжерела || верифікованіЧанкиIds.has(р.chunk.id) || р.chunk.sourceUrl.startsWith('internal://'))
       .map(р => ({
         law: р.chunk.lawTitle,
         article: р.chunk.part
