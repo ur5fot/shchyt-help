@@ -157,21 +157,50 @@ describe('Chat', () => {
       const mockGenerateDocx = vi.mocked(docxGenerator.generateDocx);
       mockGenerateDocx.mockResolvedValue(new Blob(['test'], { type: 'application/octet-stream' }));
 
-      mockSendMessage.mockResolvedValueOnce({
-        answer: 'Ви маєте право на відпустку згідно закону.',
-        sources: [],
-      });
-      render(<Chat />);
-      const input = screen.getByPlaceholderText(/Введіть ваше питання/i);
-      await userEvent.type(input, 'відпустка');
-      await userEvent.click(screen.getByRole('button', { name: /Надіслати/i }));
-      await waitFor(() => {
-        expect(screen.getByTestId('download-docx-button')).toBeInTheDocument();
-      });
-      await userEvent.click(screen.getByTestId('download-docx-button'));
-      await waitFor(() => {
-        expect(mockGenerateDocx).toHaveBeenCalledWith('raport-vidpustka');
-      });
+      const mockCreateObjectURL = vi.fn(() => 'blob:mock-url');
+      const mockRevokeObjectURL = vi.fn();
+      const origCreateObjectURL = global.URL.createObjectURL;
+      const origRevokeObjectURL = global.URL.revokeObjectURL;
+      global.URL.createObjectURL = mockCreateObjectURL;
+      global.URL.revokeObjectURL = mockRevokeObjectURL;
+
+      let createdAnchor: HTMLAnchorElement | null = null;
+      const mockClick = vi.fn();
+      const origCreate = Document.prototype.createElement;
+      vi.spyOn(document, 'createElement').mockImplementation(function (this: Document, tag: string) {
+        const el = origCreate.call(this, tag);
+        if (tag === 'a') {
+          el.click = mockClick;
+          createdAnchor = el as HTMLAnchorElement;
+        }
+        return el;
+      } as typeof document.createElement);
+
+      try {
+        mockSendMessage.mockResolvedValueOnce({
+          answer: 'Ви маєте право на відпустку згідно закону.',
+          sources: [],
+        });
+        render(<Chat />);
+        const input = screen.getByPlaceholderText(/Введіть ваше питання/i);
+        await userEvent.type(input, 'відпустка');
+        await userEvent.click(screen.getByRole('button', { name: /Надіслати/i }));
+        await waitFor(() => {
+          expect(screen.getByTestId('download-docx-button')).toBeInTheDocument();
+        });
+        await userEvent.click(screen.getByTestId('download-docx-button'));
+        await waitFor(() => {
+          expect(mockGenerateDocx).toHaveBeenCalledWith('raport-vidpustka');
+        });
+        expect(mockCreateObjectURL).toHaveBeenCalled();
+        expect(mockClick).toHaveBeenCalled();
+        expect(createdAnchor).not.toBeNull();
+        expect(createdAnchor!.download).toBe('raport-vidpustka.docx');
+      } finally {
+        vi.mocked(document.createElement).mockRestore();
+        global.URL.createObjectURL = origCreateObjectURL;
+        global.URL.revokeObjectURL = origRevokeObjectURL;
+      }
     });
   });
 
