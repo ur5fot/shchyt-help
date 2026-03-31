@@ -16,6 +16,8 @@ export async function generateDocx(templateId: string): Promise<Blob> {
   const doc = new Docxtemplater(zip, {
     paragraphLoop: true,
     linebreaks: true,
+    // Зберігаємо невизначені плейсхолдери як є (для ручного заповнення користувачем)
+    nullGetter: (part: { value: string }) => `{${part.value}}`,
   });
 
   doc.render({
