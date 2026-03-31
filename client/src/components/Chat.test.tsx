@@ -3,8 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Chat from './Chat';
 import * as api from '../services/api';
+import * as docxGenerator from '../services/docxGenerator';
 
 vi.mock('../services/api');
+vi.mock('../services/docxGenerator');
 
 describe('Chat', () => {
   const mockSendMessage = vi.mocked(api.sendMessage);
@@ -117,6 +119,58 @@ describe('Chat', () => {
       await userEvent.click(screen.getByRole('button', { name: /Надіслати/i }));
       await waitFor(() => {
         expect(screen.queryByText(/Типові питання/i)).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('кнопка завантаження .docx', () => {
+    it('відображає кнопку завантаження рапорту коли шаблон розпізнано', async () => {
+      mockSendMessage.mockResolvedValueOnce({
+        answer: 'Ви маєте право на відпустку згідно закону.',
+        sources: [],
+      });
+      render(<Chat />);
+      const input = screen.getByPlaceholderText(/Введіть ваше питання/i);
+      await userEvent.type(input, 'відпустка');
+      await userEvent.click(screen.getByRole('button', { name: /Надіслати/i }));
+      await waitFor(() => {
+        expect(screen.getByTestId('download-docx-button')).toBeInTheDocument();
+        expect(screen.getByTestId('download-docx-button')).toHaveTextContent(/Завантажити рапорт/i);
+      });
+    });
+
+    it('відображає кнопку завантаження скарги для шаблону skarga', async () => {
+      mockSendMessage.mockResolvedValueOnce({
+        answer: 'Ви можете оскаржити це рішення.',
+        sources: [],
+      });
+      render(<Chat />);
+      const input = screen.getByPlaceholderText(/Введіть ваше питання/i);
+      await userEvent.type(input, 'оскаржити');
+      await userEvent.click(screen.getByRole('button', { name: /Надіслати/i }));
+      await waitFor(() => {
+        expect(screen.getByTestId('download-docx-button')).toHaveTextContent(/Завантажити скаргу/i);
+      });
+    });
+
+    it('викликає generateDocx при кліку на кнопку завантаження', async () => {
+      const mockGenerateDocx = vi.mocked(docxGenerator.generateDocx);
+      mockGenerateDocx.mockResolvedValue(new Blob(['test'], { type: 'application/octet-stream' }));
+
+      mockSendMessage.mockResolvedValueOnce({
+        answer: 'Ви маєте право на відпустку згідно закону.',
+        sources: [],
+      });
+      render(<Chat />);
+      const input = screen.getByPlaceholderText(/Введіть ваше питання/i);
+      await userEvent.type(input, 'відпустка');
+      await userEvent.click(screen.getByRole('button', { name: /Надіслати/i }));
+      await waitFor(() => {
+        expect(screen.getByTestId('download-docx-button')).toBeInTheDocument();
+      });
+      await userEvent.click(screen.getByTestId('download-docx-button'));
+      await waitFor(() => {
+        expect(mockGenerateDocx).toHaveBeenCalledWith('raport-vidpustka');
       });
     });
   });
