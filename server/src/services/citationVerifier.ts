@@ -157,7 +157,13 @@ function articleMatches(citationArticle: string, chunk: LawChunk): boolean {
   const citationNumbers = extractArticleNumbers(citationArticle);
   const chunkNumbers = extractArticleNumbers(chunkArticleText);
 
-  // Якщо немає чисел — не можемо підтвердити відповідність
+  // Якщо немає чисел в обох — порівнюємо назви напряму (для контактів гарячих ліній тощо)
+  if (citationNumbers.length === 0 && chunkNumbers.length === 0) {
+    const normCitation = normalizeForComparison(citationArticle);
+    const normChunk = normalizeForComparison(chunkArticleText);
+    return normChunk.includes(normCitation) || normCitation.includes(normChunk);
+  }
+  // Якщо числа є лише в одному — не можемо підтвердити відповідність
   if (citationNumbers.length === 0 || chunkNumbers.length === 0) return false;
 
   // Всі номери з цитати повинні послідовно співпадати з номерами чанка
