@@ -41,4 +41,13 @@ describe('SYSTEM_PROMPT', () => {
     const текст = SYSTEM_PROMPT.toLowerCase();
     expect(текст).toMatch(/недостатньо|не маю інформації|зверніться/);
   });
+
+  it('містить інструкцію про контакти гарячих ліній', () => {
+    expect(SYSTEM_PROMPT).toContain('КОНТАКТИ ГАРЯЧИХ ЛІНІЙ');
+    expect(SYSTEM_PROMPT).toContain('Телефон');
+    expect(SYSTEM_PROMPT).toContain('Email');
+    expect(SYSTEM_PROMPT).toContain('Графік роботи');
+    const текст = SYSTEM_PROMPT.toLowerCase();
+    expect(текст).toMatch(/скарг|звернень|правової допомоги|психологічн/);
+  });
 });
