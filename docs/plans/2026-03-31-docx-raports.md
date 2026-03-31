@@ -72,15 +72,14 @@
 - [x] запустити тести — мають проходити
 
 ### Task 5: Видалити старий код та залежності
-- [ ] видалити `client/src/components/DocGenerator.tsx`
-- [ ] видалити `templates/raport-nevyplata.json`, `templates/raport-vidpustka.json`, `templates/skarga.json`
-- [ ] з `pdfGenerator.ts` видалити `generatePdf()`, `applyFields()`, `sanitizeField()`, `loadFont()`, `wrapLines()` — залишити тільки `exportChatToPdf()`
-- [ ] видалити `pdf-lib` та `@pdf-lib/fontkit` з `client/package.json`
-- [ ] запустити `npm install` для оновлення lock-файлу
-- [ ] видалити тести `DocGenerator.test.tsx`
-- [ ] оновити тести `pdfGenerator.test.ts` — видалити тести `generatePdf`, залишити `exportChatToPdf`
-- [ ] запустити тести — мають проходити
-- [ ] запустити `npm run lint` — виправити проблеми
+- [x] видалити `client/src/components/DocGenerator.tsx`
+- [x] видалити `templates/raport-nevyplata.json`, `templates/raport-vidpustka.json`, `templates/skarga.json`
+- [x] з `pdfGenerator.ts` видалити `generatePdf()`, `applyFields()`, `sanitizeField()`, `loadFont()`, `wrapLines()` — залишити тільки `exportChatToPdf()`
+- ⚠️ `pdf-lib` та `@pdf-lib/fontkit` залишені — `exportChatToPdf()` їх використовує
+- [x] видалити тести `DocGenerator.test.tsx`
+- [x] оновити тести `pdfGenerator.test.ts` — видалити тести `generatePdf`, залишити `exportChatToPdf`
+- [x] запустити тести — мають проходити
+- [x] запустити `npm run lint` — виправити проблеми
 
 ### Task 6: Верифікація
 - [ ] перевірити що всі вимоги з специфікації реалізовані
