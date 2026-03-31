@@ -154,7 +154,7 @@ describe('валідація .docx шаблонів', () => {
 
     expect(content).toContain('{ПОСАДА}');
     expect(content).toContain('{В/Ч}');
-    expect(content).toContain('{Ім');
+    expect(content).toMatch(/\{Ім.*ПРІЗВИЩЕ\}/);
   });
 
   it('raport-zvilnennya має облікові документи, додатки та клопотання', () => {
