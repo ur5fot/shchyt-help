@@ -34,13 +34,13 @@
 ## Implementation Steps
 
 ### Task 1: Додати залежності та створити docxGenerator.ts
-- [ ] додати `docxtemplater` та `pizzip` в `client/package.json`
-- [ ] запустити `npm install`
-- [ ] створити `client/src/services/docxGenerator.ts` з функцією `generateDocx(templateId: string): Promise<Blob>`
-- [ ] реалізувати: fetch шаблону з `/templates/docx/{templateId}.docx`, розпакування через PizZip, підстановка `{ДАТА}` через docxtemplater, повернення Blob
-- [ ] створити тестовий .docx файл `templates/docx/test-template.docx` для тестування
-- [ ] написати тести для `docxGenerator.ts`: генерація повертає Blob, підстановка `{ДАТА}` працює, помилка при відсутньому шаблоні
-- [ ] запустити тести — мають проходити
+- [x] додати `docxtemplater` та `pizzip` в `client/package.json`
+- [x] запустити `npm install`
+- [x] створити `client/src/services/docxGenerator.ts` з функцією `generateDocx(templateId: string): Promise<Blob>`
+- [x] реалізувати: fetch шаблону з `/templates/docx/{templateId}.docx`, розпакування через PizZip, підстановка `{ДАТА}` через docxtemplater, повернення Blob
+- [x] створити тестовий .docx файл `templates/docx/test-template.docx` для тестування
+- [x] написати тести для `docxGenerator.ts`: генерація повертає Blob, підстановка `{ДАТА}` працює, помилка при відсутньому шаблоні
+- [x] запустити тести — мають проходити
 
 ### Task 2: Створити 6 .docx шаблонів
 - [ ] дослідити правила оформлення рапортів за Наказом МОУ №40 (шапка, звернення, дата, підпис)
