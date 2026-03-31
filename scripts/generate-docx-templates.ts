@@ -21,6 +21,9 @@ interface ШаблонДаних {
   тип: 'рапорт' | 'скарга';
   кому: string[];
   тілоРапорту: string[];
+  обліковіДокументи?: string; // Куди направити облікові документи
+  додатки?: string[]; // Список копій документів
+  клопотання?: Array<{ кому: string; від: string[] }>; // Ланцюжок клопотань
   підказка: Підказка;
 }
 
@@ -215,12 +218,41 @@ function buildРапортСторінка(шаблон: ШаблонДаних)
     paragraphs.push(paragraph(абзац, { size: 24, spacingAfter: 120 }));
   }
 
+  // Облікові документи (якщо є)
+  if (шаблон.обліковіДокументи) {
+    paragraphs.push(emptyParagraph(120));
+    paragraphs.push(paragraph(шаблон.обліковіДокументи, { size: 24, spacingAfter: 120 }));
+  }
+
+  // Додатки (якщо є)
+  if (шаблон.додатки && шаблон.додатки.length > 0) {
+    paragraphs.push(emptyParagraph(120));
+    paragraphs.push(paragraph('Додатки:', { bold: true, size: 24, spacingAfter: 60 }));
+    for (let i = 0; i < шаблон.додатки.length; i++) {
+      paragraphs.push(paragraph(`${i + 1}. ${шаблон.додатки[i]}`, { size: 24, spacingAfter: 40 }));
+    }
+  }
+
   paragraphs.push(emptyParagraph(240));
 
   // Дата і підпис
+  paragraphs.push(paragraph('{ПОСАДА}', { alignment: 'right', size: 24 }));
+  paragraphs.push(paragraph('військової частини {В/Ч}', { alignment: 'right', size: 24 }));
+  paragraphs.push(paragraph('{ЗВАННЯ}        {Ім\'я ПРІЗВИЩЕ}', { alignment: 'right', size: 24 }));
   paragraphs.push(paragraph('{ДАТА}', { alignment: 'left', size: 24 }));
-  paragraphs.push(emptyParagraph(120));
-  paragraphs.push(paragraph('{ЗВАННЯ} ________________ {ПІБ}', { alignment: 'right', size: 24 }));
+
+  // Клопотання (якщо є)
+  if (шаблон.клопотання && шаблон.клопотання.length > 0) {
+    for (const клопотання of шаблон.клопотання) {
+      paragraphs.push(emptyParagraph(400));
+      paragraphs.push(paragraph(клопотання.кому, { alignment: 'left', bold: true, size: 24, spacingAfter: 120 }));
+      paragraphs.push(paragraph('Клопочу по суті рапорту {ЗВАННЯ} {ПІБ}.', { size: 24, spacingAfter: 200 }));
+      for (const рядок of клопотання.від) {
+        paragraphs.push(paragraph(рядок, { alignment: 'right', size: 24 }));
+      }
+      paragraphs.push(paragraph('___.___.20__', { alignment: 'left', size: 24 }));
+    }
+  }
 
   return paragraphs;
 }

@@ -146,4 +146,14 @@ describe('валідація .docx шаблонів', () => {
       expect(files).toContain(`${id}.docx`);
     }
   });
+
+  it('шаблон має оновлений блок підпису з посадою та в/ч', () => {
+    const buf = loadTemplate('raport-nevyplata');
+    const zip = new PizZip(buf);
+    const content = zip.file('word/document.xml')?.asText() ?? '';
+
+    expect(content).toContain('{ПОСАДА}');
+    expect(content).toContain('{В/Ч}');
+    expect(content).toContain('{Ім');
+  });
 });
