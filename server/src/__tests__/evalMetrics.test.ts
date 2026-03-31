@@ -161,15 +161,29 @@ describe('обчислитиПовніМетрики', () => {
 
   it('обчислює citation accuracy', () => {
     const результати = [
-      створитиПовнийРезультат({ correctCitations: 3, totalCitations: 4, hallucinatedCitations: 1 }),
-      створитиПовнийРезультат({ correctCitations: 2, totalCitations: 2, hallucinatedCitations: 0 }),
+      створитиПовнийРезультат({ expectedArticles: ['Стаття 1'], correctCitations: 3, totalCitations: 4, hallucinatedCitations: 1 }),
+      створитиПовнийРезультат({ expectedArticles: ['Стаття 2'], correctCitations: 2, totalCitations: 2, hallucinatedCitations: 0 }),
     ];
     const метрики = обчислитиПовніМетрики(результати);
     expect(метрики.citationAccuracy).toBeCloseTo(83.33, 1);
     expect(метрики.hallucinationRate).toBeCloseTo(16.67, 1);
     expect(метрики.всьогоЦитат).toBe(6);
     expect(метрики.правильнихЦитат).toBe(5);
+    expect(метрики.всьогоЦитатДляГалюцинацій).toBe(6);
     expect(метрики.галюцинованихЦитат).toBe(1);
+  });
+
+  it('не враховує питання без expectedArticles в citation accuracy', () => {
+    const результати = [
+      створитиПовнийРезультат({ expectedArticles: ['Стаття 1'], correctCitations: 2, totalCitations: 2, hallucinatedCitations: 0 }),
+      створитиПовнийРезультат({ expectedArticles: [], correctCitations: 0, totalCitations: 3, hallucinatedCitations: 0 }),
+    ];
+    const метрики = обчислитиПовніМетрики(результати);
+    // Citation accuracy рахується тільки по першому питанню (з expectedArticles)
+    expect(метрики.citationAccuracy).toBeCloseTo(100, 1);
+    expect(метрики.всьогоЦитат).toBe(2);
+    // Hallucination rate рахується по всіх
+    expect(метрики.всьогоЦитатДляГалюцинацій).toBe(5);
   });
 
   it('обчислює fact recall', () => {

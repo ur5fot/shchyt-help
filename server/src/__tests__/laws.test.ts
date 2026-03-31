@@ -74,7 +74,7 @@ describe('loadAllLaws', () => {
   it('sourceUrl відповідає zakon.rada.gov.ua або internal://', () => {
     const chunks = loadAllLaws();
     for (const chunk of chunks) {
-      expect(chunk.sourceUrl).toMatch(/zakon\.rada\.gov\.ua|internal:\/\//);
+      expect(chunk.sourceUrl).toMatch(/^https:\/\/zakon\.rada\.gov\.ua\/|^internal:\/\//);
     }
   });
 

@@ -161,6 +161,8 @@ function articleMatches(citationArticle: string, chunk: LawChunk): boolean {
   if (citationNumbers.length === 0 && chunkNumbers.length === 0) {
     const normCitation = normalizeForComparison(citationArticle);
     const normChunk = normalizeForComparison(chunkArticleText);
+    // Захист від надто коротких рядків — мінімум 3 символи для substring-порівняння
+    if (normCitation.length < 3 || normChunk.length < 3) return false;
     return normChunk.includes(normCitation) || normCitation.includes(normChunk);
   }
   // Якщо числа є лише в одному — не можемо підтвердити відповідність
