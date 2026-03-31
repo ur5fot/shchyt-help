@@ -402,5 +402,26 @@
     "expectedChunks": ["soczakhyst-st18-ch1"],
     "expectedArticles": ["Стаття 18"],
     "category": "грошове забезпечення"
+  },
+  {
+    "id": "hotline-psychological-help",
+    "question": "Мені потрібна психологічна допомога, куди звернутися?",
+    "expectedChunks": ["hotlines-lifeline", "hotlines-psychosocial"],
+    "expectedArticles": [],
+    "category": "гарячі лінії"
+  },
+  {
+    "id": "hotline-legal-aid",
+    "question": "Де отримати безоплатну правову допомогу для військовослужбовців?",
+    "expectedChunks": ["hotlines-legal-aid"],
+    "expectedArticles": [],
+    "category": "гарячі лінії"
+  },
+  {
+    "id": "hotline-complaint",
+    "question": "Куди подати скаргу на порушення прав військовослужбовця?",
+    "expectedChunks": ["hotlines-mou", "hotlines-ombudsman", "hotlines-military-prosecution"],
+    "expectedArticles": [],
+    "category": "гарячі лінії"
   }
 ]
