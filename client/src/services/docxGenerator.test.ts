@@ -156,4 +156,24 @@ describe('валідація .docx шаблонів', () => {
     expect(content).toContain('{В/Ч}');
     expect(content).toContain('{Ім');
   });
+
+  it('raport-zvilnennya має облікові документи, додатки та клопотання', () => {
+    const buf = loadTemplate('raport-zvilnennya');
+    const zip = new PizZip(buf);
+    const content = zip.file('word/document.xml')?.asText() ?? '';
+
+    // Облікові документи
+    expect(content).toContain('{НАЗВА_ТЦК}');
+    expect(content).toContain('{МІСТО}');
+
+    // Додатки
+    expect(content).toContain('Додатки:');
+    expect(content).toContain('Копія паспорта');
+    expect(content).toContain('Копія військового квитка');
+
+    // Клопотання (2 рівні)
+    expect(content).toContain('Клопочу по суті рапорту');
+    expect(content).toContain('{ПОСАДА_БЕЗПОСЕРЕДНЬОГО_КОМАНДИРА}');
+    expect(content).toContain('{В/Ч_БРИГАДИ}');
+  });
 });
