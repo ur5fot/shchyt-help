@@ -26,6 +26,7 @@ export default function Chat() {
   const [quoteTooltip, setQuoteTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatAreaRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -55,6 +56,7 @@ export default function Chat() {
     setInput((prev) => (prev ? `${prev} > ${text}` : `> ${text} `));
     setQuoteTooltip(null);
     window.getSelection()?.removeAllRanges();
+    requestAnimationFrame(() => inputRef.current?.focus());
   }
 
   async function handleSend(text: string) {
@@ -187,9 +189,6 @@ export default function Chat() {
                 </li>
               ))}
             </ul>
-            <p className="mt-6 text-center text-xs text-gray-600">
-              ⚠️ Це не юридична консультація. Для прийняття рішень зверніться до військового адвоката.
-            </p>
           </div>
         )}
 
@@ -224,6 +223,7 @@ export default function Chat() {
       <div className="px-4 py-3 border-t border-gray-800">
         <div className="flex gap-2">
           <textarea
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -240,6 +240,9 @@ export default function Chat() {
             Надіслати
           </button>
         </div>
+        <p className="mt-1.5 text-center text-[10px] text-gray-600">
+          ⚠️ Це не юридична консультація. Для прийняття рішень зверніться до військового адвоката.
+        </p>
       </div>
     </div>
   );
