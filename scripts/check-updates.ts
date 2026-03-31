@@ -74,6 +74,7 @@ async function main(): Promise<void> {
     // Пропускаємо внутрішні URL (не зовнішні ресурси)
     if (law.sourceUrl.startsWith('internal://')) {
       console.log('пропущено (внутрішній ресурс)');
+      result.пропущено++;
       continue;
     }
 
