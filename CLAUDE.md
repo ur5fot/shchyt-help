@@ -50,7 +50,7 @@ server/      → Express бекенд, єдиний ендпоінт POST /api/c
 laws/        → JSON-файли українських законів (чанки з ключовими словами)
 data/lancedb/→ Векторна база LanceDB (генерується локально через init-vector-db)
 data/law-hashes.json → Хеші HTML сторінок законів для виявлення змін (генерується через init-hashes / check-updates)
-templates/docx/ → Шаблони .docx документів (6 шт: невиплата, відпустка, звільнення, ротація, ВЛК, скарга) з підказками
+client/public/templates/docx/ → Шаблони .docx документів (6 шт: невиплата, відпустка, звільнення, ротація, ВЛК, скарга) з підказками
 scripts/     → Парсер законів, ініціалізація векторної бази, оновлення законів, eval
 eval/        → Golden test set (59 питань з очікуваними чанками та статтями)
 ```
@@ -85,6 +85,7 @@ eval/        → Golden test set (59 питань з очікуваними ча
 - **scripts/eval.ts** — скрипт оцінки якості: `npm run eval` (retrieval recall по golden set, 59 питань), `npm run eval -- --full` (повний eval з Claude API: citation accuracy, fact recall)
 - **scripts/generate-hashes.ts** — генерація `data/law-hashes.json`: sha256 хеші HTML сторінок законів з rada.gov.ua, утиліти `computeHash()`, `loadHashes()`, `saveHashes()`, `readLawFiles()`, `fetchHtml()`. Запуск: `npm run init-hashes`
 - **scripts/check-updates.ts** — перевірка оновлень законів: порівняння поточних хешів з збереженими, режим `--auto` для автоматичного перепарсингу + ембеддинги + upsert в LanceDB. Graceful fallback при недоступності rada.gov.ua. Запуск: `npm run check-updates`
+- **scripts/generate-docx-templates.ts** — програмна генерація 6 .docx шаблонів (рапорти + скарга) через PizZip: плейсхолдери для docxtemplater, листи-підказки на 2-й сторінці, оформлення за Наказом МОУ №40. Запуск: `npx tsx scripts/generate-docx-templates.ts`
 
 ## База законів
 

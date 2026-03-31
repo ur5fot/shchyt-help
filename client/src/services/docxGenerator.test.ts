@@ -14,7 +14,7 @@ const TEMPLATE_IDS = [
   'skarga',
 ];
 
-const templatesDir = path.resolve(__dirname, '../../../templates/docx');
+const templatesDir = path.resolve(__dirname, '../../public/templates/docx');
 
 function loadTemplate(id: string): Buffer {
   return fs.readFileSync(path.join(templatesDir, `${id}.docx`));

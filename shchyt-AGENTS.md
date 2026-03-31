@@ -18,7 +18,7 @@
 - **Backend:** Node.js + Express
 - **AI:** Claude API (claude-sonnet-4-20250514)
 - **База законів:** JSON-файли (без БД на старті)
-- **Генерація документів:** pdf-lib (на клієнті)
+- **Генерація документів:** docxtemplater/pizzip (.docx генерація) + pdf-lib (експорт чату в PDF)
 
 Без PostgreSQL, без pgvector, без Docker, без Ollama. Все максимально просто.
 
@@ -34,11 +34,12 @@ shchyt/
 │   │   │   ├── Chat.tsx        # Основний чат
 │   │   │   ├── Message.tsx     # Бульбашка повідомлення
 │   │   │   ├── Sources.tsx     # Блок джерел у відповіді
-│   │   │   ├── DocGenerator.tsx # Форма генерації рапорту
 │   │   │   └── Home.tsx        # Головний екран
 │   │   ├── services/
 │   │   │   ├── api.ts          # Запити до сервера
-│   │   │   └── pdfGenerator.ts # Генерація PDF на клієнті
+│   │   │   ├── docxGenerator.ts # Генерація .docx рапортів/скарг
+│   │   │   ├── pdfGenerator.ts # Експорт бесіди в PDF
+│   │   │   └── templateDetector.ts # Визначення типу шаблону
 │   │   ├── App.tsx
 │   │   └── main.tsx
 │   ├── index.html
@@ -64,10 +65,13 @@ shchyt/
 │   ├── pro-status-veteraniv.json     # ЗУ Про статус ветеранів війни
 │   └── index.ts                # Завантаження всіх законів
 │
-├── templates/                   # Шаблони документів
-│   ├── raport-nevyplata.json
-│   ├── raport-vidpustka.json
-│   └── skarga.json
+├── client/public/templates/docx/ # .docx шаблони документів (6 шт)
+│   ├── raport-nevyplata.docx   # Рапорт невиплата грошового забезпечення
+│   ├── raport-vidpustka.docx   # Рапорт відпустка
+│   ├── raport-zvilnennya.docx  # Рапорт звільнення
+│   ├── raport-rotatsia.docx    # Рапорт ротація
+│   ├── raport-vlk.docx         # Рапорт ВЛК
+│   └── skarga.docx             # Скарга
 │
 ├── scripts/
 │   └── parse-law.ts            # Скрипт парсингу закону з HTML
@@ -97,9 +101,9 @@ claude.ts: відправляє в Claude API
         ↓
 Відповідь з цитатами → клієнт
         ↓
-Якщо є можливість — кнопка "Згенерувати рапорт"
+Якщо є можливість — кнопка "Завантажити рапорт (.docx)"
         ↓
-PDF генерується на клієнті (pdf-lib), нікуди не відправляється
+.docx генерується на клієнті (docxtemplater/pizzip), нікуди не відправляється
 ```
 
 ---
@@ -401,7 +405,7 @@ export { router as chatRouter };
 Frontend: React + Vite + TypeScript + Tailwind CSS
 Backend: Node.js + Express + TypeScript
 Встанови залежності:
-  client: react, react-dom, tailwindcss, @tailwindcss/vite, pdf-lib
+  client: react, react-dom, tailwindcss, @tailwindcss/vite, docxtemplater, pizzip, pdf-lib
   server: express, cors, @anthropic-ai/sdk, tsx, typescript, @types/express, @types/cors
 Налаштуй vite proxy для /api → localhost:3001
 Зроби щоб `npm run dev` запускало і клієнт і сервер одночасно.
@@ -442,11 +446,11 @@ API ключ з .env файлу.
 ### Крок 5: Генерація документів
 
 ```
-Додай кнопку "Згенерувати рапорт" у відповідях де це доречно.
-Форма: звання, тип виплати, період.
-Генерація PDF через pdf-lib прямо в браузері.
-ПІБ та номер частини — placeholder [ПІБ], [НОМЕР В/Ч] які
-користувач заповнює вручну після роздрукування.
+Кнопка "Завантажити рапорт (.docx)" з'являється автоматично у відповідях де це доречно.
+6 шаблонів .docx (невиплата, відпустка, звільнення, ротація, ВЛК, скарга).
+Генерація .docx через docxtemplater/pizzip прямо в браузері.
+{ДАТА} підставляється автоматично, решта плейсхолдерів ({ПІБ}, {ЗВАННЯ}, тощо)
+залишаються для ручного заповнення у Word/Google Docs.
 ```
 
 ---
@@ -477,7 +481,7 @@ npm run dev
 - [ ] Додати більше законів (парсером)
 - [ ] Замінити keyword search на embeddings (pgvector)
 - [ ] Додати offline режим (Service Worker + IndexedDB)
-- [ ] Додати більше шаблонів документів
+- [x] Додати більше шаблонів документів (6 шт: невиплата, відпустка, звільнення, ротація, ВЛК, скарга)
 - [ ] Задеплоїти для друзів (Hetzner VPS або Vercel)
 - [ ] PII-анонімізація запитів
 - [ ] Показати волонтерській організації

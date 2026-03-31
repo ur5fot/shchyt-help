@@ -1,6 +1,6 @@
 /**
  * Скрипт для генерації .docx шаблонів рапортів/скарг.
- * Створює 6 шаблонів у templates/docx/ з плейсхолдерами для docxtemplater.
+ * Створює 6 шаблонів у client/public/templates/docx/ з плейсхолдерами для docxtemplater.
  *
  * Запуск: npx tsx scripts/generate-docx-templates.ts
  */
@@ -577,7 +577,7 @@ function generateTemplate(шаблон: ШаблонДаних): Buffer {
 }
 
 function main() {
-  const outputDir = path.resolve(__dirname, '../templates/docx');
+  const outputDir = path.resolve(__dirname, '../client/public/templates/docx');
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }

@@ -121,7 +121,7 @@ export default function Chat() {
       a.download = `shchyt-${new Date().toISOString().slice(0, 10)}.pdf`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 5000);
-    } catch { setError('Не вдалося згенерувати PDF'); }
+    } catch (err) { console.error('PDF export failed', err); setError('Не вдалося згенерувати PDF'); }
   }
 
   async function handleDownloadDocx(templateId: string) {
@@ -133,7 +133,7 @@ export default function Chat() {
       a.download = `${templateId}.docx`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 5000);
-    } catch { setError('Не вдалося згенерувати документ'); }
+    } catch (err) { console.error('docx generation failed', err); setError('Не вдалося згенерувати документ'); }
   }
 
   function handleПідказка(підказка: string) {
