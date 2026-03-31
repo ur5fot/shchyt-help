@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import Message, { type MessageRole } from './Message';
 import Sources from './Sources';
-import DocGenerator from './DocGenerator';
 import { sendMessage, type Source, type HistoryMessage } from '../services/api';
 import { exportChatToPdf } from '../services/pdfGenerator';
+import { generateDocx } from '../services/docxGenerator';
 import { detectTemplate } from '../services/templateDetector';
 import { ПІДКАЗКИ, МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ } from '../constants';
 
@@ -20,7 +20,6 @@ export default function Chat() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeDocTemplate, setActiveDocTemplate] = useState<{ msgIndex: number; templateId: string } | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
   const [summarizedUpTo, setSummarizedUpTo] = useState(0);
   const [quoteTooltip, setQuoteTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
@@ -122,7 +121,19 @@ export default function Chat() {
       a.download = `shchyt-${new Date().toISOString().slice(0, 10)}.pdf`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 5000);
-    } catch { setError('Не вдалося згенерувати PDF'); }
+    } catch (err) { console.error('PDF export failed', err); setError('Не вдалося згенерувати PDF'); }
+  }
+
+  async function handleDownloadDocx(templateId: string) {
+    try {
+      const blob = await generateDocx(templateId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${templateId}.docx`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch (err) { console.error('docx generation failed', err); setError('Не вдалося згенерувати документ'); }
   }
 
   function handleПідказка(підказка: string) {
@@ -150,22 +161,13 @@ export default function Chat() {
             )}
             {msg.role === 'assistant' && msg.suggestedTemplate && (
               <div className="mb-3">
-                {activeDocTemplate?.msgIndex === i ? (
-                  <DocGenerator
-                    templateId={activeDocTemplate.templateId}
-                    onClose={() => setActiveDocTemplate(null)}
-                  />
-                ) : (
-                  <button
-                    onClick={() =>
-                      setActiveDocTemplate({ msgIndex: i, templateId: msg.suggestedTemplate! })
-                    }
-                    className="text-sm px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-blue-400 hover:text-blue-300 rounded-xl border border-gray-700 transition-colors"
-                    data-testid="generate-doc-button"
-                  >
-                    📄 {msg.suggestedTemplate === 'skarga' ? 'Згенерувати скаргу' : 'Згенерувати рапорт'}
-                  </button>
-                )}
+                <button
+                  onClick={() => void handleDownloadDocx(msg.suggestedTemplate!)}
+                  className="text-sm px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-blue-400 hover:text-blue-300 rounded-xl border border-gray-700 transition-colors"
+                  data-testid="download-docx-button"
+                >
+                  📄 {msg.suggestedTemplate === 'skarga' ? 'Завантажити скаргу (.docx)' : 'Завантажити рапорт (.docx)'}
+                </button>
               </div>
             )}
           </div>

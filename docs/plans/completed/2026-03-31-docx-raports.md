@@ -34,65 +34,64 @@
 ## Implementation Steps
 
 ### Task 1: Додати залежності та створити docxGenerator.ts
-- [ ] додати `docxtemplater` та `pizzip` в `client/package.json`
-- [ ] запустити `npm install`
-- [ ] створити `client/src/services/docxGenerator.ts` з функцією `generateDocx(templateId: string): Promise<Blob>`
-- [ ] реалізувати: fetch шаблону з `/templates/docx/{templateId}.docx`, розпакування через PizZip, підстановка `{ДАТА}` через docxtemplater, повернення Blob
-- [ ] створити тестовий .docx файл `templates/docx/test-template.docx` для тестування
-- [ ] написати тести для `docxGenerator.ts`: генерація повертає Blob, підстановка `{ДАТА}` працює, помилка при відсутньому шаблоні
-- [ ] запустити тести — мають проходити
+- [x] додати `docxtemplater` та `pizzip` в `client/package.json`
+- [x] запустити `npm install`
+- [x] створити `client/src/services/docxGenerator.ts` з функцією `generateDocx(templateId: string): Promise<Blob>`
+- [x] реалізувати: fetch шаблону з `/templates/docx/{templateId}.docx`, розпакування через PizZip, підстановка `{ДАТА}` через docxtemplater, повернення Blob
+- [x] створити тестовий .docx файл `templates/docx/test-template.docx` для тестування
+- [x] написати тести для `docxGenerator.ts`: генерація повертає Blob, підстановка `{ДАТА}` працює, помилка при відсутньому шаблоні
+- [x] запустити тести — мають проходити
 
 ### Task 2: Створити 6 .docx шаблонів
-- [ ] дослідити правила оформлення рапортів за Наказом МОУ №40 (шапка, звернення, дата, підпис)
-- [ ] створити `templates/docx/raport-nevyplata.docx` — рапорт невиплата + підказка (Постанова КМУ №704, Наказ МОУ №260)
-- [ ] створити `templates/docx/raport-vidpustka.docx` — рапорт відпустка + підказка (ЗУ «Про соцзахист», Положення)
-- [ ] створити `templates/docx/raport-zvilnennya.docx` — рапорт звільнення + підказка (ЗУ «Про військовий обов'язок»)
-- [ ] створити `templates/docx/raport-rotatsia.docx` — рапорт ротація + підказка (Положення про проходження служби)
-- [ ] створити `templates/docx/raport-vlk.docx` — рапорт ВЛК + підказка (Положення про ВЛК)
-- [ ] створити `templates/docx/skarga.docx` — скарга + підказка (ЗУ «Про соцзахист», ст. 7¹)
-- [ ] написати тест що всі 6 шаблонів існують і коректно відкриваються через PizZip/docxtemplater
-- [ ] видалити тестовий `templates/docx/test-template.docx`
-- [ ] запустити тести — мають проходити
+- [x] дослідити правила оформлення рапортів за Наказом МОУ №40 (шапка, звернення, дата, підпис)
+- [x] створити `templates/docx/raport-nevyplata.docx` — рапорт невиплата + підказка (Постанова КМУ №704, Наказ МОУ №260)
+- [x] створити `templates/docx/raport-vidpustka.docx` — рапорт відпустка + підказка (ЗУ «Про соцзахист», Положення)
+- [x] створити `templates/docx/raport-zvilnennya.docx` — рапорт звільнення + підказка (ЗУ «Про військовий обов'язок»)
+- [x] створити `templates/docx/raport-rotatsia.docx` — рапорт ротація + підказка (Положення про проходження служби)
+- [x] створити `templates/docx/raport-vlk.docx` — рапорт ВЛК + підказка (Положення про ВЛК)
+- [x] створити `templates/docx/skarga.docx` — скарга + підказка (ЗУ «Про соцзахист», ст. 7¹)
+- [x] написати тест що всі 6 шаблонів існують і коректно відкриваються через PizZip/docxtemplater
+- [x] видалити тестовий `templates/docx/test-template.docx`
+- [x] запустити тести — мають проходити
 
 ### Task 3: Розширити templateDetector для нових типів
-- [ ] додати патерни в `client/src/services/templateDetector.ts`:
+- [x] додати патерни в `client/src/services/templateDetector.ts`:
   - `raport-zvilnennya`: 'звільнен', 'демобіліз', 'закінч.*служб'
   - `raport-rotatsia`: 'ротаці', 'заміна на позиці'
   - `raport-vlk`: 'ВЛК', 'влк', 'лікарськ.*комісі', 'придатн.*служб', 'медичн.*огляд'
-- [ ] оновити тести `templateDetector.test.ts` — додати кейси для нових патернів
-- [ ] перевірити що існуючі патерни (невиплата, відпустка, скарга) не зламались
-- [ ] запустити тести — мають проходити
+- [x] оновити тести `templateDetector.test.ts` — додати кейси для нових патернів
+- [x] перевірити що існуючі патерни (невиплата, відпустка, скарга) не зламались
+- [x] запустити тести — мають проходити
 
 ### Task 4: Оновити UI — замінити DocGenerator на кнопку завантаження
-- [ ] в `Chat.tsx` замінити імпорт `DocGenerator` на `generateDocx` з `docxGenerator.ts`
-- [ ] видалити стан `activeDocTemplate` (форма більше не потрібна)
-- [ ] замінити блок DocGenerator/кнопки на просту кнопку "📄 Завантажити рапорт (.docx)" / "📄 Завантажити скаргу (.docx)"
-- [ ] при кліку: `generateDocx(templateId)` → створити посилання → автозавантаження
-- [ ] оновити тести `Chat.test.tsx` — кнопка завантаження замість форми
-- [ ] запустити тести — мають проходити
+- [x] в `Chat.tsx` замінити імпорт `DocGenerator` на `generateDocx` з `docxGenerator.ts`
+- [x] видалити стан `activeDocTemplate` (форма більше не потрібна)
+- [x] замінити блок DocGenerator/кнопки на просту кнопку "📄 Завантажити рапорт (.docx)" / "📄 Завантажити скаргу (.docx)"
+- [x] при кліку: `generateDocx(templateId)` → створити посилання → автозавантаження
+- [x] оновити тести `Chat.test.tsx` — кнопка завантаження замість форми
+- [x] запустити тести — мають проходити
 
 ### Task 5: Видалити старий код та залежності
-- [ ] видалити `client/src/components/DocGenerator.tsx`
-- [ ] видалити `templates/raport-nevyplata.json`, `templates/raport-vidpustka.json`, `templates/skarga.json`
-- [ ] з `pdfGenerator.ts` видалити `generatePdf()`, `applyFields()`, `sanitizeField()`, `loadFont()`, `wrapLines()` — залишити тільки `exportChatToPdf()`
-- [ ] видалити `pdf-lib` та `@pdf-lib/fontkit` з `client/package.json`
-- [ ] запустити `npm install` для оновлення lock-файлу
-- [ ] видалити тести `DocGenerator.test.tsx`
-- [ ] оновити тести `pdfGenerator.test.ts` — видалити тести `generatePdf`, залишити `exportChatToPdf`
-- [ ] запустити тести — мають проходити
-- [ ] запустити `npm run lint` — виправити проблеми
+- [x] видалити `client/src/components/DocGenerator.tsx`
+- [x] видалити `templates/raport-nevyplata.json`, `templates/raport-vidpustka.json`, `templates/skarga.json`
+- [x] з `pdfGenerator.ts` видалити `generatePdf()`, `applyFields()`, `sanitizeField()`, `loadFont()`, `wrapLines()` — залишити тільки `exportChatToPdf()`
+- ⚠️ `pdf-lib` та `@pdf-lib/fontkit` залишені — `exportChatToPdf()` їх використовує
+- [x] видалити тести `DocGenerator.test.tsx`
+- [x] оновити тести `pdfGenerator.test.ts` — видалити тести `generatePdf`, залишити `exportChatToPdf`
+- [x] запустити тести — мають проходити
+- [x] запустити `npm run lint` — виправити проблеми
 
 ### Task 6: Верифікація
-- [ ] перевірити що всі вимоги з специфікації реалізовані
-- [ ] перевірити що `exportChatToPdf` не зламався
-- [ ] запустити повний test suite (`npm test`)
-- [ ] запустити `npm run lint` — всі проблеми виправити
-- [ ] перевірити що шаблони правильно завантажуються та генерують .docx
+- [x] перевірити що всі вимоги з специфікації реалізовані
+- [x] перевірити що `exportChatToPdf` не зламався
+- [x] запустити повний test suite (`npm test`)
+- [x] запустити `npm run lint` — всі проблеми виправити
+- [x] перевірити що шаблони правильно завантажуються та генерують .docx
 
 ### Task 7: Оновити документацію
-- [ ] оновити `CLAUDE.md` — замінити опис pdf-lib на docxtemplater, оновити опис шаблонів та DocGenerator
-- [ ] оновити `feat.md` — позначити задачу виконаною
-- [ ] оновити `client/src/constants.ts` якщо є текстові константи пов'язані зі старими шаблонами
+- [x] оновити `CLAUDE.md` — замінити опис pdf-lib на docxtemplater, оновити опис шаблонів та DocGenerator
+- [x] оновити `feat.md` — позначити задачу виконаною
+- [x] оновити `client/src/constants.ts` якщо є текстові константи пов'язані зі старими шаблонами
 
 ## Technical Details
 

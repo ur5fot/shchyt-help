@@ -46,6 +46,80 @@ describe('detectTemplate', () => {
     });
   });
 
+  describe('raport-zvilnennya (рапорт про звільнення)', () => {
+    it('виявляє "звільнення"', () => {
+      expect(detectTemplate('Порядок звільнення з військової служби')).toBe('raport-zvilnennya');
+    });
+
+    it('виявляє "демобілізація"', () => {
+      expect(detectTemplate('Демобілізація після 36 місяців служби')).toBe('raport-zvilnennya');
+    });
+
+    it('виявляє "закінчення служби" (regex)', () => {
+      expect(detectTemplate('Після закінчення строкової служби')).toBe('raport-zvilnennya');
+    });
+
+    it('виявляє "закінчення військової служби" (regex)', () => {
+      expect(detectTemplate('Порядок закінчення військової служби')).toBe('raport-zvilnennya');
+    });
+
+    it('виявляє "звільнений"', () => {
+      expect(detectTemplate('Він був звільнений зі служби')).toBe('raport-zvilnennya');
+    });
+  });
+
+  describe('raport-rotatsia (рапорт про ротацію)', () => {
+    it('виявляє "ротація"', () => {
+      expect(detectTemplate('Ротація підрозділу кожні 6 місяців')).toBe('raport-rotatsia');
+    });
+
+    it('виявляє "ротації"', () => {
+      expect(detectTemplate('Право на ротації передбачено Положенням')).toBe('raport-rotatsia');
+    });
+
+    it('виявляє "заміна на позиції"', () => {
+      expect(detectTemplate('Заміна на позиції повинна відбутися')).toBe('raport-rotatsia');
+    });
+  });
+
+  describe('raport-vlk (рапорт про ВЛК)', () => {
+    it('виявляє "ВЛК" (великими)', () => {
+      expect(detectTemplate('Направлення на ВЛК для огляду')).toBe('raport-vlk');
+    });
+
+    it('виявляє "влк" (малими)', () => {
+      expect(detectTemplate('Потрібно пройти влк')).toBe('raport-vlk');
+    });
+
+    it('виявляє "лікарська комісія" (regex)', () => {
+      expect(detectTemplate('Військово-лікарська комісія визначає придатність')).toBe('raport-vlk');
+    });
+
+    it('виявляє "лікарській комісії" (regex)', () => {
+      expect(detectTemplate('На лікарській комісії визначили')).toBe('raport-vlk');
+    });
+
+    it('виявляє "лікарську комісію" (regex)', () => {
+      expect(detectTemplate('Направили на лікарську комісію')).toBe('raport-vlk');
+    });
+
+    it('виявляє "придатність до служби" (regex)', () => {
+      expect(detectTemplate('Визначення придатності до служби')).toBe('raport-vlk');
+    });
+
+    it('виявляє "придатний до служби" (regex)', () => {
+      expect(detectTemplate('Визнаний придатний до служби з обмеженнями')).toBe('raport-vlk');
+    });
+
+    it('виявляє "медичний огляд" (regex)', () => {
+      expect(detectTemplate('Направлення на медичний огляд')).toBe('raport-vlk');
+    });
+
+    it('виявляє "медичного огляду" (regex)', () => {
+      expect(detectTemplate('Результати медичного огляду')).toBe('raport-vlk');
+    });
+  });
+
   describe('skarga (скарга)', () => {
     it('виявляє "оскаржити"', () => {
       expect(detectTemplate('Ви можете оскаржити це рішення')).toBe('skarga');
@@ -80,6 +154,18 @@ describe('detectTemplate', () => {
     it('працює з великими для скарги', () => {
       expect(detectTemplate('Подати СКАРГУ')).toBe('skarga');
     });
+
+    it('працює з великими для звільнення', () => {
+      expect(detectTemplate('ЗВІЛЬНЕННЯ зі служби')).toBe('raport-zvilnennya');
+    });
+
+    it('працює з великими для ротації', () => {
+      expect(detectTemplate('РОТАЦІЯ підрозділу')).toBe('raport-rotatsia');
+    });
+
+    it('працює з великими для ВЛК regex', () => {
+      expect(detectTemplate('ЛІКАРСЬКА КОМІСІЯ визначила')).toBe('raport-vlk');
+    });
   });
 
   describe('edge cases', () => {
@@ -111,11 +197,16 @@ describe('detectTemplate', () => {
       const довгийТекст = 'А'.repeat(10000) + ' невиплата ' + 'Б'.repeat(10000);
       expect(detectTemplate(довгийТекст)).toBe('raport-nevyplata');
     });
+
+    it('звільнення має пріоритет над скаргою', () => {
+      const текст = 'Звільнення можна оскаржити';
+      expect(detectTemplate(текст)).toBe('raport-zvilnennya');
+    });
   });
 
   describe('структура ШАБЛОНИ_ПАТТЕРНИ', () => {
-    it('містить 3 шаблони', () => {
-      expect(ШАБЛОНИ_ПАТТЕРНИ).toHaveLength(3);
+    it('містить 6 шаблонів', () => {
+      expect(ШАБЛОНИ_ПАТТЕРНИ).toHaveLength(6);
     });
 
     it('кожен шаблон має id та ключові слова', () => {

@@ -8,13 +8,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Огляд проекту
 
-**SHCHYT** — AI-асистент з прав військовослужбовців ЗСУ. Локальний веб-додаток: задаєш питання — отримуєш відповідь з посиланням на конкретну статтю закону. Може згенерувати рапорт або скаргу у PDF.
+**SHCHYT** — AI-асистент з прав військовослужбовців ЗСУ. Локальний веб-додаток: задаєш питання — отримуєш відповідь з посиланням на конкретну статтю закону. Може згенерувати рапорт або скаргу у .docx для ручного заповнення.
 
 Повна специфікація — у `shchyt-AGENTS.md`. Прочитай перед початком будь-якої роботи.
 
 ## Стек
 
-- **Frontend:** React + Vite + TypeScript + Tailwind CSS + pdf-lib (PDF на клієнті)
+- **Frontend:** React + Vite + TypeScript + Tailwind CSS + docxtemplater/pizzip (.docx генерація) + pdf-lib (експорт чату в PDF)
 - **Backend:** Node.js + Express + TypeScript
 - **AI:** Claude API (`claude-sonnet-4-20250514`) через `@anthropic-ai/sdk`
 - **Векторний пошук:** LanceDB (вбудована векторна БД) + `@xenova/transformers` (ембеддинги: `Xenova/multilingual-e5-small`, 384d; re-ranking: `Xenova/bge-reranker-base`)
@@ -50,14 +50,14 @@ server/      → Express бекенд, єдиний ендпоінт POST /api/c
 laws/        → JSON-файли українських законів (чанки з ключовими словами)
 data/lancedb/→ Векторна база LanceDB (генерується локально через init-vector-db)
 data/law-hashes.json → Хеші HTML сторінок законів для виявлення змін (генерується через init-hashes / check-updates)
-templates/   → Шаблони документів (рапорт, скарга) у JSON
+client/public/templates/docx/ → Шаблони .docx документів (6 шт: невиплата, відпустка, звільнення, ротація, ВЛК, скарга) з підказками
 scripts/     → Парсер законів, ініціалізація векторної бази, оновлення законів, eval
 eval/        → Golden test set (59 питань з очікуваними чанками та статтями)
 ```
 
 **Потік запиту:** Питання користувача → `lawSearch.ts` знаходить релевантні чанки через гібридний пошук (keyword + vector similarity через LanceDB + HyDE hypothesis vector search) + cross-encoder re-ranking (top-20 → top-8) → `promptBuilder.ts` складає промпт з контекстом законів → `claude.ts` відправляє в Claude API → `citationVerifier.ts` перевіряє цитати AI проти наданих чанків → відповідь з верифікованими джерелами повертається клієнту. Якщо LanceDB не ініціалізована — автоматичний fallback на keyword пошук.
 
-**Генерація PDF** відбувається повністю на клієнті через pdf-lib. Два режими: генерація рапорту/скарги з шаблону та експорт всієї бесіди в PDF. Жодні дані не надсилаються назовні.
+**Генерація документів** відбувається повністю на клієнті. Рапорти/скарги генеруються у .docx через docxtemplater/pizzip (підстановка дати, плейсхолдери для ручного заповнення). Експорт бесіди в PDF — через pdf-lib. Жодні дані не надсилаються назовні.
 
 ## Ключові правила
 
@@ -76,14 +76,16 @@ eval/        → Golden test set (59 питань з очікуваними ча
 - **vectorStore.ts** (сервер) — робота з LanceDB: ініціалізація, створення таблиці, cosine similarity пошук, upsert чанків
 - **citationVerifier.ts** (сервер) — верифікація цитат AI: парсинг блоку `ЦИТАТИ:` з відповіді, fuzzy-перевірка кожної цитати проти наданих чанків (нормалізація + 80% порогове співпадіння слів), видалення блоку цитат з відповіді користувачу. Захист від галюцінацій — вигадані цитати не потрапляють у sources
 - **claude.ts** (сервер) — обгортка Claude API: `askClaude` з підтримкою історії, `summarizeHistory` для стиснення діалогу (>10 повідомлень)
-- **templateDetector.ts** (клієнт) — виявлення шаблонів документів у відповідях AI через масив паттернів
-- **pdfGenerator.ts** (клієнт) — генерація PDF: рапорти/скарги з шаблонів + `exportChatToPdf` для експорту бесіди (Markdown stripping, джерела з documentId, автопагінація A4)
+- **templateDetector.ts** (клієнт) — виявлення шаблонів документів у відповідях AI через масив паттернів (6 типів: невиплата, відпустка, звільнення, ротація, ВЛК, скарга)
+- **docxGenerator.ts** (клієнт) — генерація .docx рапортів/скарг з шаблонів через docxtemplater/pizzip (підстановка {ДАТА}, збереження плейсхолдерів для ручного заповнення)
+- **pdfGenerator.ts** (клієнт) — `exportChatToPdf` для експорту бесіди в PDF (Markdown stripping, джерела з documentId, автопагінація A4)
 - **logger.ts** (сервер) — структуроване логування через pino (JSON в production, pretty в dev)
 - **app.ts** — Express з rate limiting (20 запитів/хвилину на IP)
 - **evalMetrics.ts** (сервер) — утиліти для eval: нормалізація статей, перевірка фактів, підрахунок retrieval recall, citation accuracy, hallucination rate
 - **scripts/eval.ts** — скрипт оцінки якості: `npm run eval` (retrieval recall по golden set, 59 питань), `npm run eval -- --full` (повний eval з Claude API: citation accuracy, fact recall)
 - **scripts/generate-hashes.ts** — генерація `data/law-hashes.json`: sha256 хеші HTML сторінок законів з rada.gov.ua, утиліти `computeHash()`, `loadHashes()`, `saveHashes()`, `readLawFiles()`, `fetchHtml()`. Запуск: `npm run init-hashes`
 - **scripts/check-updates.ts** — перевірка оновлень законів: порівняння поточних хешів з збереженими, режим `--auto` для автоматичного перепарсингу + ембеддинги + upsert в LanceDB. Graceful fallback при недоступності rada.gov.ua. Запуск: `npm run check-updates`
+- **scripts/generate-docx-templates.ts** — програмна генерація 6 .docx шаблонів (рапорти + скарга) через PizZip: плейсхолдери для docxtemplater, листи-підказки на 2-й сторінці, оформлення за Наказом МОУ №40. Запуск: `npx tsx scripts/generate-docx-templates.ts`
 
 ## База законів
 
