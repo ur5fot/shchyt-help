@@ -28,5 +28,8 @@ npm-debug.log*
 # Векторна база LanceDB (генерується локально)
 data/lancedb/
 
+# Хеші законів (генеруються локально)
+data/law-hashes.json
+
 # Vitest coverage
 coverage/

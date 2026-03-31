@@ -92,6 +92,9 @@ npm run lint:fix         # Автоматично виправити ESLint-по
 npm run format           # Форматувати код Prettier
 npm run init-vector-db   # Ініціалізувати векторну базу LanceDB
 npm run update-law -- <url> <назва>  # Оновити/додати закон з rada.gov.ua
+npm run check-updates    # Перевірити оновлення законів на rada.gov.ua
+npm run check-updates -- --auto  # Автоматично оновити змінені закони
+npm run init-hashes      # Примусова переініціалізація хешів законів
 npm run eval             # Оцінка якості пошуку (retrieval recall)
 npm run eval -- --full   # Повний eval з Claude API (citation accuracy, fact recall)
 ```

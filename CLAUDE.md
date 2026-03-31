@@ -32,6 +32,9 @@ npm run lint:fix         # Автоматично виправити ESLint-по
 npm run format           # Форматувати код Prettier
 npm run init-vector-db   # Ініціалізувати векторну базу LanceDB (потрібно після npm install)
 npm run update-law -- <url>  # Оновити/додати закон з zakon.rada.gov.ua
+npm run check-updates    # Перевірити оновлення законів на rada.gov.ua
+npm run check-updates -- --auto  # Автоматично оновити змінені закони
+npm run init-hashes      # Примусова переініціалізація хешів законів
 npm run eval             # Оцінка якості пошуку (retrieval recall по golden test set)
 npm run eval -- --full   # Повний eval з Claude API (citation accuracy, fact recall)
 ```
@@ -46,6 +49,7 @@ client/      → React фронтенд (Vite), проксі /api на localhost
 server/      → Express бекенд, єдиний ендпоінт POST /api/chat
 laws/        → JSON-файли українських законів (чанки з ключовими словами)
 data/lancedb/→ Векторна база LanceDB (генерується локально через init-vector-db)
+data/law-hashes.json → Хеші HTML сторінок законів для виявлення змін (генерується через init-hashes / check-updates)
 templates/   → Шаблони документів (рапорт, скарга) у JSON
 scripts/     → Парсер законів, ініціалізація векторної бази, оновлення законів, eval
 eval/        → Golden test set (56 питань з очікуваними чанками та статтями)
@@ -78,6 +82,8 @@ eval/        → Golden test set (56 питань з очікуваними ча
 - **app.ts** — Express з rate limiting (20 запитів/хвилину на IP)
 - **evalMetrics.ts** (сервер) — утиліти для eval: нормалізація статей, перевірка фактів, підрахунок retrieval recall, citation accuracy, hallucination rate
 - **scripts/eval.ts** — скрипт оцінки якості: `npm run eval` (retrieval recall по golden set, 56 питань), `npm run eval -- --full` (повний eval з Claude API: citation accuracy, fact recall)
+- **scripts/generate-hashes.ts** — генерація `data/law-hashes.json`: sha256 хеші HTML сторінок законів з rada.gov.ua, утиліти `computeHash()`, `loadHashes()`, `saveHashes()`, `readLawFiles()`, `fetchHtml()`. Запуск: `npm run init-hashes`
+- **scripts/check-updates.ts** — перевірка оновлень законів: порівняння поточних хешів з збереженими, режим `--auto` для автоматичного перепарсингу + ембеддинги + upsert в LanceDB. Graceful fallback при недоступності rada.gov.ua. Запуск: `npm run check-updates`
 
 ## База законів
 
