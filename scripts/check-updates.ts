@@ -71,6 +71,13 @@ async function main(): Promise<void> {
   for (const law of laws) {
     process.stdout.write(`  ${law.shortTitle}... `);
 
+    // Пропускаємо внутрішні URL (не зовнішні ресурси)
+    if (law.sourceUrl.startsWith('internal://')) {
+      console.log('пропущено (внутрішній ресурс)');
+      result.пропущено++;
+      continue;
+    }
+
     // Перевірка домену для безпеки
     try {
       const urlObj = new URL(law.sourceUrl);

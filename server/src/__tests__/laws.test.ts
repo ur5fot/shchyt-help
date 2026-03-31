@@ -71,10 +71,10 @@ describe('loadAllLaws', () => {
     expect(soczakhystChunks.length).toBeGreaterThan(0);
   });
 
-  it('sourceUrl відповідає zakon.rada.gov.ua', () => {
+  it('sourceUrl відповідає zakon.rada.gov.ua або internal://', () => {
     const chunks = loadAllLaws();
     for (const chunk of chunks) {
-      expect(chunk.sourceUrl).toMatch(/zakon\.rada\.gov\.ua/);
+      expect(chunk.sourceUrl).toMatch(/^https:\/\/zakon\.rada\.gov\.ua\/|^internal:\/\//);
     }
   });
 
@@ -100,6 +100,47 @@ describe('loadAllLaws', () => {
     const ids = chunks.map(c => c.id);
     const uniqueIds = new Set(ids);
     expect(uniqueIds.size).toBe(ids.length);
+  });
+});
+
+describe('hotlines.json', () => {
+  const chunks = loadAllLaws();
+  const hotlineChunks = chunks.filter(c => c.id.startsWith('hotlines-'));
+
+  it('завантажує чанки з hotlines.json', () => {
+    expect(hotlineChunks.length).toBeGreaterThan(0);
+  });
+
+  it('кожен чанк має обов\'язкові поля з непорожніми значеннями', () => {
+    for (const chunk of hotlineChunks) {
+      expect(chunk.id).toBeTruthy();
+      expect(chunk.article).toBeTruthy();
+      expect(typeof chunk.part).toBe('string');
+      expect(chunk.text).toBeTruthy();
+      expect(chunk.keywords.length).toBeGreaterThan(0);
+      expect(chunk.lawTitle).toBe('Гарячі лінії та контакти для військовослужбовців');
+      expect(chunk.sourceUrl).toBe('internal://hotlines');
+      expect(chunk.documentId).toBe('Довідник контактів');
+    }
+  });
+
+  it('містить ключові організації: МОУ, Омбудсман, БПД, психологічна допомога', () => {
+    const ids = hotlineChunks.map(c => c.id);
+    expect(ids).toContain('hotlines-mou');
+    expect(ids).toContain('hotlines-ombudsman');
+    expect(ids).toContain('hotlines-legal-aid');
+    expect(ids).toContain('hotlines-lifeline');
+  });
+
+  it('кожен чанк містить телефонний номер у тексті', () => {
+    for (const chunk of hotlineChunks) {
+      expect(chunk.text).toMatch(/\d{3,}/);
+    }
+  });
+
+  it('id кожного чанку унікальний серед hotlines', () => {
+    const ids = hotlineChunks.map(c => c.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });
 

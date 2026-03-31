@@ -193,7 +193,7 @@ function вивестиПовнийЗвіт(результати: FullEvalResult
   console.log('─'.repeat(50));
   console.log(`  Питань з цитатами: ${зЦитатами.length}/${результати.length}`);
   console.log(`  Citation accuracy:   ${метрики.правильнихЦитат}/${метрики.всьогоЦитат} (${метрики.citationAccuracy.toFixed(1)}%)`);
-  console.log(`  Hallucination rate:  ${метрики.галюцинованихЦитат}/${метрики.всьогоЦитат} (${метрики.hallucinationRate.toFixed(1)}%)`);
+  console.log(`  Hallucination rate:  ${метрики.галюцинованихЦитат}/${метрики.всьогоЦитатДляГалюцинацій} (${метрики.hallucinationRate.toFixed(1)}%)`);
 
   console.log('\nFact recall:');
   console.log('─'.repeat(50));
