@@ -76,18 +76,18 @@ function stripTags(html: string): string {
 }
 
 // Перевіряє чи параграф є редакційною приміткою (не основний текст)
-function isEditorialNote(text: string): boolean {
+export function isEditorialNote(text: string): boolean {
   return /^\{.*\}$/.test(text.trim());
 }
 
 // Видаляє інлайн редакційні примітки {…} з тексту
 // Не підтримує вкладені дужки (на zakon.rada.gov.ua не зустрічаються)
-function stripEditorialNotes(text: string): string {
+export function stripEditorialNotes(text: string): string {
   return text.replace(/\{[^}]*\}/g, '').replace(/\s+/g, ' ').trim();
 }
 
 // Генерує baseId з short_title
-function makeBaseId(shortTitle: string): string {
+export function makeBaseId(shortTitle: string): string {
   return shortTitle
     .toLowerCase()
     .replace(/«|»/g, '')
@@ -98,7 +98,7 @@ function makeBaseId(shortTitle: string): string {
 }
 
 // Парсить закон зі "Стаття N" структурою
-function parseArticleBased(paragraphs: string[], baseId: string): LawChunkRaw[] {
+export function parseArticleBased(paragraphs: string[], baseId: string): LawChunkRaw[] {
   const chunks: LawChunkRaw[] = [];
   let currentArticleNum = '';
   let currentArticleTitle = '';
@@ -356,7 +356,7 @@ function splitEmbeddedStattyaChunks(chunks: LawChunkRaw[], baseId: string): LawC
 const МАКС_РОЗМІР_ЧАНКА = 2000;
 
 // Розбиває великі чанки по підпунктах (1), 2), 3) або 1., 2., 3.)
-function splitLargeChunks(chunks: LawChunkRaw[]): LawChunkRaw[] {
+export function splitLargeChunks(chunks: LawChunkRaw[]): LawChunkRaw[] {
   const result: LawChunkRaw[] = [];
 
   for (const chunk of chunks) {
