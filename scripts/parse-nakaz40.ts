@@ -115,16 +115,56 @@ function parsePdfText(text: string): ParsedPunkt[] {
 function punktsToChunks(punkts: ParsedPunkt[]): LawChunkRaw[] {
   const chunks: LawChunkRaw[] = [];
 
+  // Допоміжна функція: розбити текст на речення по крапках та крапках з комою
+  function splitBySentences(text: string, idBase: string, articleLabel: string, partLabel: string) {
+    const sentences = text.split(/(?<=[.;])\s+/);
+    let buffer: string[] = [];
+    let bufferLen = 0;
+    let partIdx = 0;
+
+    for (const sent of sentences) {
+      if (bufferLen + sent.length > МАКС_РОЗМІР_ЧАНКА && buffer.length > 0) {
+        partIdx++;
+        const id = `${idBase}-s${partIdx}`;
+        const segText = buffer.join(' ');
+        chunks.push({
+          id,
+          article: articleLabel,
+          part: partLabel,
+          text: segText,
+          keywords: extractKeywords(segText),
+        });
+        buffer = [];
+        bufferLen = 0;
+      }
+      buffer.push(sent);
+      bufferLen += sent.length + 1;
+    }
+
+    if (buffer.length > 0) {
+      partIdx++;
+      const id = partIdx === 1 ? idBase : `${idBase}-s${partIdx}`;
+      const segText = buffer.join(' ');
+      chunks.push({
+        id,
+        article: articleLabel,
+        part: partLabel,
+        text: segText,
+        keywords: extractKeywords(segText),
+      });
+    }
+  }
+
   for (const punkt of punkts) {
     const sectionName = SECTIONS[punkt.section] || '';
     const articleLabel = `Пункт ${punkt.number}`;
     const partLabel = sectionName ? `Розділ ${punkt.section}. ${sectionName}` : '';
+    const idBase = `${BASE_ID}-p${punkt.number.replace(/\./g, '-')}`;
 
     // Якщо текст менший за ліміт — один чанк
     if (punkt.text.length <= МАКС_РОЗМІР_ЧАНКА) {
-      const id = `${BASE_ID}-p${punkt.number.replace(/\./g, '-')}`;
       chunks.push({
-        id,
+        id: idBase,
         article: articleLabel,
         part: partLabel,
         text: punkt.text,
@@ -156,55 +196,24 @@ function punktsToChunks(punkts: ParsedPunkt[]): LawChunkRaw[] {
 
         if (segmentText.length < 10) continue;
 
-        const id = `${BASE_ID}-p${punkt.number.replace(/\./g, '-')}-s${i + 1}`;
-        chunks.push({
-          id,
-          article: articleLabel,
-          part: partLabel,
-          text: segmentText,
-          keywords: extractKeywords(segmentText),
-        });
+        const segId = `${idBase}-s${i + 1}`;
+
+        // Якщо сегмент все ще перевищує ліміт — дорозбиваємо по реченнях
+        if (segmentText.length > МАКС_РОЗМІР_ЧАНКА) {
+          splitBySentences(segmentText, segId, articleLabel, partLabel);
+        } else {
+          chunks.push({
+            id: segId,
+            article: articleLabel,
+            part: partLabel,
+            text: segmentText,
+            keywords: extractKeywords(segmentText),
+          });
+        }
       }
     } else {
       // Розбиваємо по ~МАКС_РОЗМІР_ЧАНКА символів на реченнях
-      const sentences = punkt.text.split(/(?<=\.)\s+/);
-      let buffer: string[] = [];
-      let bufferLen = 0;
-      let partIdx = 0;
-
-      for (const sent of sentences) {
-        if (bufferLen + sent.length > МАКС_РОЗМІР_ЧАНКА && buffer.length > 0) {
-          partIdx++;
-          const id = `${BASE_ID}-p${punkt.number.replace(/\./g, '-')}-s${partIdx}`;
-          const text = buffer.join(' ');
-          chunks.push({
-            id,
-            article: articleLabel,
-            part: partLabel,
-            text,
-            keywords: extractKeywords(text),
-          });
-          buffer = [];
-          bufferLen = 0;
-        }
-        buffer.push(sent);
-        bufferLen += sent.length + 1;
-      }
-
-      if (buffer.length > 0) {
-        partIdx++;
-        const id = partIdx === 1
-          ? `${BASE_ID}-p${punkt.number.replace(/\./g, '-')}`
-          : `${BASE_ID}-p${punkt.number.replace(/\./g, '-')}-s${partIdx}`;
-        const text = buffer.join(' ');
-        chunks.push({
-          id,
-          article: articleLabel,
-          part: partLabel,
-          text,
-          keywords: extractKeywords(text),
-        });
-      }
+      splitBySentences(punkt.text, idBase, articleLabel, partLabel);
     }
   }
 
