@@ -157,6 +157,27 @@ describe('валідація .docx шаблонів', () => {
     expect(content).toMatch(/\{Ім.*ПРІЗВИЩЕ\}/);
   });
 
+  it.each(['raport-nevyplata', 'raport-vidpustka', 'raport-zvilnennya', 'raport-rotatsia', 'raport-vlk'])(
+    'рапорт %s має додатки та клопотання',
+    (id) => {
+      const buf = loadTemplate(id);
+      const zip = new PizZip(buf);
+      const content = zip.file('word/document.xml')?.asText() ?? '';
+
+      expect(content).toContain('Додатки:');
+      expect(content).toContain('Клопочу по суті рапорту');
+    },
+  );
+
+  it('skarga має додатки але не має клопотань', () => {
+    const buf = loadTemplate('skarga');
+    const zip = new PizZip(buf);
+    const content = zip.file('word/document.xml')?.asText() ?? '';
+
+    expect(content).toContain('Додатки:');
+    expect(content).not.toContain('Клопочу по суті рапорту');
+  });
+
   it('raport-zvilnennya має облікові документи, додатки та клопотання', () => {
     const buf = loadTemplate('raport-zvilnennya');
     const zip = new PizZip(buf);
