@@ -455,5 +455,29 @@
     "expectedArticles": ["Пункт 3.1", "Пункт 1.13.3"],
     "category": "діловодство",
     "expectedFacts": ["реєстрація", "документообіг", "облік документів"]
+  },
+  {
+    "id": "doc-dovidka-msek-get",
+    "question": "Де і як отримати довідку МСЕК про інвалідність?",
+    "expectedChunks": ["doc-dovidka-msek"],
+    "expectedArticles": [],
+    "category": "довідкові документи",
+    "expectedFacts": ["форма 157-1/о", "МСЕК за місцем реєстрації", "направлення від лікаря"]
+  },
+  {
+    "id": "doc-vitjag-yeddr-get",
+    "question": "Як отримати витяг з ЄДДР замість паспорта?",
+    "expectedChunks": ["doc-vitjag-yeddr"],
+    "expectedArticles": [],
+    "category": "довідкові документи",
+    "expectedFacts": ["ЦНАП", "Дія", "безкоштовно"]
+  },
+  {
+    "id": "doc-posvidchennja-ubd-get",
+    "question": "Де отримати посвідчення учасника бойових дій?",
+    "expectedChunks": ["doc-posvidchennja-ubd"],
+    "expectedArticles": [],
+    "category": "довідкові документи",
+    "expectedFacts": ["комісія з питань ветеранів", "довідка про участь у бойових діях"]
   }
 ]
