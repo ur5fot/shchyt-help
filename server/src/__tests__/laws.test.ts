@@ -71,10 +71,10 @@ describe('loadAllLaws', () => {
     expect(soczakhystChunks.length).toBeGreaterThan(0);
   });
 
-  it('sourceUrl відповідає zakon.rada.gov.ua або internal://', () => {
+  it('sourceUrl відповідає zakon.rada.gov.ua, turbota.mil.gov.ua або internal://', () => {
     const chunks = loadAllLaws();
     for (const chunk of chunks) {
-      expect(chunk.sourceUrl).toMatch(/^https:\/\/zakon\.rada\.gov\.ua\/|^internal:\/\//);
+      expect(chunk.sourceUrl).toMatch(/^https:\/\/zakon\.rada\.gov\.ua\/|^internal:\/\/|^https:\/\/turbota\.mil\.gov\.ua\//);
     }
   });
 

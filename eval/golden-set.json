@@ -423,5 +423,37 @@
     "expectedChunks": ["hotlines-mou", "hotlines-ombudsman", "hotlines-military-prosecution"],
     "expectedArticles": [],
     "category": "гарячі лінії"
+  },
+  {
+    "id": "dilovod-requisites",
+    "question": "Які реквізити повинен мати службовий документ у ЗСУ?",
+    "expectedChunks": ["nakaz40-dilovod-p2-7-1"],
+    "expectedArticles": ["Пункт 2.7.1"],
+    "category": "діловодство",
+    "expectedFacts": ["Державний Герб", "найменування військової частини", "дата документа", "реєстраційний індекс"]
+  },
+  {
+    "id": "dilovod-raport-format",
+    "question": "Як правильно оформити рапорт у ЗСУ?",
+    "expectedChunks": ["nakaz40-dilovod-p2-6-9", "nakaz40-dilovod-p2-7-12-s1"],
+    "expectedArticles": ["Пункт 2.6.9", "Пункт 2.7.12"],
+    "category": "діловодство",
+    "expectedFacts": ["не на бланках", "адресується посадовій особі"]
+  },
+  {
+    "id": "dilovod-addressing",
+    "question": "Як адресувати документ у Збройних Силах?",
+    "expectedChunks": ["nakaz40-dilovod-p2-7-12-s1", "nakaz40-dilovod-p2-7-12-s2"],
+    "expectedArticles": ["Пункт 2.7.12"],
+    "category": "діловодство",
+    "expectedFacts": ["військовій частині", "посадовій особі", "структурним підрозділам"]
+  },
+  {
+    "id": "dilovod-registration",
+    "question": "Як реєструються документи у військовій частині?",
+    "expectedChunks": ["nakaz40-dilovod-p3-1", "nakaz40-dilovod-p1-13-3-s1"],
+    "expectedArticles": ["Пункт 3.1", "Пункт 1.13.3"],
+    "category": "діловодство",
+    "expectedFacts": ["реєстрація", "документообіг", "облік документів"]
   }
 ]

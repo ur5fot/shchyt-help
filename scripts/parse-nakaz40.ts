@@ -1,0 +1,516 @@
+/**
+ * Парсер Наказу Головнокомандувача ЗСУ №40 від 31.01.2024
+ * "Інструкція з діловодства у Збройних Силах України"
+ * (зі змінами від 27.02.2026)
+ *
+ * Підтримує вхід з .docx (PizZip → XML → text) або plain text (.txt).
+ * Структура: розділи (N.), підрозділи (N.M.), пункти (N.M.K.)
+ */
+
+import { readFileSync, writeFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import PizZip from 'pizzip';
+import { extractKeywords, type LawChunkRaw, type LawFile } from './parse-law.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const МАКС_РОЗМІР_ЧАНКА = 2000;
+const BASE_ID = 'nakaz40-dilovod';
+
+/**
+ * Витягує plain text з .docx файлу через PizZip → word/document.xml → strip XML
+ */
+export function extractTextFromDocx(docxPath: string): string {
+  const docxBuffer = readFileSync(docxPath);
+  const zip = new PizZip(docxBuffer);
+  const xml = zip.file('word/document.xml')?.asText() || '';
+
+  return xml
+    .replace(/<w:p[^>]*\/>/g, '\n')
+    .replace(/<w:p[^>]*>/g, '\n')
+    .replace(/<w:tab[^>]*\/>/g, '\t')
+    .replace(/<w:br[^>]*\/>/g, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/\r\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n');
+}
+
+// Розділи документа для анотації чанків
+const SECTIONS: Record<string, string> = {
+  '1': 'Загальні положення',
+  '2': 'Документування управлінської діяльності',
+  '3': 'Організація документообігу та виконання документів',
+  '4': 'Систематизація та зберігання документів',
+  '5': 'Зберігання документів у діловодстві',
+  '6': 'Порядок підготовки справ до архівного зберігання',
+  '7': 'Оперативне зберігання',
+  '8': 'Організаційні питання щодо здавання документів до архіву',
+  '9': 'Особливості здавання документів у разі розформування',
+  '10': 'Порядок приймання-передачі документів у разі зміни командира',
+  '11': 'Порядок приймання-передачі справ та посади',
+  '12': 'Знищення документів',
+  '13': 'Бойова готовність служби діловодства',
+  '14': 'Порушення законодавства про Національний архівний фонд',
+  '15': 'Особливості поводження з документами зі службовою інформацією',
+  '16': 'Облік, зберігання печаток, штампів і бланків',
+  '17': 'Картка обліку Бойового Прапора',
+  '18': 'Особливості організації діловодства у штабі угруповання',
+};
+
+interface ParsedPunkt {
+  number: string; // "1.1" або "2.3.4"
+  text: string;
+  section: string; // "1", "2" тощо
+}
+
+function parseNakazText(text: string): ParsedPunkt[] {
+  // Передобробка: розбиваємо рядки, де номер нового пункту з'являється посеред тексту
+  // Наприклад: "...документів. 1.13.4. Начальник..." → два окремих рядки
+  // Фільтруємо дати (від 16.11. / станом 17.01.) та посилання на пункти (пунктом 2.7.8.)
+  const DATE_PREPOSITION_RE = /(?:від|до|з|після|на|по|станом)$/i;
+  const PUNKT_REFERENCE_RE = /(?:пункт(?:у|і|а|ом|ів|ами|ах)?|підпункт(?:у|і|а|ом|ів|ами|ах)?|п\.|пп\.)$/i;
+
+  function shouldSplitAtPunktMarker(precedingWord: string, punktNum: string): boolean {
+    if (DATE_PREPOSITION_RE.test(precedingWord)) return false;
+    if (PUNKT_REFERENCE_RE.test(precedingWord)) return false;
+    if (!SECTIONS[punktNum.split('.')[0]]) return false;
+    return true;
+  }
+
+  const processedText = text
+    // Випадок 1: маркер пункту посеред рядка, після нього йде текст з великої літери
+    .replace(
+      /(\S+)\s+(\d{1,2}\.\d{1,2}(?:\.\d{1,3}){0,2})\.\s+(?=[А-ЯІЇЄҐA-Z])/g,
+      (match, precedingWord, punktNum) => {
+        if (!shouldSplitAtPunktMarker(precedingWord, punktNum)) return match;
+        return `${precedingWord}\n${punktNum}. `;
+      }
+    )
+    // Випадок 2: маркер пункту в кінці рядка (текст пункту на наступному рядку)
+    .replace(
+      /(\S+)\s+(\d{1,2}\.\d{1,2}(?:\.\d{1,3}){0,2})\.\s*$/gm,
+      (match, precedingWord, punktNum) => {
+        if (!shouldSplitAtPunktMarker(precedingWord, punktNum)) return match;
+        return `${precedingWord}\n${punktNum}. `;
+      }
+    );
+  const lines = processedText.split('\n');
+  const punkts: ParsedPunkt[] = [];
+
+  // Паттерн для пунктів: N.M. або N.M.K. або N.M.K.L. на початку рядка
+  const PUNKT_RE = /^(\d{1,2}\.\d{1,2}(?:\.\d{1,3}){0,2})\.\s*(.*)/;
+  // Паттерн для номерів сторінок (рядки що містять тільки число)
+  const PAGE_NUM_RE = /^\s*\d{1,3}\s*$/;
+  // Паттерн для заголовків розділів: "N. НАЗВА" (де назва з великих літер або довга)
+  const SECTION_RE = /^(\d{1,2})\.\s+([А-ЯІЇЄҐ])/;
+
+  let currentPunkt: ParsedPunkt | null = null;
+  let textBuffer: string[] = [];
+  // Попередній непорожній рядок для виявлення крос-рядкових посилань
+  let previousLine = '';
+  // Паттерн для слів-посилань на пункти (пункту, підпункту тощо)
+  const REFERENCE_WORD_RE = /(?:пункт(?:у|і|а|ом|ів|ами|ах)?|підпункт(?:у|і|а|ом|ів|ами|ах)?|п\.|пп\.)\s*$/i;
+
+  function flushPunkt() {
+    if (currentPunkt && textBuffer.length > 0) {
+      currentPunkt.text = textBuffer.join(' ').replace(/\s+/g, ' ').trim();
+      if (currentPunkt.text.length >= 10) {
+        punkts.push(currentPunkt);
+      }
+    }
+    textBuffer = [];
+  }
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+
+    // Пропускаємо порожні рядки та номери сторінок
+    if (!line || PAGE_NUM_RE.test(line)) continue;
+
+    // Перевіряємо чи це заголовок розділу (N. Назва)
+    // Заголовки розділів — не пункти, пропускаємо
+    // Тільки коли НЕ всередині пункту, щоб не втратити рядки типу "5. Командир..."
+    if (!currentPunkt) {
+      const sectionMatch = SECTION_RE.exec(line);
+      if (sectionMatch && !line.match(/^\d{1,2}\.\d/)) {
+        // Це заголовок розділу, не пункт — пропускаємо текст заголовка
+        previousLine = line;
+        continue;
+      }
+    }
+
+    // Перевіряємо чи це початок нового пункту
+    const punktMatch = PUNKT_RE.exec(line);
+    if (punktMatch) {
+      // Пропускаємо дати: "27.10.2023" парситься як пункт 27.10 з текстом "2023..."
+      const remainingText = punktMatch[2].trim();
+      if (/^\d{4}\b/.test(remainingText)) {
+        if (currentPunkt) {
+          textBuffer.push(line);
+        }
+        previousLine = line;
+        continue;
+      }
+      // Пропускаємо номери з неіснуючим розділом (дати типу "24.06." де 24 — не розділ)
+      if (!SECTIONS[punktMatch[1].split('.')[0]]) {
+        if (currentPunkt) {
+          textBuffer.push(line);
+        }
+        previousLine = line;
+        continue;
+      }
+      // Крос-рядкове посилання: попередній рядок закінчується "пункту", "підпункту" тощо
+      // Це не новий пункт, а продовження тексту (типу "пункту\n2.7.8 цієї Інструкції")
+      if (REFERENCE_WORD_RE.test(previousLine)) {
+        if (currentPunkt) {
+          textBuffer.push(line);
+        }
+        previousLine = line;
+        continue;
+      }
+
+      flushPunkt();
+      let number = punktMatch[1];
+
+      // Перевіряємо чи текст починається з цифри, яка є частиною номера пункту
+      // Це трапляється коли 4-рівневий номер (типу "2.8.11.1") не має завершальної крапки:
+      // regex бачить "2.8.11." як номер, а "1 Порядок..." як текст
+      let initialText = remainingText;
+      const levels = number.split('.').length;
+      const extraDigitMatch = remainingText.match(/^(\d{1,3})\s+([А-ЯІЇЄҐA-Z].*)/s);
+      if (extraDigitMatch && levels < 4) {
+        number = `${number}.${extraDigitMatch[1]}`;
+        initialText = extraDigitMatch[2];
+      }
+
+      const parts = number.split('.');
+      const section = parts[0];
+      currentPunkt = {
+        number,
+        text: '',
+        section,
+      };
+      textBuffer = [initialText];
+      previousLine = line;
+      continue;
+    }
+
+    // Продовження поточного пункту
+    if (currentPunkt) {
+      textBuffer.push(line);
+    }
+    previousLine = line;
+  }
+
+  flushPunkt();
+
+  // Об'єднуємо послідовні пункти з однаковим номером (виникають коли текст пункту
+  // у .docx розбитий на окремі абзаци, кожен з яких починається з того самого номера)
+  const mergedPunkts = mergeConsecutivePunkts(punkts);
+
+  // Обробка "плоских" розділів (без пунктів N.M) — наприклад, Розділ 14
+  // Збираємо текст між заголовком розділу та наступним розділом/пунктом
+  const flatSections = findFlatSections(processedText, mergedPunkts);
+  mergedPunkts.push(...flatSections);
+
+  return mergedPunkts;
+}
+
+/**
+ * Об'єднує пункти з однаковим номером (можуть бути непослідовними через
+ * вставки з наказів-змін, коли абзаци одного пункту розкидані по тексту).
+ * Зберігає порядок першого входження.
+ */
+function mergeConsecutivePunkts(punkts: ParsedPunkt[]): ParsedPunkt[] {
+  const seen = new Map<string, ParsedPunkt>();
+  const order: string[] = [];
+  for (const p of punkts) {
+    const key = `${p.section}:${p.number}`;
+    const existing = seen.get(key);
+    if (existing) {
+      existing.text = existing.text + ' ' + p.text;
+    } else {
+      seen.set(key, { ...p });
+      order.push(key);
+    }
+  }
+  return order.map((k) => seen.get(k)!);
+}
+
+/**
+ * Знаходить "плоскі" розділи — ті що мають заголовок але жодного пункту N.M.
+ * Такий текст додається як єдиний пункт "N.0" (наприклад, "14.0").
+ */
+function findFlatSections(text: string, existingPunkts: ParsedPunkt[]): ParsedPunkt[] {
+  const sectionsWithPunkts = new Set(existingPunkts.map((p) => p.section));
+  const result: ParsedPunkt[] = [];
+  const lines = text.split('\n');
+  const SECTION_HEADER_RE = /^\s*(\d{1,2})\.\s+([А-ЯІЇЄҐ])/;
+
+  for (let i = 0; i < lines.length; i++) {
+    const match = SECTION_HEADER_RE.exec(lines[i]);
+    if (!match) continue;
+    const sectionNum = match[1];
+    if (!SECTIONS[sectionNum]) continue;
+    if (sectionsWithPunkts.has(sectionNum)) continue;
+
+    // Збираємо текст до наступного заголовка розділу або пункту
+    const bodyLines: string[] = [];
+    for (let j = i + 1; j < lines.length; j++) {
+      const line = lines[j].trim();
+      if (!line) continue;
+      // Зупиняємось на наступному заголовку розділу або пункті
+      if (SECTION_HEADER_RE.test(lines[j])) break;
+      if (/^\d{1,2}\.\d{1,2}(?:\.\d{1,3}){0,2}\.\s/.test(line)) break;
+      bodyLines.push(line);
+    }
+
+    if (bodyLines.length > 0) {
+      result.push({
+        number: `${sectionNum}.0`,
+        text: bodyLines.join(' ').replace(/\s+/g, ' ').trim(),
+        section: sectionNum,
+      });
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Очищає текст чанка: прибирає підписи/футери та виправляє незамкнені примітки про зміни.
+ */
+function cleanChunkText(text: string): string {
+  let cleaned = text;
+
+  // Прибираємо підписи посадових осіб (формат: "Посада ... звання ІМ'Я ПРІЗВИЩЕ" в кінці тексту)
+  // Паттерн: "Начальник|Командувач|...", потім будь-що, потім ім'я ПРІЗВИЩЕ великими літерами
+  // НЕ видаляємо, якщо перед підписом стоїть "наприклад:" — це приклад оформлення, а не реальний підпис
+  const signatureMatch = cleaned.match(
+    /\s+(?:Начальник|Командувач|Головнокомандувач|Командир|Заступник|Міністр)\s+[\s\S]*?[А-ЯІЇЄҐ]{2,}\s*$/
+  );
+  if (signatureMatch) {
+    const beforeSignature = cleaned.substring(0, signatureMatch.index!).trimEnd();
+    if (!beforeSignature.endsWith('наприклад:')) {
+      cleaned = beforeSignature;
+    }
+  }
+
+  // Виправляємо розірвані примітки про зміни з .docx:
+  // "{...в редакції}  Наказу...}" → "{...в редакції Наказу...}"
+  cleaned = cleaned.replace(
+    /\{([^}]*(?:в редакції|із змінами|доповнено|виключено))\}\s+(Наказу\b)/g,
+    '{$1 $2'
+  );
+
+  // Закриваємо незамкнені примітки про зміни після дати: "{...від DD.MM.YYYY текст" → "{...від DD.MM.YYYY} текст"
+  cleaned = cleaned.replace(
+    /(\{[^}]*(?:в редакції|із змінами|доповнено|виключено)[^}]*\d{2}\.\d{2}\.\d{4})\s+(?=[А-ЯІЇЄҐ])/g,
+    '$1} '
+  );
+
+  return cleaned.trim();
+}
+
+function punktsToChunks(punkts: ParsedPunkt[]): LawChunkRaw[] {
+  const chunks: LawChunkRaw[] = [];
+
+  // Допоміжна функція: очистити та зберегти чанк
+  function pushChunk(id: string, text: string, articleLabel: string, partLabel: string, title: string) {
+    const cleaned = cleanChunkText(text);
+    if (cleaned.length < 10) return;
+    chunks.push({
+      id,
+      article: articleLabel,
+      part: partLabel,
+      title,
+      text: cleaned,
+      keywords: extractKeywords(cleaned),
+    });
+  }
+
+  function splitBySentences(text: string, idBase: string, articleLabel: string, partLabel: string, title: string) {
+    const sentences = text.split(/(?<=[.;])\s+/);
+    let buffer: string[] = [];
+    let bufferLen = 0;
+    let partIdx = 0;
+
+    function flushBuffer() {
+      if (buffer.length === 0) return;
+      partIdx++;
+      const id = `${idBase}-s${partIdx}`;
+      const segText = buffer.join(' ');
+      pushChunk(id, segText, articleLabel, partLabel, title);
+      buffer = [];
+      bufferLen = 0;
+    }
+
+    for (const sent of sentences) {
+      // Якщо одне "речення" саме по собі перевищує ліміт — дорозбиваємо по комах
+      if (sent.length > МАКС_РОЗМІР_ЧАНКА) {
+        flushBuffer();
+        const subParts = sent.split(/(?<=,)\s+/);
+        for (const part of subParts) {
+          if (bufferLen + part.length > МАКС_РОЗМІР_ЧАНКА && buffer.length > 0) {
+            flushBuffer();
+          }
+          buffer.push(part);
+          bufferLen += part.length + 1;
+        }
+        continue;
+      }
+
+      if (bufferLen + sent.length > МАКС_РОЗМІР_ЧАНКА && buffer.length > 0) {
+        flushBuffer();
+      }
+      buffer.push(sent);
+      bufferLen += sent.length + 1;
+    }
+
+    if (buffer.length > 0) {
+      partIdx++;
+      const id = partIdx === 1 ? idBase : `${idBase}-s${partIdx}`;
+      const segText = buffer.join(' ');
+      pushChunk(id, segText, articleLabel, partLabel, title);
+    }
+  }
+
+  for (const punkt of punkts) {
+    const sectionName = SECTIONS[punkt.section] || '';
+    const articleLabel = `Пункт ${punkt.number}`;
+    const partLabel = sectionName ? `Розділ ${punkt.section}. ${sectionName}` : '';
+    const idBase = `${BASE_ID}-p${punkt.number.replace(/\./g, '-')}`;
+    const title = sectionName || '';
+
+    // Якщо текст менший за ліміт — один чанк
+    if (punkt.text.length <= МАКС_РОЗМІР_ЧАНКА) {
+      pushChunk(idBase, punkt.text, articleLabel, partLabel, title);
+      continue;
+    }
+
+    // Розбиваємо великий пункт по підпунктах або реченнях
+    const subItemRe = /(?:^|\s)(\d+\)\s)/g;
+    const boundaries: number[] = [];
+    let m;
+    while ((m = subItemRe.exec(punkt.text)) !== null) {
+      boundaries.push(m.index === 0 ? 0 : m.index + 1);
+    }
+
+    if (boundaries.length > 1) {
+      // Є підпункти — розбиваємо по них
+      const preamble = punkt.text.slice(0, boundaries[0]).trim();
+
+      for (let i = 0; i < boundaries.length; i++) {
+        const start = boundaries[i];
+        const end = i + 1 < boundaries.length ? boundaries[i + 1] : punkt.text.length;
+        let segmentText = punkt.text.slice(start, end).trim();
+
+        if (i === 0 && preamble) {
+          segmentText = preamble + ' ' + segmentText;
+        }
+
+        if (segmentText.length < 10) continue;
+
+        const segId = `${idBase}-s${i + 1}`;
+
+        // Якщо сегмент все ще перевищує ліміт — дорозбиваємо по реченнях
+        if (segmentText.length > МАКС_РОЗМІР_ЧАНКА) {
+          splitBySentences(segmentText, segId, articleLabel, partLabel, title);
+        } else {
+          pushChunk(segId, segmentText, articleLabel, partLabel, title);
+        }
+      }
+    } else {
+      // Розбиваємо по ~МАКС_РОЗМІР_ЧАНКА символів на реченнях
+      splitBySentences(punkt.text, idBase, articleLabel, partLabel, title);
+    }
+  }
+
+  return chunks;
+}
+
+function deduplicateIds(chunks: LawChunkRaw[]): LawChunkRaw[] {
+  const idCounts: Record<string, number> = {};
+  for (const chunk of chunks) {
+    const origId = chunk.id;
+    const count = idCounts[origId] || 0;
+    if (count > 0) {
+      chunk.id = `${origId}-d${count}`;
+    }
+    idCounts[origId] = count + 1;
+  }
+  return chunks;
+}
+
+async function main() {
+  const inputPath = process.argv[2];
+  if (!inputPath) {
+    console.error('Використання: npx tsx scripts/parse-nakaz40.ts <шлях-до-txt-або-docx>');
+    console.error('Приклад: npx tsx scripts/parse-nakaz40.ts /tmp/nakaz40.txt');
+    console.error('Приклад: npx tsx scripts/parse-nakaz40.ts "ГК ЗСУ №40 від 31.01.2024 (зі змінами від 27.02.2026).docx"');
+    process.exit(1);
+  }
+
+  const isDocx = inputPath.endsWith('.docx');
+  let text: string;
+  if (isDocx) {
+    console.log('Витягування тексту з .docx...');
+    text = extractTextFromDocx(inputPath);
+    console.log(`Витягнуто ${text.length} символів`);
+    if (text.length < 100) {
+      console.error(`Занадто мало тексту витягнуто (${text.length} символів) — можливо файл пошкоджений`);
+      process.exit(1);
+    }
+  } else {
+    text = readFileSync(inputPath, 'utf-8');
+  }
+
+  console.log('Парсинг тексту Наказу №40...');
+  const punkts = parseNakazText(text);
+  console.log(`Знайдено ${punkts.length} пунктів`);
+
+  let chunks = punktsToChunks(punkts);
+  chunks = deduplicateIds(chunks);
+  console.log(`Створено ${chunks.length} чанків`);
+
+  // Статистика по розділах
+  const sectionStats: Record<string, number> = {};
+  for (const chunk of chunks) {
+    const section = chunk.part || 'Без розділу';
+    sectionStats[section] = (sectionStats[section] || 0) + 1;
+  }
+  console.log('\nЧанків по розділах:');
+  for (const [section, count] of Object.entries(sectionStats)) {
+    console.log(`  ${section}: ${count}`);
+  }
+
+  const law: LawFile = {
+    title:
+      'Інструкція з діловодства у Збройних Силах України (Наказ Головнокомандувача ЗСУ №40 від 31.01.2024, зі змінами від 27.02.2026)',
+    short_title: 'Наказ №40 Діловодство ЗСУ',
+    source_url: 'https://turbota.mil.gov.ua/dopomoga-dilovodam/instrukcziya-z-dilovodstva-u-zbrojnyh-sylah-ukrayiny',
+    last_updated: '2026-02-27',
+    chunks,
+  };
+
+  // Також додаємо document_id для ідентифікації
+  const output = {
+    ...law,
+    document_id: 'Наказ Головнокомандувача ЗСУ №40 від 31.01.2024',
+  };
+
+  const outputPath = join(__dirname, '..', 'laws', 'наказ-40-діловодство-зсу.json');
+  writeFileSync(outputPath, JSON.stringify(output, null, 2), 'utf-8');
+  console.log(`\nJSON збережено → ${outputPath}`);
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
