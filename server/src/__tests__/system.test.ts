@@ -42,6 +42,19 @@ describe('SYSTEM_PROMPT', () => {
     expect(текст).toMatch(/недостатньо|не маю інформації|зверніться/);
   });
 
+  it('розрізняє контракти ДО та ПІД ЧАС воєнного стану', () => {
+    expect(SYSTEM_PROMPT).toContain('укладені ДО 24.02.2022');
+    expect(SYSTEM_PROMPT).toContain('укладені ПІД ЧАС воєнного стану');
+    expect(SYSTEM_PROMPT).toContain('право на звільнення');
+  });
+
+  it('містить правило про умовне розмежування норм', () => {
+    expect(SYSTEM_PROMPT).toContain('УМОВНЕ РОЗМЕЖУВАННЯ НОРМ');
+    expect(SYSTEM_PROMPT).toContain('ДО воєнного стану vs ПІД ЧАС воєнного стану');
+    expect(SYSTEM_PROMPT).toContain('контрактник vs мобілізований');
+    expect(SYSTEM_PROMPT).toContain('ОБОВ\'ЯЗКОВО вкажи усі варіанти');
+  });
+
   it('містить інструкцію про контакти гарячих ліній', () => {
     expect(SYSTEM_PROMPT).toContain('КОНТАКТИ ГАРЯЧИХ ЛІНІЙ');
     expect(SYSTEM_PROMPT).toContain('Телефон');
