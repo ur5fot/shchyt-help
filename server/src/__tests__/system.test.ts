@@ -42,6 +42,17 @@ describe('SYSTEM_PROMPT', () => {
     expect(текст).toMatch(/недостатньо|не маю інформації|зверніться/);
   });
 
+  it('містить інструкцію про деталізацію документів', () => {
+    expect(SYSTEM_PROMPT).toContain('ДЕТАЛІЗАЦІЯ ДОКУМЕНТІВ');
+    expect(SYSTEM_PROMPT).toContain('офіційну назву документа');
+    expect(SYSTEM_PROMPT).toContain('Де отримати');
+    expect(SYSTEM_PROMPT).toContain('Порядок отримання');
+    // Містить приклади деталізації
+    expect(SYSTEM_PROMPT).toContain('НЕ ПИШИ');
+    expect(SYSTEM_PROMPT).toContain('ПИШИ');
+    expect(SYSTEM_PROMPT).toContain('МСЕК');
+  });
+
   it('містить інструкцію про контакти гарячих ліній', () => {
     expect(SYSTEM_PROMPT).toContain('КОНТАКТИ ГАРЯЧИХ ЛІНІЙ');
     expect(SYSTEM_PROMPT).toContain('Телефон');
