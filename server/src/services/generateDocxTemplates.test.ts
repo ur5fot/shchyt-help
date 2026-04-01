@@ -232,7 +232,8 @@ describe('generate-docx-templates', () => {
     });
 
     it('generateTemplate працює для шаблонів без прикладу', () => {
-      const buffer = generateTemplate(шаблони[0]);
+      const шаблонБезПрикладу: ШаблонДаних = { ...шаблони[0], приклад: undefined };
+      const buffer = generateTemplate(шаблонБезПрикладу);
       expect(buffer).toBeInstanceOf(Buffer);
       expect(buffer.length).toBeGreaterThan(0);
     });
@@ -262,6 +263,9 @@ describe('generate-docx-templates', () => {
   describe('xmlEscape', () => {
     it('екранує спецсимволи XML', () => {
       expect(xmlEscape('тест & <перевірка>')).toBe('тест &amp; &lt;перевірка&gt;');
+      expect(xmlEscape('зв\'язок "цитата"')).toBe('зв&apos;язок &quot;цитата&quot;');
+      expect(xmlEscape('')).toBe('');
+      expect(xmlEscape('без спецсимволів')).toBe('без спецсимволів');
     });
   });
 });
