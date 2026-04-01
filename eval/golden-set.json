@@ -146,8 +146,22 @@
   {
     "id": "discharge-contract-end",
     "question": "Що відбувається після закінчення контракту під час воєнного стану?",
-    "expectedChunks": ["про-проходження-служ-p34-rII-ch0", "про-проходження-служ-p29-rII-ch0"],
+    "expectedChunks": ["про-проходження-служ-p34-rII-ch0", "про-проходження-служ-p29-rII-ch0", "зміни-щодо-мобілізац-st27-ch5-d7-p3"],
     "expectedArticles": ["Пункт 34", "Пункт 29"],
+    "category": "звільнення"
+  },
+  {
+    "id": "discharge-contract-during-wartime",
+    "question": "Контракт укладений під час воєнного стану і закінчився, що робити?",
+    "expectedChunks": ["зміни-щодо-мобілізац-st27-ch5-d7-p3"],
+    "expectedArticles": ["Стаття 26"],
+    "category": "звільнення"
+  },
+  {
+    "id": "discharge-contract-before-vs-during",
+    "question": "Чим відрізняється звільнення за контрактом до і під час воєнного стану?",
+    "expectedChunks": ["зміни-щодо-мобілізац-st27-ch5-d7-p3"],
+    "expectedArticles": ["Стаття 26"],
     "category": "звільнення"
   },
   {
