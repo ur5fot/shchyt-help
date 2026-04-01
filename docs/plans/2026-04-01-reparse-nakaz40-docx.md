@@ -65,10 +65,10 @@
 - [x] запустити повний test suite + lint
 
 ### Task 5: Верифікація
-- [ ] запустити повний test suite (`npm test`)
-- [ ] запустити `npm run lint`
-- [ ] перевірити що всі ключові зміни 2025-2026 присутні в JSON
-- [ ] перевірити eval recall
+- [x] запустити повний test suite (`npm test`)
+- [x] запустити `npm run lint`
+- [x] перевірити що всі ключові зміни 2025-2026 присутні в JSON
+- [x] перевірити eval recall
 
 ## Technical Details
 
