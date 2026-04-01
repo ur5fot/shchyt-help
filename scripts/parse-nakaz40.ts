@@ -1,20 +1,45 @@
 /**
  * Парсер Наказу Головнокомандувача ЗСУ №40 від 31.01.2024
  * "Інструкція з діловодства у Збройних Силах України"
+ * (зі змінами від 27.02.2026)
  *
- * Документ не з zakon.rada.gov.ua — парситься з PDF-тексту (pdftotext).
+ * Підтримує вхід з .docx (PizZip → XML → text) або plain text (.txt).
  * Структура: розділи (N.), підрозділи (N.M.), пункти (N.M.K.)
  */
 
 import { readFileSync, writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import PizZip from 'pizzip';
 import { extractKeywords, type LawChunkRaw, type LawFile } from './parse-law.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const МАКС_РОЗМІР_ЧАНКА = 2000;
 const BASE_ID = 'nakaz40-dilovod';
+
+/**
+ * Витягує plain text з .docx файлу через PizZip → word/document.xml → strip XML
+ */
+export function extractTextFromDocx(docxPath: string): string {
+  const docxBuffer = readFileSync(docxPath);
+  const zip = new PizZip(docxBuffer);
+  const xml = zip.file('word/document.xml')?.asText() || '';
+
+  return xml
+    .replace(/<w:p[^>]*\/>/g, '\n')
+    .replace(/<w:p[^>]*>/g, '\n')
+    .replace(/<w:tab[^>]*\/>/g, '\t')
+    .replace(/<w:br[^>]*\/>/g, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/\r\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n');
+}
 
 // Розділи документа для анотації чанків
 const SECTIONS: Record<string, string> = {
@@ -178,7 +203,53 @@ function parsePdfText(text: string): ParsedPunkt[] {
   }
 
   flushPunkt();
+
+  // Обробка "плоских" розділів (без пунктів N.M) — наприклад, Розділ 14
+  // Збираємо текст між заголовком розділу та наступним розділом/пунктом
+  const flatSections = findFlatSections(text, punkts);
+  punkts.push(...flatSections);
+
   return punkts;
+}
+
+/**
+ * Знаходить "плоскі" розділи — ті що мають заголовок але жодного пункту N.M.
+ * Такий текст додається як єдиний пункт "N.0" (наприклад, "14.0").
+ */
+function findFlatSections(text: string, existingPunkts: ParsedPunkt[]): ParsedPunkt[] {
+  const sectionsWithPunkts = new Set(existingPunkts.map((p) => p.section));
+  const result: ParsedPunkt[] = [];
+  const lines = text.split('\n');
+  const SECTION_HEADER_RE = /^\s*(\d{1,2})\.\s+([А-ЯІЇЄҐ])/;
+
+  for (let i = 0; i < lines.length; i++) {
+    const match = SECTION_HEADER_RE.exec(lines[i]);
+    if (!match) continue;
+    const sectionNum = match[1];
+    if (!SECTIONS[sectionNum]) continue;
+    if (sectionsWithPunkts.has(sectionNum)) continue;
+
+    // Збираємо текст до наступного заголовка розділу або пункту
+    const bodyLines: string[] = [];
+    for (let j = i + 1; j < lines.length; j++) {
+      const line = lines[j].trim();
+      if (!line) continue;
+      // Зупиняємось на наступному заголовку розділу або пункті
+      if (SECTION_HEADER_RE.test(lines[j])) break;
+      if (/^\d{1,2}\.\d{1,2}(?:\.\d{1,3}){0,2}\.\s/.test(line)) break;
+      bodyLines.push(line);
+    }
+
+    if (bodyLines.length > 0) {
+      result.push({
+        number: `${sectionNum}.0`,
+        text: bodyLines.join(' ').replace(/\s+/g, ' ').trim(),
+        section: sectionNum,
+      });
+    }
+  }
+
+  return result;
 }
 
 function punktsToChunks(punkts: ParsedPunkt[]): LawChunkRaw[] {
@@ -326,11 +397,21 @@ function deduplicateIds(chunks: LawChunkRaw[]): LawChunkRaw[] {
 async function main() {
   const inputPath = process.argv[2];
   if (!inputPath) {
-    console.error('Використання: npx tsx scripts/parse-nakaz40.ts <шлях-до-txt>');
+    console.error('Використання: npx tsx scripts/parse-nakaz40.ts <шлях-до-txt-або-docx>');
     console.error('Приклад: npx tsx scripts/parse-nakaz40.ts /tmp/nakaz40.txt');
+    console.error('Приклад: npx tsx scripts/parse-nakaz40.ts "ГК ЗСУ №40 від 31.01.2024 (зі змінами від 27.02.2026).docx"');
     process.exit(1);
   }
-  const text = readFileSync(inputPath, 'utf-8');
+
+  const isDocx = inputPath.endsWith('.docx');
+  let text: string;
+  if (isDocx) {
+    console.log('Витягування тексту з .docx...');
+    text = extractTextFromDocx(inputPath);
+    console.log(`Витягнуто ${text.length} символів`);
+  } else {
+    text = readFileSync(inputPath, 'utf-8');
+  }
 
   console.log('Парсинг тексту Наказу №40...');
   const punkts = parsePdfText(text);
@@ -352,10 +433,11 @@ async function main() {
   }
 
   const law: LawFile = {
-    title: 'Інструкція з діловодства у Збройних Силах України (Наказ Головнокомандувача ЗСУ №40 від 31.01.2024)',
+    title:
+      'Інструкція з діловодства у Збройних Силах України (Наказ Головнокомандувача ЗСУ №40 від 31.01.2024, зі змінами від 27.02.2026)',
     short_title: 'Наказ №40 Діловодство ЗСУ',
     source_url: 'https://turbota.mil.gov.ua/dopomoga-dilovodam/instrukcziya-z-dilovodstva-u-zbrojnyh-sylah-ukrayiny',
-    last_updated: '2024-01-31',
+    last_updated: '2026-02-27',
     chunks,
   };
 
