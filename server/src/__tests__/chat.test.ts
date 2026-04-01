@@ -220,8 +220,8 @@ describe('POST /api/chat', () => {
   });
 
   it('повертає 504 якщо Claude не відповів вчасно', async () => {
-    const timeoutError = new Error('Request timed out.');
-    timeoutError.name = 'APIConnectionTimeoutError';
+    const { APIConnectionTimeoutError } = await import('@anthropic-ai/sdk');
+    const timeoutError = new APIConnectionTimeoutError({ message: 'Request timed out.' });
     mockAskClaude.mockRejectedValue(timeoutError);
 
     const відповідь = await request(app)

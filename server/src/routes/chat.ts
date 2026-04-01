@@ -3,6 +3,7 @@ import { Router, type Request, type Response } from 'express';
 import { loadAllLaws } from '../../../laws/index.ts';
 import { searchLaws, hybridSearchLaws } from '../services/lawSearch.ts';
 import { buildPrompt } from '../services/promptBuilder.ts';
+import Anthropic from '@anthropic-ai/sdk';
 import { askClaude, summarizeHistory, type HistoryMessage } from '../services/claude.ts';
 import { ініціалізуватиБД, чиДоступнаБД } from '../services/vectorStore.ts';
 import { extractCitations, verifyCitations, removeCitationBlock, hasCitationBlock } from '../services/citationVerifier.ts';
@@ -276,7 +277,7 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
       return;
     }
 
-    if (помилка instanceof Error && помилка.name === 'APIConnectionTimeoutError') {
+    if (помилка instanceof Anthropic.APIConnectionTimeoutError) {
       res.status(504).json({ error: 'Claude не відповів вчасно. Спробуйте ще раз.' });
       return;
     }
