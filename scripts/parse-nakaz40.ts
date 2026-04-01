@@ -42,7 +42,6 @@ interface ParsedPunkt {
   number: string; // "1.1" або "2.3.4"
   text: string;
   section: string; // "1", "2" тощо
-  subsection: string; // "2.1", "2.3" тощо
 }
 
 function parsePdfText(text: string): ParsedPunkt[] {
@@ -161,13 +160,10 @@ function parsePdfText(text: string): ParsedPunkt[] {
 
       const parts = number.split('.');
       const section = parts[0];
-      const subsection = parts.length >= 2 ? `${parts[0]}.${parts[1]}` : parts[0];
-
       currentPunkt = {
         number,
         text: '',
         section,
-        subsection,
       };
       textBuffer = [initialText];
       previousLine = line;

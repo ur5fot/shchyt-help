@@ -451,7 +451,7 @@
   {
     "id": "dilovod-registration",
     "question": "Як реєструються документи у військовій частині?",
-    "expectedChunks": ["nakaz40-dilovod-p3-1", "nakaz40-dilovod-p1-13-3-s1"],
+    "expectedChunks": ["nakaz40-dilovod-p3-1", "nakaz40-dilovod-p1-13-3"],
     "expectedArticles": ["Пункт 3.1", "Пункт 1.13.3"],
     "category": "діловодство",
     "expectedFacts": ["реєстрація", "документообіг", "облік документів"]
