@@ -309,6 +309,25 @@ describe('POST /api/chat', () => {
       expect(контекстнийЗапит).toContain('ст. 10');
     });
 
+    it('витягує посилання на статті з дефісом (10-1, 3-1) з відповіді AI', async () => {
+      const history = [
+        { role: 'user' as const, content: 'Які відпустки є?' },
+        { role: 'assistant' as const, content: 'Згідно стаття 10-1, частина 3-1, пункт 5-2, ст. 7-3 — є такі відпустки.' },
+      ];
+
+      mockSearchLaws.mockReturnValue([]);
+
+      await request(app)
+        .post('/api/chat')
+        .send({ message: 'А під час воєнного стану?', history });
+
+      const контекстнийЗапит = mockSearchLaws.mock.calls[1][0];
+      expect(контекстнийЗапит.toLowerCase()).toContain('стаття 10-1');
+      expect(контекстнийЗапит.toLowerCase()).toContain('частина 3-1');
+      expect(контекстнийЗапит.toLowerCase()).toContain('пункт 5-2');
+      expect(контекстнийЗапит).toContain('ст. 7-3');
+    });
+
     it('працює без помилок коли у відповіді AI немає посилань на статті', async () => {
       const history = [
         { role: 'user' as const, content: 'Привіт' },
