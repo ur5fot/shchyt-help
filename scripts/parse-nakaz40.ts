@@ -69,18 +69,26 @@ interface ParsedPunkt {
   section: string; // "1", "2" тощо
 }
 
-function parsePdfText(text: string): ParsedPunkt[] {
+function parseNakazText(text: string): ParsedPunkt[] {
   // Передобробка: розбиваємо рядки, де номер нового пункту з'являється посеред тексту
   // Наприклад: "...документів. 1.13.4. Начальник..." → два окремих рядки
   // Фільтруємо дати (від 16.11. / станом 17.01.) та посилання на пункти (пунктом 2.7.8.)
+  const DATE_PREPOSITION_RE = /(?:від|до|з|після|на|по|станом)$/i;
+  const PUNKT_REFERENCE_RE = /(?:пункт(?:у|і|а|ом|ів|ами|ах)?|підпункт(?:у|і|а|ом|ів|ами|ах)?|п\.|пп\.)$/i;
+
+  function shouldSplitAtPunktMarker(precedingWord: string, punktNum: string): boolean {
+    if (DATE_PREPOSITION_RE.test(precedingWord)) return false;
+    if (PUNKT_REFERENCE_RE.test(precedingWord)) return false;
+    if (!SECTIONS[punktNum.split('.')[0]]) return false;
+    return true;
+  }
+
   const processedText = text
     // Випадок 1: маркер пункту посеред рядка, після нього йде текст з великої літери
     .replace(
       /(\S+)\s+(\d{1,2}\.\d{1,2}(?:\.\d{1,3}){0,2})\.\s+(?=[А-ЯІЇЄҐA-Z])/g,
       (match, precedingWord, punktNum) => {
-        if (/(?:від|до|з|після|на|по|станом)$/i.test(precedingWord)) return match;
-        if (/(?:пункт(?:у|і|а|ом|ів|ами|ах)?|підпункт(?:у|і|а|ом|ів|ами|ах)?|п\.|пп\.)$/i.test(precedingWord)) return match;
-        if (!SECTIONS[punktNum.split('.')[0]]) return match;
+        if (!shouldSplitAtPunktMarker(precedingWord, punktNum)) return match;
         return `${precedingWord}\n${punktNum}. `;
       }
     )
@@ -88,9 +96,7 @@ function parsePdfText(text: string): ParsedPunkt[] {
     .replace(
       /(\S+)\s+(\d{1,2}\.\d{1,2}(?:\.\d{1,3}){0,2})\.\s*$/gm,
       (match, precedingWord, punktNum) => {
-        if (/(?:від|до|з|після|на|по|станом)$/i.test(precedingWord)) return match;
-        if (/(?:пункт(?:у|і|а|ом|ів|ами|ах)?|підпункт(?:у|і|а|ом|ів|ами|ах)?|п\.|пп\.)$/i.test(precedingWord)) return match;
-        if (!SECTIONS[punktNum.split('.')[0]]) return match;
+        if (!shouldSplitAtPunktMarker(precedingWord, punktNum)) return match;
         return `${precedingWord}\n${punktNum}. `;
       }
     );
@@ -206,7 +212,7 @@ function parsePdfText(text: string): ParsedPunkt[] {
 
   // Обробка "плоских" розділів (без пунктів N.M) — наприклад, Розділ 14
   // Збираємо текст між заголовком розділу та наступним розділом/пунктом
-  const flatSections = findFlatSections(text, punkts);
+  const flatSections = findFlatSections(processedText, punkts);
   punkts.push(...flatSections);
 
   return punkts;
@@ -322,14 +328,7 @@ function punktsToChunks(punkts: ParsedPunkt[]): LawChunkRaw[] {
 
     // Якщо текст менший за ліміт — один чанк
     if (punkt.text.length <= МАКС_РОЗМІР_ЧАНКА) {
-      chunks.push({
-        id: idBase,
-        article: articleLabel,
-        part: partLabel,
-        title,
-        text: punkt.text,
-        keywords: extractKeywords(punkt.text),
-      });
+      pushChunk(idBase, punkt.text, articleLabel, partLabel, title);
       continue;
     }
 
@@ -362,14 +361,7 @@ function punktsToChunks(punkts: ParsedPunkt[]): LawChunkRaw[] {
         if (segmentText.length > МАКС_РОЗМІР_ЧАНКА) {
           splitBySentences(segmentText, segId, articleLabel, partLabel, title);
         } else {
-          chunks.push({
-            id: segId,
-            article: articleLabel,
-            part: partLabel,
-            title,
-            text: segmentText,
-            keywords: extractKeywords(segmentText),
-          });
+          pushChunk(segId, segmentText, articleLabel, partLabel, title);
         }
       }
     } else {
@@ -409,12 +401,16 @@ async function main() {
     console.log('Витягування тексту з .docx...');
     text = extractTextFromDocx(inputPath);
     console.log(`Витягнуто ${text.length} символів`);
+    if (text.length < 100) {
+      console.error(`Занадто мало тексту витягнуто (${text.length} символів) — можливо файл пошкоджений`);
+      process.exit(1);
+    }
   } else {
     text = readFileSync(inputPath, 'utf-8');
   }
 
   console.log('Парсинг тексту Наказу №40...');
-  const punkts = parsePdfText(text);
+  const punkts = parseNakazText(text);
   console.log(`Знайдено ${punkts.length} пунктів`);
 
   let chunks = punktsToChunks(punkts);
