@@ -146,4 +146,55 @@ describe('валідація .docx шаблонів', () => {
       expect(files).toContain(`${id}.docx`);
     }
   });
+
+  it('шаблон має оновлений блок підпису з посадою та в/ч', () => {
+    const buf = loadTemplate('raport-nevyplata');
+    const zip = new PizZip(buf);
+    const content = zip.file('word/document.xml')?.asText() ?? '';
+
+    expect(content).toContain('{ПОСАДА}');
+    expect(content).toContain('{В/Ч}');
+    expect(content).toMatch(/\{Ім.*ПРІЗВИЩЕ\}/);
+  });
+
+  it.each(['raport-nevyplata', 'raport-vidpustka', 'raport-zvilnennya', 'raport-rotatsia', 'raport-vlk'])(
+    'рапорт %s має додатки та клопотання',
+    (id) => {
+      const buf = loadTemplate(id);
+      const zip = new PizZip(buf);
+      const content = zip.file('word/document.xml')?.asText() ?? '';
+
+      expect(content).toContain('Додатки:');
+      expect(content).toContain('Клопочу по суті рапорту');
+    },
+  );
+
+  it('skarga має додатки але не має клопотань', () => {
+    const buf = loadTemplate('skarga');
+    const zip = new PizZip(buf);
+    const content = zip.file('word/document.xml')?.asText() ?? '';
+
+    expect(content).toContain('Додатки:');
+    expect(content).not.toContain('Клопочу по суті рапорту');
+  });
+
+  it('raport-zvilnennya має облікові документи, додатки та клопотання', () => {
+    const buf = loadTemplate('raport-zvilnennya');
+    const zip = new PizZip(buf);
+    const content = zip.file('word/document.xml')?.asText() ?? '';
+
+    // Облікові документи
+    expect(content).toContain('{НАЗВА_ТЦК}');
+    expect(content).toContain('{МІСТО}');
+
+    // Додатки
+    expect(content).toContain('Додатки:');
+    expect(content).toContain('Копія паспорта');
+    expect(content).toContain('Копія військового квитка');
+
+    // Клопотання (2 рівні)
+    expect(content).toContain('Клопочу по суті рапорту');
+    expect(content).toContain('{ПОСАДА_БЕЗПОСЕРЕДНЬОГО_КОМАНДИРА}');
+    expect(content).toContain('{В/Ч_БРИГАДИ}');
+  });
 });
