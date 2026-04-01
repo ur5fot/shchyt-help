@@ -144,6 +144,54 @@ describe('hotlines.json', () => {
   });
 });
 
+describe('dovidkovi-dokumenty.json', () => {
+  const chunks = loadAllLaws();
+  const docChunks = chunks.filter(c => c.id.startsWith('doc-'));
+
+  it('завантажує чанки з dovidkovi-dokumenty.json', () => {
+    expect(docChunks.length).toBeGreaterThanOrEqual(10);
+  });
+
+  it('кожен чанк має обов\'язкові поля з непорожніми значеннями', () => {
+    for (const chunk of docChunks) {
+      expect(chunk.id).toBeTruthy();
+      expect(chunk.article).toBeTruthy();
+      expect(typeof chunk.part).toBe('string');
+      expect(chunk.text).toBeTruthy();
+      expect(chunk.keywords.length).toBeGreaterThan(0);
+      expect(chunk.lawTitle).toBe('Довідник типових документів для військовослужбовців');
+      expect(chunk.sourceUrl).toBe('internal://documents-guide');
+      expect(chunk.documentId).toBe('Довідник документів');
+    }
+  });
+
+  it('містить ключові документи: МСЕК, ЄДДР, УБД, ТЦК, ВЛК, ІПН', () => {
+    const ids = docChunks.map(c => c.id);
+    expect(ids).toContain('doc-dovidka-msek');
+    expect(ids).toContain('doc-vitjag-yeddr');
+    expect(ids).toContain('doc-posvidchennja-ubd');
+    expect(ids).toContain('doc-dovidka-tck');
+    expect(ids).toContain('doc-svidoctvo-pro-hvorobu');
+    expect(ids).toContain('doc-kopija-ipn');
+  });
+
+  it('кожен чанк містить інформацію про порядок отримання', () => {
+    for (const chunk of docChunks) {
+      const text = chunk.text.toLowerCase();
+      const hasObtainInfo = text.includes('видає') ||
+        text.includes('порядок отримання') ||
+        text.includes('подається') ||
+        text.includes('оформлення');
+      expect(hasObtainInfo).toBe(true);
+    }
+  });
+
+  it('id кожного чанку унікальний серед довідкових документів', () => {
+    const ids = docChunks.map(c => c.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
 describe('LawChunk тип', () => {
   it('тип LawChunk є сумісним з даними з JSON', () => {
     const chunks = loadAllLaws();
