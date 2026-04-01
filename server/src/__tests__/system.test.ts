@@ -26,9 +26,8 @@ describe('SYSTEM_PROMPT', () => {
     expect(текст).toMatch(/контекст|наданого|законодавства/);
   });
 
-  it('містить обов`язковий дисклеймер наприкінці', () => {
-    expect(SYSTEM_PROMPT).toContain('⚠️');
-    expect(SYSTEM_PROMPT).toContain('не юридична консультація');
+  it('містить інструкцію додавати дисклеймер у відповіді', () => {
+    expect(SYSTEM_PROMPT).toContain('Після дисклеймера');
     expect(SYSTEM_PROMPT).toContain('військового адвоката');
   });
 
@@ -43,9 +42,8 @@ describe('SYSTEM_PROMPT', () => {
   });
 
   it('розрізняє контракти ДО та ПІД ЧАС воєнного стану', () => {
-    expect(SYSTEM_PROMPT).toContain('укладені ДО 24.02.2022');
-    expect(SYSTEM_PROMPT).toContain('укладені ПІД ЧАС воєнного стану');
-    expect(SYSTEM_PROMPT).toContain('право на звільнення');
+    expect(SYSTEM_PROMPT).toContain('Коли укладено контракт: ДО воєнного стану vs ПІД ЧАС воєнного стану');
+    expect(SYSTEM_PROMPT).toContain('Період: мирний час vs особливий період vs мобілізація/воєнний стан');
   });
 
   it('містить правило про умовне розмежування норм', () => {

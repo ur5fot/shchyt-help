@@ -276,6 +276,11 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
       return;
     }
 
+    if (помилка instanceof Error && помилка.name === 'APIConnectionTimeoutError') {
+      res.status(504).json({ error: 'Claude не відповів вчасно. Спробуйте ще раз.' });
+      return;
+    }
+
     res.status(500).json({ error: 'Внутрішня помилка сервера' });
   }
 });

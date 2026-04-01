@@ -1,8 +1,20 @@
 // Спільні константи серверної частини
 
 // Claude API
-export const МОДЕЛЬ_CLAUDE = 'claude-sonnet-4-20250514';
-export const МАКС_ТОКЕНІВ = 2048;
+export const МОДЕЛІ_CLAUDE = {
+  SONNET_4_6: 'claude-sonnet-4-6',
+  OPUS_4_6: 'claude-opus-4-6',
+} as const;
+
+export type МодельClaude = (typeof МОДЕЛІ_CLAUDE)[keyof typeof МОДЕЛІ_CLAUDE];
+
+// Перемикач активної Claude-моделі
+export const МОДЕЛЬ_CLAUDE: МодельClaude = МОДЕЛІ_CLAUDE.OPUS_4_6;
+export const МАКС_ТОКЕНІВ = 4096;
+export const МАКС_ПОВТОРІВ_CLAUDE = 0;
+export const ТАЙМАУТ_ЗАПИТУ_CLAUDE_МС = 60_000;
+export const ТАЙМАУТ_СТИСНЕННЯ_CLAUDE_МС = 15_000;
+export const ТАЙМАУТ_HYDE_МС = 10_000;
 
 // Валідація запитів
 export const МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ = 2000;

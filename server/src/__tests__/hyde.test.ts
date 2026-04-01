@@ -31,16 +31,23 @@ describe('generateHypothesis', () => {
     }));
 
     const { generateHypothesis } = await import('../services/hyde.ts');
+    const { МАКС_ПОВТОРІВ_CLAUDE, ТАЙМАУТ_HYDE_МС } = await import('../constants.ts');
     const результат = await generateHypothesis('Скільки днів відпустки мені належить як військовослужбовцю?');
 
     expect(результат).toBe(гіпотеза);
+    expect(Anthropic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        apiKey: 'test-api-key',
+        maxRetries: МАКС_ПОВТОРІВ_CLAUDE,
+      }),
+    );
     expect(mockCreateFn).toHaveBeenCalledWith(
       expect.objectContaining({
         max_tokens: 200,
         system: expect.stringContaining('юрист'),
         messages: [{ role: 'user', content: expect.stringContaining('відпустки') }],
       }),
-      expect.objectContaining({ timeout: 10_000 }),
+      expect.objectContaining({ timeout: ТАЙМАУТ_HYDE_МС }),
     );
   });
 

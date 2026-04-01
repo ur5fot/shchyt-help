@@ -219,6 +219,19 @@ describe('POST /api/chat', () => {
     expect(відповідь.body.error).toContain('.env');
   });
 
+  it('повертає 504 якщо Claude не відповів вчасно', async () => {
+    const timeoutError = new Error('Request timed out.');
+    timeoutError.name = 'APIConnectionTimeoutError';
+    mockAskClaude.mockRejectedValue(timeoutError);
+
+    const відповідь = await request(app)
+      .post('/api/chat')
+      .send({ message: 'Питання' });
+
+    expect(відповідь.status).toBe(504);
+    expect(відповідь.body.error).toContain('не відповів вчасно');
+  });
+
   it('використовує hybridSearchLaws коли LanceDB доступна', async () => {
     _встановитиLanceDB(true);
     mockHybridSearchLaws.mockResolvedValue([]);

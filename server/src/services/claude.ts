@@ -2,7 +2,13 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT } from '../prompts/system.ts';
 import { SUMMARIZE_PROMPT } from '../prompts/summarize.ts';
-import { МОДЕЛЬ_CLAUDE, МАКС_ТОКЕНІВ } from '../constants.ts';
+import {
+  МОДЕЛЬ_CLAUDE,
+  МАКС_ТОКЕНІВ,
+  МАКС_ПОВТОРІВ_CLAUDE,
+  ТАЙМАУТ_ЗАПИТУ_CLAUDE_МС,
+  ТАЙМАУТ_СТИСНЕННЯ_CLAUDE_МС,
+} from '../constants.ts';
 import { logger } from '../logger.ts';
 
 export interface HistoryMessage {
@@ -19,7 +25,7 @@ function getClient(): Anthropic {
     if (!apiKey) {
       throw new Error('API ключ ANTHROPIC_API_KEY не встановлений');
     }
-    _client = new Anthropic({ apiKey });
+    _client = new Anthropic({ apiKey, maxRetries: МАКС_ПОВТОРІВ_CLAUDE });
   }
   return _client;
 }
@@ -63,7 +69,7 @@ export async function askClaude(
         system: SYSTEM_PROMPT,
         messages,
       },
-      { timeout: 30_000 },
+      { timeout: ТАЙМАУТ_ЗАПИТУ_CLAUDE_МС },
     );
 
     const блок = відповідь.content[0];
@@ -96,7 +102,7 @@ export async function summarizeHistory(messages: HistoryMessage[]): Promise<stri
         system: SUMMARIZE_PROMPT,
         messages: [{ role: 'user', content: діалог }],
       },
-      { timeout: 15_000 },
+      { timeout: ТАЙМАУТ_СТИСНЕННЯ_CLAUDE_МС },
     );
 
     const блок = відповідь.content[0];

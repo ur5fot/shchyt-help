@@ -36,16 +36,24 @@ describe('askClaude', () => {
     }));
 
     const { askClaude } = await import('../services/claude.ts');
+    const { МОДЕЛЬ_CLAUDE, МАКС_ПОВТОРІВ_CLAUDE, ТАЙМАУТ_ЗАПИТУ_CLAUDE_МС } = await import('../constants.ts');
     await askClaude('Тестовий промпт');
+
+    expect(Anthropic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        apiKey: 'test-api-key',
+        maxRetries: МАКС_ПОВТОРІВ_CLAUDE,
+      }),
+    );
 
     expect(mockCreateFn).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: 'claude-sonnet-4-20250514',
+        model: МОДЕЛЬ_CLAUDE,
         max_tokens: expect.any(Number),
         system: expect.any(String),
         messages: [{ role: 'user', content: 'Тестовий промпт' }],
       }),
-      expect.objectContaining({ timeout: 30_000 }),
+      expect.objectContaining({ timeout: ТАЙМАУТ_ЗАПИТУ_CLAUDE_МС }),
     );
   });
 
@@ -73,11 +81,11 @@ describe('askClaude', () => {
     }));
 
     const { askClaude } = await import('../services/claude.ts');
+    const { SYSTEM_PROMPT } = await import('../prompts/system.ts');
     await askClaude('Питання');
 
     const виклик = mockCreateFn.mock.calls[0][0];
-    expect(виклик.system).toContain('військовослужбовців');
-    expect(виклик.system).toContain('⚠️');
+    expect(виклик.system).toBe(SYSTEM_PROMPT);
   });
 
   it('кидає помилку при відсутньому API ключі', async () => {

@@ -1,7 +1,7 @@
 // HyDE (Hypothetical Document Embeddings) — генерація гіпотетичної відповіді
 // для покращення векторного пошуку по розмитих запитах
 import Anthropic from '@anthropic-ai/sdk';
-import { МОДЕЛЬ_CLAUDE } from '../constants.ts';
+import { МОДЕЛЬ_CLAUDE, МАКС_ПОВТОРІВ_CLAUDE, ТАЙМАУТ_HYDE_МС } from '../constants.ts';
 import { logger } from '../logger.ts';
 
 const HYDE_SYSTEM_PROMPT = `Ти — юрист з питань військового права України. Дай коротку відповідь (2-3 речення) на питання, згадай конкретні статті законів. Не додавай вступних фраз.`;
@@ -18,7 +18,7 @@ function getClient(): Anthropic {
     throw new Error('API ключ ANTHROPIC_API_KEY не встановлений');
   }
   if (!_client) {
-    _client = new Anthropic({ apiKey });
+    _client = new Anthropic({ apiKey, maxRetries: МАКС_ПОВТОРІВ_CLAUDE });
   }
   return _client;
 }
@@ -61,7 +61,7 @@ export async function generateHypothesis(query: string): Promise<string | null> 
         system: HYDE_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: query }],
       },
-      { timeout: 10_000 },
+      { timeout: ТАЙМАУТ_HYDE_МС },
     );
 
     const блок = відповідь.content[0];
