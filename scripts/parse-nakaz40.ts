@@ -510,7 +510,11 @@ async function main() {
   console.log(`\nJSON збережено → ${outputPath}`);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// Запускати main() тільки при прямому виклику скрипта, не при імпорті
+const isDirectRun = process.argv[1]?.replace(/\.ts$/, '').endsWith('parse-nakaz40');
+if (isDirectRun) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
