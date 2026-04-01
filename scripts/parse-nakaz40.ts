@@ -116,26 +116,49 @@ function punktsToChunks(punkts: ParsedPunkt[]): LawChunkRaw[] {
   const chunks: LawChunkRaw[] = [];
 
   // Допоміжна функція: розбити текст на речення по крапках та крапках з комою
+  function pushChunk(id: string, text: string, articleLabel: string, partLabel: string) {
+    chunks.push({
+      id,
+      article: articleLabel,
+      part: partLabel,
+      text,
+      keywords: extractKeywords(text),
+    });
+  }
+
   function splitBySentences(text: string, idBase: string, articleLabel: string, partLabel: string) {
     const sentences = text.split(/(?<=[.;])\s+/);
     let buffer: string[] = [];
     let bufferLen = 0;
     let partIdx = 0;
 
+    function flushBuffer() {
+      if (buffer.length === 0) return;
+      partIdx++;
+      const id = `${idBase}-s${partIdx}`;
+      const segText = buffer.join(' ');
+      pushChunk(id, segText, articleLabel, partLabel);
+      buffer = [];
+      bufferLen = 0;
+    }
+
     for (const sent of sentences) {
+      // Якщо одне "речення" саме по собі перевищує ліміт — дорозбиваємо по комах
+      if (sent.length > МАКС_РОЗМІР_ЧАНКА) {
+        flushBuffer();
+        const subParts = sent.split(/(?<=,)\s+/);
+        for (const part of subParts) {
+          if (bufferLen + part.length > МАКС_РОЗМІР_ЧАНКА && buffer.length > 0) {
+            flushBuffer();
+          }
+          buffer.push(part);
+          bufferLen += part.length + 1;
+        }
+        continue;
+      }
+
       if (bufferLen + sent.length > МАКС_РОЗМІР_ЧАНКА && buffer.length > 0) {
-        partIdx++;
-        const id = `${idBase}-s${partIdx}`;
-        const segText = buffer.join(' ');
-        chunks.push({
-          id,
-          article: articleLabel,
-          part: partLabel,
-          text: segText,
-          keywords: extractKeywords(segText),
-        });
-        buffer = [];
-        bufferLen = 0;
+        flushBuffer();
       }
       buffer.push(sent);
       bufferLen += sent.length + 1;
@@ -145,13 +168,7 @@ function punktsToChunks(punkts: ParsedPunkt[]): LawChunkRaw[] {
       partIdx++;
       const id = partIdx === 1 ? idBase : `${idBase}-s${partIdx}`;
       const segText = buffer.join(' ');
-      chunks.push({
-        id,
-        article: articleLabel,
-        part: partLabel,
-        text: segText,
-        keywords: extractKeywords(segText),
-      });
+      pushChunk(id, segText, articleLabel, partLabel);
     }
   }
 
@@ -234,7 +251,12 @@ function deduplicateIds(chunks: LawChunkRaw[]): LawChunkRaw[] {
 }
 
 async function main() {
-  const inputPath = process.argv[2] || '/tmp/nakaz40.txt';
+  const inputPath = process.argv[2];
+  if (!inputPath) {
+    console.error('Використання: npx tsx scripts/parse-nakaz40.ts <шлях-до-txt>');
+    console.error('Приклад: npx tsx scripts/parse-nakaz40.ts /tmp/nakaz40.txt');
+    process.exit(1);
+  }
   const text = readFileSync(inputPath, 'utf-8');
 
   console.log('Парсинг тексту Наказу №40...');
