@@ -130,7 +130,7 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
         const останняВідповідь = [...sanitizedHistory].reverse().find(m => m.role === 'assistant');
         let статтіЗВідповіді = '';
         if (останняВідповідь) {
-          const знайдені = останняВідповідь.content.match(/стаття\s+\d+|частин[аи]?\s+\d+|пункт\s+\d+|ст\.\s*\d+/gi);
+          const знайдені = останняВідповідь.content.match(/стат[а-яіїєґ']*\s+\d+|частин[а-яіїєґ']*\s+\d+|пункт[а-яіїєґ']*\s+\d+|ст\.\s*\d+/gi);
           if (знайдені) {
             // Дедуплікуємо знайдені посилання (нормалізуємо регістр)
             const унікальні = [...new Set(знайдені.map(s => s.toLowerCase()))];

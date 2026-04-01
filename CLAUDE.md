@@ -81,6 +81,7 @@ eval/        → Golden test set (68 питань з очікуваними ча
 - **docxGenerator.ts** (клієнт) — генерація .docx рапортів/скарг з шаблонів через docxtemplater/pizzip (підстановка {ДАТА}, збереження плейсхолдерів для ручного заповнення). Шаблони містять додатки, клопотання, підказки та приклади заповнення
 - **pdfGenerator.ts** (клієнт) — `exportChatToPdf` для експорту бесіди в PDF (Markdown stripping, джерела з documentId, автопагінація A4)
 - **logger.ts** (сервер) — структуроване логування через pino (JSON в production, pretty в dev)
+- **chat.ts** (сервер) — маршрут POST /api/chat: оркестрація запиту (пошук → промпт → Claude → верифікація цитат). Query expansion для follow-up: витягує посилання на статті з попередньої відповіді AI (regex) і додає до пошукового запиту (ліміт 400 символів). Об'єднання контексту (top-10 з основного + follow-up пошуку)
 - **app.ts** — Express з rate limiting (20 запитів/хвилину на IP)
 - **evalMetrics.ts** (сервер) — утиліти для eval: нормалізація статей, перевірка фактів, підрахунок retrieval recall, citation accuracy, hallucination rate
 - **scripts/eval.ts** — скрипт оцінки якості: `npm run eval` (retrieval recall по golden set, 68 питань), `npm run eval -- --full` (повний eval з Claude API: citation accuracy, fact recall)

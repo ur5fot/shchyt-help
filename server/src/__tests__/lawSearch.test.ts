@@ -243,9 +243,9 @@ describe('searchLaws — edge cases', () => {
     expect(результати1.length).toBe(результати2.length);
   });
 
-  it('повертає не більше 8 результатів за замовчуванням', () => {
-    // Створюємо 10 чанків з однаковим ключовим словом
-    const багатоЧанків: LawChunk[] = Array.from({ length: 10 }, (_, i) => ({
+  it('повертає не більше 10 результатів за замовчуванням', () => {
+    // Створюємо 15 чанків з однаковим ключовим словом (більше ніж ліміт)
+    const багатоЧанків: LawChunk[] = Array.from({ length: 15 }, (_, i) => ({
       id: `chunk-${i}`,
       article: `Стаття ${i + 1}`,
       part: 'Частина 1',
@@ -325,6 +325,21 @@ describe('розширитиСинонімами — карта синонімі
     expect(результат).toContain('призов');
     expect(результат).toContain('військовий');
   });
+
+  it('додає синоніми для "закінчився"', () => {
+    const результат = розширитиСинонімами(['закінчився']);
+    expect(результат).toContain('контракт');
+    expect(результат).toContain('строк');
+    expect(результат).toContain('припинення');
+    expect(результат).toContain('звільнення');
+  });
+
+  it('додає синоніми для "закінчення"', () => {
+    const результат = розширитиСинонімами(['закінчення']);
+    expect(результат).toContain('контракт');
+    expect(результат).toContain('строк');
+    expect(результат).toContain('припинення');
+  });
 });
 
 describe('розширитиСинонімами — російсько-українські відповідності', () => {
@@ -400,7 +415,7 @@ describe('hybridSearchLaws — гібридний пошук', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // За замовчуванням rerank повертає документи як є (pass-through)
-    mockRerank.mockImplementation(async (_запит, документи, topK = 8) => {
+    mockRerank.mockImplementation(async (_запит, документи, topK = 10) => {
       return документи.slice(0, topK).map((д, і) => ({
         id: д.id,
         score: документи.length - і,
@@ -724,7 +739,7 @@ describe('hybridSearchLaws — re-ranking інтеграція', () => {
   it('обмежує результати до 10 після re-ranking', async () => {
     mockСтворитиЕмбеддинг.mockResolvedValue(new Array(384).fill(0.1));
     mockПошукПоВектору.mockResolvedValue(
-      Array.from({ length: 10 }, (_, i) => ({
+      Array.from({ length: 15 }, (_, i) => ({
         id: `chunk-${i}`,
         article: `Стаття ${i + 1}`, part: 'Частина 1', title: 'Тест',
         text: 'Тестовий текст',
@@ -735,15 +750,15 @@ describe('hybridSearchLaws — re-ranking інтеграція', () => {
       }))
     );
 
-    // Re-ranker повертає рівно 8
-    mockRerank.mockResolvedValue(
-      Array.from({ length: 8 }, (_, i) => ({
-        id: `chunk-${i}`,
-        score: 1 - i * 0.1,
-      }))
-    );
+    // Re-ranker повертає topK результатів (як реальний reranker)
+    mockRerank.mockImplementation(async (_запит, документи, topK = 10) => {
+      return документи.slice(0, topK).map((д, і) => ({
+        id: д.id,
+        score: 1 - і * 0.05,
+      }));
+    });
 
-    const багатоЧанків: LawChunk[] = Array.from({ length: 10 }, (_, i) => ({
+    const багатоЧанків: LawChunk[] = Array.from({ length: 15 }, (_, i) => ({
       id: `chunk-${i}`,
       article: `Стаття ${i + 1}`, part: 'Частина 1', title: 'Тест',
       text: 'Тестовий текст для пошуку.',
@@ -760,7 +775,7 @@ describe('hybridSearchLaws — re-ranking інтеграція', () => {
 describe('hybridSearchLaws — HyDE інтеграція', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRerank.mockImplementation(async (_запит, документи, topK = 8) => {
+    mockRerank.mockImplementation(async (_запит, документи, topK = 10) => {
       return документи.slice(0, topK).map((д, і) => ({
         id: д.id,
         score: документи.length - і,
