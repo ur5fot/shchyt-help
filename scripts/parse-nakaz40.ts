@@ -46,11 +46,35 @@ interface ParsedPunkt {
 }
 
 function parsePdfText(text: string): ParsedPunkt[] {
-  const lines = text.split('\n');
+  // Передобробка: розбиваємо рядки, де номер нового пункту з'являється посеред тексту
+  // Наприклад: "...документів. 1.13.4. Начальник..." → два окремих рядки
+  // Фільтруємо дати (від 16.11. / станом 17.01.) та посилання на пункти (пунктом 2.7.8.)
+  const processedText = text
+    // Випадок 1: маркер пункту посеред рядка, після нього йде текст з великої літери
+    .replace(
+      /(\S+)\s+(\d{1,2}\.\d{1,2}(?:\.\d{1,3}){0,2})\.\s+(?=[А-ЯІЇЄҐA-Z])/g,
+      (match, precedingWord, punktNum) => {
+        if (/(?:від|до|з|після|на|по|станом)$/i.test(precedingWord)) return match;
+        if (/(?:пункт(?:у|і|а|ом|ів|ами|ах)?|підпункт(?:у|і|а|ом|ів|ами|ах)?|п\.|пп\.)$/i.test(precedingWord)) return match;
+        if (!SECTIONS[punktNum.split('.')[0]]) return match;
+        return `${precedingWord}\n${punktNum}. `;
+      }
+    )
+    // Випадок 2: маркер пункту в кінці рядка (текст пункту на наступному рядку)
+    .replace(
+      /(\S+)\s+(\d{1,2}\.\d{1,2}(?:\.\d{1,3}){0,2})\.\s*$/gm,
+      (match, precedingWord, punktNum) => {
+        if (/(?:від|до|з|після|на|по|станом)$/i.test(precedingWord)) return match;
+        if (/(?:пункт(?:у|і|а|ом|ів|ами|ах)?|підпункт(?:у|і|а|ом|ів|ами|ах)?|п\.|пп\.)$/i.test(precedingWord)) return match;
+        if (!SECTIONS[punktNum.split('.')[0]]) return match;
+        return `${precedingWord}\n${punktNum}. `;
+      }
+    );
+  const lines = processedText.split('\n');
   const punkts: ParsedPunkt[] = [];
 
-  // Паттерн для пунктів: N.M. або N.M.K. на початку рядка
-  const PUNKT_RE = /^(\d{1,2}\.\d{1,2}(?:\.\d{1,3})?)\.\s+(.*)/;
+  // Паттерн для пунктів: N.M. або N.M.K. або N.M.K.L. на початку рядка
+  const PUNKT_RE = /^(\d{1,2}\.\d{1,2}(?:\.\d{1,3}){0,2})\.\s*(.*)/;
   // Паттерн для номерів сторінок (рядки що містять тільки число)
   const PAGE_NUM_RE = /^\s*\d{1,3}\s*$/;
   // Паттерн для заголовків розділів: "N. НАЗВА" (де назва з великих літер або довга)
@@ -58,6 +82,10 @@ function parsePdfText(text: string): ParsedPunkt[] {
 
   let currentPunkt: ParsedPunkt | null = null;
   let textBuffer: string[] = [];
+  // Попередній непорожній рядок для виявлення крос-рядкових посилань
+  let previousLine = '';
+  // Паттерн для слів-посилань на пункти (пункту, підпункту тощо)
+  const REFERENCE_WORD_RE = /(?:пункт(?:у|і|а|ом|ів|ами|ах)?|підпункт(?:у|і|а|ом|ів|ами|ах)?|п\.|пп\.)\s*$/i;
 
   function flushPunkt() {
     if (currentPunkt && textBuffer.length > 0) {
@@ -82,6 +110,7 @@ function parsePdfText(text: string): ParsedPunkt[] {
       const sectionMatch = SECTION_RE.exec(line);
       if (sectionMatch && !line.match(/^\d{1,2}\.\d/)) {
         // Це заголовок розділу, не пункт — пропускаємо текст заголовка
+        previousLine = line;
         continue;
       }
     }
@@ -89,8 +118,47 @@ function parsePdfText(text: string): ParsedPunkt[] {
     // Перевіряємо чи це початок нового пункту
     const punktMatch = PUNKT_RE.exec(line);
     if (punktMatch) {
+      // Пропускаємо дати: "27.10.2023" парситься як пункт 27.10 з текстом "2023..."
+      const remainingText = punktMatch[2].trim();
+      if (/^\d{4}\b/.test(remainingText)) {
+        if (currentPunkt) {
+          textBuffer.push(line);
+        }
+        previousLine = line;
+        continue;
+      }
+      // Пропускаємо номери з неіснуючим розділом (дати типу "24.06." де 24 — не розділ)
+      if (!SECTIONS[punktMatch[1].split('.')[0]]) {
+        if (currentPunkt) {
+          textBuffer.push(line);
+        }
+        previousLine = line;
+        continue;
+      }
+      // Крос-рядкове посилання: попередній рядок закінчується "пункту", "підпункту" тощо
+      // Це не новий пункт, а продовження тексту (типу "пункту\n2.7.8 цієї Інструкції")
+      if (REFERENCE_WORD_RE.test(previousLine)) {
+        if (currentPunkt) {
+          textBuffer.push(line);
+        }
+        previousLine = line;
+        continue;
+      }
+
       flushPunkt();
-      const number = punktMatch[1];
+      let number = punktMatch[1];
+
+      // Перевіряємо чи текст починається з цифри, яка є частиною номера пункту
+      // Це трапляється коли 4-рівневий номер (типу "2.8.11.1") не має завершальної крапки:
+      // regex бачить "2.8.11." як номер, а "1 Порядок..." як текст
+      let initialText = remainingText;
+      const levels = number.split('.').length;
+      const extraDigitMatch = remainingText.match(/^(\d{1,3})\s+([А-ЯІЇЄҐA-Z].*)/s);
+      if (extraDigitMatch && levels < 4) {
+        number = `${number}.${extraDigitMatch[1]}`;
+        initialText = extraDigitMatch[2];
+      }
+
       const parts = number.split('.');
       const section = parts[0];
       const subsection = parts.length >= 2 ? `${parts[0]}.${parts[1]}` : parts[0];
@@ -101,7 +169,8 @@ function parsePdfText(text: string): ParsedPunkt[] {
         section,
         subsection,
       };
-      textBuffer = [punktMatch[2].trim()];
+      textBuffer = [initialText];
+      previousLine = line;
       continue;
     }
 
@@ -109,6 +178,7 @@ function parsePdfText(text: string): ParsedPunkt[] {
     if (currentPunkt) {
       textBuffer.push(line);
     }
+    previousLine = line;
   }
 
   flushPunkt();
