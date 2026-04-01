@@ -139,7 +139,7 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
           }
         }
         результатиПошуку.sort((а, б) => б.score - а.score);
-        результатиПошуку = результатиПошуку.slice(0, 8);
+        результатиПошуку = результатиПошуку.slice(0, 10);
         logger.info({ оригінал: trimmed, контекст: останнєПитання.content.slice(0, 50) }, 'Пошук з контекстом');
       }
     }
