@@ -77,10 +77,13 @@ function parsePdfText(text: string): ParsedPunkt[] {
 
     // Перевіряємо чи це заголовок розділу (N. Назва)
     // Заголовки розділів — не пункти, пропускаємо
-    const sectionMatch = SECTION_RE.exec(line);
-    if (sectionMatch && !line.match(/^\d{1,2}\.\d/)) {
-      // Це заголовок розділу, не пункт — пропускаємо текст заголовка
-      continue;
+    // Тільки коли НЕ всередині пункту, щоб не втратити рядки типу "5. Командир..."
+    if (!currentPunkt) {
+      const sectionMatch = SECTION_RE.exec(line);
+      if (sectionMatch && !line.match(/^\d{1,2}\.\d/)) {
+        // Це заголовок розділу, не пункт — пропускаємо текст заголовка
+        continue;
+      }
     }
 
     // Перевіряємо чи це початок нового пункту
@@ -116,17 +119,18 @@ function punktsToChunks(punkts: ParsedPunkt[]): LawChunkRaw[] {
   const chunks: LawChunkRaw[] = [];
 
   // Допоміжна функція: розбити текст на речення по крапках та крапках з комою
-  function pushChunk(id: string, text: string, articleLabel: string, partLabel: string) {
+  function pushChunk(id: string, text: string, articleLabel: string, partLabel: string, title: string) {
     chunks.push({
       id,
       article: articleLabel,
       part: partLabel,
+      title,
       text,
       keywords: extractKeywords(text),
     });
   }
 
-  function splitBySentences(text: string, idBase: string, articleLabel: string, partLabel: string) {
+  function splitBySentences(text: string, idBase: string, articleLabel: string, partLabel: string, title: string) {
     const sentences = text.split(/(?<=[.;])\s+/);
     let buffer: string[] = [];
     let bufferLen = 0;
@@ -137,7 +141,7 @@ function punktsToChunks(punkts: ParsedPunkt[]): LawChunkRaw[] {
       partIdx++;
       const id = `${idBase}-s${partIdx}`;
       const segText = buffer.join(' ');
-      pushChunk(id, segText, articleLabel, partLabel);
+      pushChunk(id, segText, articleLabel, partLabel, title);
       buffer = [];
       bufferLen = 0;
     }
@@ -168,7 +172,7 @@ function punktsToChunks(punkts: ParsedPunkt[]): LawChunkRaw[] {
       partIdx++;
       const id = partIdx === 1 ? idBase : `${idBase}-s${partIdx}`;
       const segText = buffer.join(' ');
-      pushChunk(id, segText, articleLabel, partLabel);
+      pushChunk(id, segText, articleLabel, partLabel, title);
     }
   }
 
@@ -177,6 +181,7 @@ function punktsToChunks(punkts: ParsedPunkt[]): LawChunkRaw[] {
     const articleLabel = `Пункт ${punkt.number}`;
     const partLabel = sectionName ? `Розділ ${punkt.section}. ${sectionName}` : '';
     const idBase = `${BASE_ID}-p${punkt.number.replace(/\./g, '-')}`;
+    const title = sectionName || '';
 
     // Якщо текст менший за ліміт — один чанк
     if (punkt.text.length <= МАКС_РОЗМІР_ЧАНКА) {
@@ -184,6 +189,7 @@ function punktsToChunks(punkts: ParsedPunkt[]): LawChunkRaw[] {
         id: idBase,
         article: articleLabel,
         part: partLabel,
+        title,
         text: punkt.text,
         keywords: extractKeywords(punkt.text),
       });
@@ -217,12 +223,13 @@ function punktsToChunks(punkts: ParsedPunkt[]): LawChunkRaw[] {
 
         // Якщо сегмент все ще перевищує ліміт — дорозбиваємо по реченнях
         if (segmentText.length > МАКС_РОЗМІР_ЧАНКА) {
-          splitBySentences(segmentText, segId, articleLabel, partLabel);
+          splitBySentences(segmentText, segId, articleLabel, partLabel, title);
         } else {
           chunks.push({
             id: segId,
             article: articleLabel,
             part: partLabel,
+            title,
             text: segmentText,
             keywords: extractKeywords(segmentText),
           });
@@ -230,7 +237,7 @@ function punktsToChunks(punkts: ParsedPunkt[]): LawChunkRaw[] {
       }
     } else {
       // Розбиваємо по ~МАКС_РОЗМІР_ЧАНКА символів на реченнях
-      splitBySentences(punkt.text, idBase, articleLabel, partLabel);
+      splitBySentences(punkt.text, idBase, articleLabel, partLabel, title);
     }
   }
 
