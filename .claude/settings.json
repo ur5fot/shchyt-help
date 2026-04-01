@@ -43,7 +43,8 @@
       "Bash(__NEW_LINE_24cdd8a9e617d40b__ echo:*)",
       "Bash(__NEW_LINE_346d5b84641eb604__ echo:*)",
       "Bash(node -e \"console.log\\(require\\(''./laws/pro-soczakhyst.json''\\).document_id\\)\")",
-      "Bash(ralphex -s --max-iterations 50 docs/plans/2026-03-30-auto-update-laws.md)"
+      "Bash(ralphex -s --max-iterations 50 docs/plans/2026-03-30-auto-update-laws.md)",
+      "Bash(ralphex -s --max-iterations 50 docs/plans/2026-04-01-fix-contract-distinction.md)"
     ]
   }
 }
