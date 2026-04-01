@@ -55,13 +55,13 @@ export async function звільнитиReranker(): Promise<void> {
  *
  * @param запит — запит користувача
  * @param документи — масив документів з id та text
- * @param topK — максимальна кількість результатів (за замовчуванням 8)
+ * @param topK — максимальна кількість результатів (за замовчуванням 10)
  * @returns відсортований масив з id та score, або оригінальний порядок при помилці
  */
 export async function rerank(
   запит: string,
   документи: RerankDocument[],
-  topK: number = 8
+  topK: number = 10
 ): Promise<RerankResult[]> {
   if (документи.length === 0) {
     return [];

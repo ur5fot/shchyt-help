@@ -309,6 +309,24 @@ describe('POST /api/chat', () => {
       expect(контекстнийЗапит).toContain('ст. 10');
     });
 
+    it('витягує скорочені посилання п. та ч. з відповіді AI', async () => {
+      const history = [
+        { role: 'user' as const, content: 'Питання' },
+        { role: 'assistant' as const, content: 'Відповідно до пп. «ж» п.3 ч.5 ст.26 Закону.' },
+      ];
+
+      mockSearchLaws.mockReturnValue([]);
+
+      await request(app)
+        .post('/api/chat')
+        .send({ message: 'Розкажіть детальніше', history });
+
+      const контекстнийЗапит = mockSearchLaws.mock.calls[1][0];
+      expect(контекстнийЗапит).toContain('п.3');
+      expect(контекстнийЗапит).toContain('ч.5');
+      expect(контекстнийЗапит).toContain('ст.26');
+    });
+
     it('витягує посилання на статті з дефісом (10-1, 3-1) з відповіді AI', async () => {
       const history = [
         { role: 'user' as const, content: 'Які відпустки є?' },

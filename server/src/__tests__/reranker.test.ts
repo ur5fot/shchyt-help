@@ -174,7 +174,7 @@ describe('reranker', () => {
       const документи = створитиДокументи(15);
       const результат = await rerank('запит', документи);
 
-      expect(результат).toHaveLength(8);
+      expect(результат).toHaveLength(10);
     });
   });
 });
