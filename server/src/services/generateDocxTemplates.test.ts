@@ -4,7 +4,6 @@ import {
   шаблони,
   generateTemplate,
   xmlEscape,
-  paragraph,
 } from '../../../scripts/generate-docx-templates';
 import type { ШаблонДаних, ПрикладДаних } from '../../../scripts/generate-docx-templates';
 
@@ -192,6 +191,43 @@ describe('generate-docx-templates', () => {
         expect(шаблон.кому.length).toBeGreaterThan(0);
         expect(шаблон.тілоРапорту.length).toBeGreaterThan(0);
         expect(шаблон.підказка).toBeDefined();
+      }
+    });
+
+    it('всі 6 шаблонів мають приклад заповнення', () => {
+      const ідШаблонів = ['raport-nevyplata', 'raport-vidpustka', 'raport-zvilnennya', 'raport-rotatsia', 'raport-vlk', 'skarga'];
+      for (const шаблон of шаблони) {
+        expect(шаблон.приклад, `шаблон ${шаблон.id} має мати приклад`).toBeDefined();
+        const п = шаблон.приклад!;
+        expect(п.пібКомандира).toBeTruthy();
+        expect(п.званняКомандира).toBeTruthy();
+        expect(п.посадаКомандира).toBeTruthy();
+        expect(п.піб).toBeTruthy();
+        expect(п.звання).toBeTruthy();
+        expect(п.посада).toBeTruthy();
+        expect(п.підрозділ).toBeTruthy();
+        expect(п.тілоПрикладу.length).toBeGreaterThan(0);
+      }
+      expect(шаблони.map(ш => ш.id).sort()).toEqual(ідШаблонів.sort());
+    });
+
+    it('приклади в шаблонах мають конкретні дані а не плейсхолдери', () => {
+      for (const шаблон of шаблони) {
+        const п = шаблон.приклад!;
+        // Перевіряємо що тіло прикладу не містить {ПЛЕЙСХОЛДЕР}
+        for (const абзац of п.тілоПрикладу) {
+          expect(абзац).not.toMatch(/\{[А-ЯІЇЄҐ_]+\}/);
+        }
+        // Імена мають виглядати як реальні
+        expect(п.піб).toMatch(/[А-ЯІЇЄҐ]{2,}/);
+      }
+    });
+
+    it('generateTemplate створює валідний буфер для кожного шаблону з прикладом', () => {
+      for (const шаблон of шаблони) {
+        const buffer = generateTemplate(шаблон);
+        expect(buffer).toBeInstanceOf(Buffer);
+        expect(buffer.length).toBeGreaterThan(0);
       }
     });
 
