@@ -31,5 +31,8 @@ data/lancedb/
 # Хеші законів (генеруються локально)
 data/law-hashes.json
 
+# Вихідні документи законів (.docx)
+data/*.docx
+
 # Vitest coverage
 coverage/
