@@ -126,8 +126,20 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
     if (sanitizedHistory && sanitizedHistory.length > 0) {
       const останнєПитання = [...sanitizedHistory].reverse().find(m => m.role === 'user');
       if (останнєПитання) {
-        // Додатковий пошук з контекстом попереднього питання
-        const контекстнийЗапит = `${trimmed} ${останнєПитання.content}`.slice(0, 300);
+        // Витягуємо посилання на статті з останньої відповіді AI (для точнішого follow-up пошуку)
+        const останняВідповідь = [...sanitizedHistory].reverse().find(m => m.role === 'assistant');
+        let статтіЗВідповіді = '';
+        if (останняВідповідь) {
+          const знайдені = останняВідповідь.content.match(/стаття\s+\d+|частин[аи]?\s+\d+|пункт\s+\d+|ст\.\s*\d+/gi);
+          if (знайдені) {
+            // Дедуплікуємо знайдені посилання (нормалізуємо регістр)
+            const унікальні = [...new Set(знайдені.map(s => s.toLowerCase()))];
+            статтіЗВідповіді = ' ' + унікальні.join(' ');
+          }
+        }
+
+        // Додатковий пошук з контекстом попереднього питання та статтями з відповіді
+        const контекстнийЗапит = `${trimmed} ${останнєПитання.content}${статтіЗВідповіді}`.slice(0, 400);
         const контекстніРезультати = await пошук(контекстнийЗапит);
 
         // Обʼєднуємо результати: унікальні чанки, сортовані за найкращим score
@@ -140,7 +152,7 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
         }
         результатиПошуку.sort((а, б) => б.score - а.score);
         результатиПошуку = результатиПошуку.slice(0, 10);
-        logger.info({ оригінал: trimmed, контекст: останнєПитання.content.slice(0, 50) }, 'Пошук з контекстом');
+        logger.info({ оригінал: trimmed, контекст: останнєПитання.content.slice(0, 50), статтіЗВідповіді: статтіЗВідповіді.trim() || undefined }, 'Пошук з контекстом');
       }
     }
     const чанки = результатиПошуку.map(р => р.chunk);

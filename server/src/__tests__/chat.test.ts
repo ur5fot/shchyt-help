@@ -271,6 +271,97 @@ describe('POST /api/chat', () => {
     expect(відповідь.body.sources[0].article).toBe('Стаття 15');
   });
 
+  describe('query expansion для follow-up питань', () => {
+    it('витягує посилання на статті з останньої відповіді AI та додає до пошуку', async () => {
+      const history = [
+        { role: 'user' as const, content: 'Як звільнитися з контракту?' },
+        { role: 'assistant' as const, content: 'Згідно стаття 26, частина 5, пункт 3 — ви маєте право на звільнення.' },
+      ];
+
+      mockSearchLaws.mockReturnValue([]);
+
+      await request(app)
+        .post('/api/chat')
+        .send({ message: 'А якщо контракт до війни?', history });
+
+      // Другий виклик — контекстний пошук з посиланнями на статті
+      expect(mockSearchLaws).toHaveBeenCalledTimes(2);
+      const контекстнийЗапит = mockSearchLaws.mock.calls[1][0];
+      expect(контекстнийЗапит.toLowerCase()).toContain('стаття 26');
+      expect(контекстнийЗапит.toLowerCase()).toContain('частина 5');
+      expect(контекстнийЗапит.toLowerCase()).toContain('пункт 3');
+    });
+
+    it('витягує скорочені посилання (ст. 26) з відповіді AI', async () => {
+      const history = [
+        { role: 'user' as const, content: 'Питання' },
+        { role: 'assistant' as const, content: 'Відповідно до ст. 9 та ст. 10 Закону.' },
+      ];
+
+      mockSearchLaws.mockReturnValue([]);
+
+      await request(app)
+        .post('/api/chat')
+        .send({ message: 'Розкажіть детальніше', history });
+
+      const контекстнийЗапит = mockSearchLaws.mock.calls[1][0];
+      expect(контекстнийЗапит).toContain('ст. 9');
+      expect(контекстнийЗапит).toContain('ст. 10');
+    });
+
+    it('працює без помилок коли у відповіді AI немає посилань на статті', async () => {
+      const history = [
+        { role: 'user' as const, content: 'Привіт' },
+        { role: 'assistant' as const, content: 'Вітаю! Чим можу допомогти?' },
+      ];
+
+      mockSearchLaws.mockReturnValue([]);
+
+      const відповідь = await request(app)
+        .post('/api/chat')
+        .send({ message: 'Що таке ВЛК?', history });
+
+      expect(відповідь.status).toBe(200);
+      // Другий виклик має бути без посилань на статті (graceful fallback)
+      expect(mockSearchLaws).toHaveBeenCalledTimes(2);
+    });
+
+    it('обмежує загальну довжину контекстного запиту до 400 символів', async () => {
+      const довгийТекст = 'A'.repeat(300);
+      const history = [
+        { role: 'user' as const, content: довгийТекст },
+        { role: 'assistant' as const, content: 'Згідно стаття 26, стаття 10, стаття 15.' },
+      ];
+
+      mockSearchLaws.mockReturnValue([]);
+
+      await request(app)
+        .post('/api/chat')
+        .send({ message: 'Деталі?', history });
+
+      const контекстнийЗапит = mockSearchLaws.mock.calls[1][0];
+      expect(контекстнийЗапит.length).toBeLessThanOrEqual(400);
+    });
+
+    it('дедуплікує однакові посилання на статті', async () => {
+      const history = [
+        { role: 'user' as const, content: 'Питання' },
+        { role: 'assistant' as const, content: 'Стаття 26 передбачає... Також стаття 26 містить...' },
+      ];
+
+      mockSearchLaws.mockReturnValue([]);
+
+      await request(app)
+        .post('/api/chat')
+        .send({ message: 'Далі?', history });
+
+      const контекстнийЗапит = mockSearchLaws.mock.calls[1][0];
+      // Має бути лише одне входження "стаття 26" (не дублюється)
+      const matches = контекстнийЗапит.match(/стаття 26/g);
+      expect(matches).toHaveLength(1);
+    });
+  });
+
   describe('верифікація цитат', () => {
     const чанкЗТекстом = {
       id: 'chunk-v1',
