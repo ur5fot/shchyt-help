@@ -210,12 +210,37 @@ function parseNakazText(text: string): ParsedPunkt[] {
 
   flushPunkt();
 
+  // Об'єднуємо послідовні пункти з однаковим номером (виникають коли текст пункту
+  // у .docx розбитий на окремі абзаци, кожен з яких починається з того самого номера)
+  const mergedPunkts = mergeConsecutivePunkts(punkts);
+
   // Обробка "плоских" розділів (без пунктів N.M) — наприклад, Розділ 14
   // Збираємо текст між заголовком розділу та наступним розділом/пунктом
-  const flatSections = findFlatSections(processedText, punkts);
-  punkts.push(...flatSections);
+  const flatSections = findFlatSections(processedText, mergedPunkts);
+  mergedPunkts.push(...flatSections);
 
-  return punkts;
+  return mergedPunkts;
+}
+
+/**
+ * Об'єднує пункти з однаковим номером (можуть бути непослідовними через
+ * вставки з наказів-змін, коли абзаци одного пункту розкидані по тексту).
+ * Зберігає порядок першого входження.
+ */
+function mergeConsecutivePunkts(punkts: ParsedPunkt[]): ParsedPunkt[] {
+  const seen = new Map<string, ParsedPunkt>();
+  const order: string[] = [];
+  for (const p of punkts) {
+    const key = `${p.section}:${p.number}`;
+    const existing = seen.get(key);
+    if (existing) {
+      existing.text = existing.text + ' ' + p.text;
+    } else {
+      seen.set(key, { ...p });
+      order.push(key);
+    }
+  }
+  return order.map((k) => seen.get(k)!);
 }
 
 /**
@@ -258,18 +283,55 @@ function findFlatSections(text: string, existingPunkts: ParsedPunkt[]): ParsedPu
   return result;
 }
 
+/**
+ * Очищає текст чанка: прибирає підписи/футери та виправляє незамкнені примітки про зміни.
+ */
+function cleanChunkText(text: string): string {
+  let cleaned = text;
+
+  // Прибираємо підписи посадових осіб (формат: "Посада ... звання ІМ'Я ПРІЗВИЩЕ" в кінці тексту)
+  // Паттерн: "Начальник|Командувач|...", потім будь-що, потім ім'я ПРІЗВИЩЕ великими літерами
+  // НЕ видаляємо, якщо перед підписом стоїть "наприклад:" — це приклад оформлення, а не реальний підпис
+  const signatureMatch = cleaned.match(
+    /\s+(?:Начальник|Командувач|Головнокомандувач|Командир|Заступник|Міністр)\s+[\s\S]*?[А-ЯІЇЄҐ]{2,}\s*$/
+  );
+  if (signatureMatch) {
+    const beforeSignature = cleaned.substring(0, signatureMatch.index!).trimEnd();
+    if (!beforeSignature.endsWith('наприклад:')) {
+      cleaned = beforeSignature;
+    }
+  }
+
+  // Виправляємо розірвані примітки про зміни з .docx:
+  // "{...в редакції}  Наказу...}" → "{...в редакції Наказу...}"
+  cleaned = cleaned.replace(
+    /\{([^}]*(?:в редакції|із змінами|доповнено|виключено))\}\s+(Наказу\b)/g,
+    '{$1 $2'
+  );
+
+  // Закриваємо незамкнені примітки про зміни після дати: "{...від DD.MM.YYYY текст" → "{...від DD.MM.YYYY} текст"
+  cleaned = cleaned.replace(
+    /(\{[^}]*(?:в редакції|із змінами|доповнено|виключено)[^}]*\d{2}\.\d{2}\.\d{4})\s+(?=[А-ЯІЇЄҐ])/g,
+    '$1} '
+  );
+
+  return cleaned.trim();
+}
+
 function punktsToChunks(punkts: ParsedPunkt[]): LawChunkRaw[] {
   const chunks: LawChunkRaw[] = [];
 
-  // Допоміжна функція: розбити текст на речення по крапках та крапках з комою
+  // Допоміжна функція: очистити та зберегти чанк
   function pushChunk(id: string, text: string, articleLabel: string, partLabel: string, title: string) {
+    const cleaned = cleanChunkText(text);
+    if (cleaned.length < 10) return;
     chunks.push({
       id,
       article: articleLabel,
       part: partLabel,
       title,
-      text,
-      keywords: extractKeywords(text),
+      text: cleaned,
+      keywords: extractKeywords(cleaned),
     });
   }
 
