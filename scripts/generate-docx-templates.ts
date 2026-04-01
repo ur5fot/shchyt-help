@@ -7,6 +7,7 @@
 import PizZip from 'pizzip';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Розміри в twips (1 inch = 1440 twips, 1 cm = 567 twips)
 const PAGE_WIDTH = 11906; // A4 width ~210mm
@@ -896,8 +897,7 @@ function main() {
 }
 
 // Запуск тільки при прямому виконанні (не при імпорті)
-const isDirectRun = !process.env.VITEST;
-if (isDirectRun) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main();
 }
 
