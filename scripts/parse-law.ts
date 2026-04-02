@@ -95,7 +95,8 @@ export function makeBaseId(shortTitle: string): string {
     .replace(/[^а-яіїєґa-z0-9]+/gi, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
-    .slice(0, 20);
+    .slice(0, 20)
+    .replace(/-$/, '');
 }
 
 // Парсить закон зі "Стаття N" структурою
