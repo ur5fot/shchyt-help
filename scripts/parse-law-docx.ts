@@ -21,7 +21,6 @@ import {
   parseArticleBased,
   splitLargeChunks,
   makeBaseId,
-  extractKeywords,
   type LawFile,
 } from './parse-law.js';
 
