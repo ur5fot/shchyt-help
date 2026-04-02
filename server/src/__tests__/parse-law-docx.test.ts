@@ -266,7 +266,7 @@ describe('експортовані функції parse-law.ts', () => {
 
       const result = splitLargeChunks(chunks);
       expect(result.length).toBeGreaterThan(1);
-      expect(result[0].id).toContain('-p1');
+      expect(result[0].id).toContain('-1');
     });
   });
 });

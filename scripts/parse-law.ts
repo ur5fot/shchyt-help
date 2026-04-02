@@ -395,7 +395,7 @@ function splitEmbeddedStattyaChunks(chunks: LawChunkRaw[], baseId: string): LawC
 // Максимальний розмір чанка — більші розбиваються по підпунктах
 const МАКС_РОЗМІР_ЧАНКА = 2000;
 
-// Розбиває великі чанки по підпунктах (1), 2), 3) або 1., 2., 3.)
+// Розбиває великі чанки по підпунктах
 export function splitLargeChunks(chunks: LawChunkRaw[]): LawChunkRaw[] {
   const result: LawChunkRaw[] = [];
 
@@ -405,12 +405,15 @@ export function splitLargeChunks(chunks: LawChunkRaw[]): LawChunkRaw[] {
       continue;
     }
 
-    // Шукаємо підпункти: "1) ...", "2) ..." або "21.1. ..."
-    const subItemRe = /\s(\d+\.\d+\.|\d+\)\s)/g;
-    const boundaries: number[] = [];
+    // Шукаємо підпункти: "а) ...", "ґ) ...", "1) ...", "21.1. ..."
+    // Літерні підпункти (а-я, і, ї, є, ґ) — стандарт українського законодавства
+    const subItemRe = /\s(\d+\.\d+\.|\d+\)\s|([а-яіїєґ])\)\s)/g;
+    const boundaries: { pos: number; label: string }[] = [];
     let m;
     while ((m = subItemRe.exec(chunk.text)) !== null) {
-      boundaries.push(m.index + 1); // +1 щоб пропустити пробіл перед номером
+      // Літерний підпункт → зберігаємо літеру; цифровий → номер
+      const label = m[2] || m[1].replace(/[.)\s]/g, '');
+      boundaries.push({ pos: m.index + 1, label });
     }
 
     // Якщо немає підпунктів або лише один — залишаємо як є
@@ -420,11 +423,11 @@ export function splitLargeChunks(chunks: LawChunkRaw[]): LawChunkRaw[] {
     }
 
     // Текст до першого підпункту (преамбула)
-    const preamble = chunk.text.slice(0, boundaries[0]).trim();
+    const preamble = chunk.text.slice(0, boundaries[0].pos).trim();
 
     for (let i = 0; i < boundaries.length; i++) {
-      const start = boundaries[i];
-      const end = i + 1 < boundaries.length ? boundaries[i + 1] : chunk.text.length;
+      const start = boundaries[i].pos;
+      const end = i + 1 < boundaries.length ? boundaries[i + 1].pos : chunk.text.length;
       let segmentText = chunk.text.slice(start, end).trim();
 
       // Додаємо преамбулу до першого підпункту для контексту
@@ -434,10 +437,11 @@ export function splitLargeChunks(chunks: LawChunkRaw[]): LawChunkRaw[] {
 
       if (segmentText.length < 10) continue;
 
+      const label = boundaries[i].label;
       result.push({
         ...chunk,
-        id: `${chunk.id}-p${i + 1}`,
-        part: chunk.part ? `${chunk.part}, п.${i + 1}` : `п.${i + 1}`,
+        id: `${chunk.id}-${label}`,
+        part: chunk.part ? `${chunk.part}, пп.${label}` : `пп.${label}`,
         text: segmentText,
         keywords: extractKeywords(segmentText),
       });

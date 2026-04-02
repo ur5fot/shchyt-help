@@ -446,7 +446,8 @@ describe('splitLargeChunks', () => {
     </body></html>`;
     const result = parseLawHtml(html, 'https://test.ua', 'Тест');
     expect(result.chunks.length).toBeGreaterThan(1);
-    const splitChunks = result.chunks.filter(c => c.id.includes('-p'));
+    // Розбиті підпункти мають суфікс пп. в part
+    const splitChunks = result.chunks.filter(c => c.part.includes('пп.'));
     expect(splitChunks.length).toBeGreaterThan(0);
   });
 
@@ -458,6 +459,6 @@ describe('splitLargeChunks', () => {
     </body></html>`;
     const result = parseLawHtml(html, 'https://test.ua', 'Тест');
     expect(result.chunks.length).toBe(1);
-    expect(result.chunks[0].id).not.toContain('-p');
+    expect(result.chunks[0].part).not.toContain('пп.');
   });
 });
