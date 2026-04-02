@@ -113,6 +113,20 @@ export function parseArticleBased(paragraphs: string[], baseId: string): LawChun
   // Може бути як "Прикінцеві положення", так і "Розділ VII ПРИКІНЦЕВІ ПОЛОЖЕННЯ"
   const SECTION_HEADER_RE = /^(?:Розділ\s+[IVXLC\d]+\s+)?((?:Прикінцеві|Перехідні|Прикінцеві та перехідні)\s+положення)\s*$/i;
 
+  function flushExcludedArticle() {
+    if (!currentArticleNum || currentArticleNum === 'pp') return;
+    const articleTag = `st${currentArticleNum.replace(/[^0-9-]/g, '')}`;
+    const id = `${baseId}-${articleTag}-ch0`;
+    const text = `Стаття ${currentArticleNum} виключена.`;
+    chunks.push({
+      id,
+      article: `Стаття ${currentArticleNum}`,
+      part: '',
+      text,
+      keywords: ['виключена', 'виключено'],
+    });
+  }
+
   function flushChunk() {
     if (!currentArticleNum || partBuffer.length === 0) return;
 
@@ -144,7 +158,18 @@ export function parseArticleBased(paragraphs: string[], baseId: string): LawChun
 
   for (const rawText of paragraphs) {
     const text = rawText.trim();
-    if (!text || isEditorialNote(text)) continue;
+    if (!text) continue;
+
+    // Повнорядкова примітка "{Статтю N виключено ...}" після "Стаття N." — дворядкова форма виключення
+    if (isEditorialNote(text)) {
+      const ARTICLE_EXCLUDED_STANDALONE_RE = /\{[^}]*статтю\s+([\d][\d-]*)[^}]*виключен[оіа][^}]*\}/i;
+      const excludedMatch = ARTICLE_EXCLUDED_STANDALONE_RE.exec(text);
+      if (excludedMatch && currentArticleNum === excludedMatch[1] && partBuffer.length === 0) {
+        flushExcludedArticle();
+        currentArticleNum = '';
+      }
+      continue;
+    }
 
     // Секція "Прикінцеві положення" тощо — окремий псевдо-артикль
     const sectionHeaderMatch = SECTION_HEADER_RE.exec(text);
@@ -164,6 +189,19 @@ export function parseArticleBased(paragraphs: string[], baseId: string): LawChun
       currentArticleTitle = articleMatch[2].trim();
       partBuffer = [];
       partNum = 0;
+      // Виключена стаття: заголовок — редакційна примітка "{Статтю N виключено ...}"
+      // або просто слово "Виключена"/"Виключено"
+      // Важливо: перевіряємо саме "статтю ... виключено", а не "назву статті виключено"
+      // (бо "назву виключено" означає що прибрали лише назву, а тіло статті залишилось)
+      const titleWithoutNotes = stripEditorialNotes(currentArticleTitle);
+      const ARTICLE_EXCLUDED_NOTE_RE = /\{[^}]*статтю\s+([\d][\d-]*)[^}]*виключен[оіа][^}]*\}/i;
+      const excludedNoteMatch = ARTICLE_EXCLUDED_NOTE_RE.exec(currentArticleTitle);
+      const isExcludedByNote = excludedNoteMatch !== null && excludedNoteMatch[1] === currentArticleNum && !titleWithoutNotes;
+      const isExcludedByTitle = /^виключен[оіа]$/i.test(titleWithoutNotes);
+      if (isExcludedByNote || isExcludedByTitle) {
+        flushExcludedArticle();
+        currentArticleNum = '';
+      }
       continue;
     }
 

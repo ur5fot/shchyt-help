@@ -126,6 +126,11 @@ async function main() {
 
   const law = parseLawDocx(docxPath, { shortTitle, sourceUrl, documentId, lastUpdated });
 
+  if (law.chunks.length === 0) {
+    console.error('Помилка: парсинг не створив жодного чанка. Файл не записано.');
+    process.exit(1);
+  }
+
   const rawFilename = output || makeBaseId(shortTitle);
   const filename = basename(rawFilename).replace(/\.json$/, '');
   const outputPath = join(__dirname, '..', 'laws', `${filename}.json`);

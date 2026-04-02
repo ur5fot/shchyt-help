@@ -114,7 +114,7 @@ describe('експортовані функції parse-law.ts', () => {
       expect(ppChunks.length).toBeGreaterThan(0);
     });
 
-    it('пропускає редакційні примітки {…}', () => {
+    it('пропускає редакційні примітки {…} але зберігає виключені статті', () => {
       const paragraphs = [
         'Стаття 5. Виключена',
         '{Статтю 5 виключено на підставі Закону N 1234}',
@@ -126,6 +126,106 @@ describe('експортовані функції parse-law.ts', () => {
 
       expect(chunks.every(c => !c.text.includes('{'))).toBe(true);
       expect(chunks.some(c => c.article === 'Стаття 6')).toBe(true);
+      // Виключена стаття створює чанк з інформацією про виключення
+      const excluded = chunks.find(c => c.article === 'Стаття 5');
+      expect(excluded).toBeDefined();
+      expect(excluded!.text).toContain('виключена');
+    });
+
+    it('створює чанк для статті виключеної через редакційну примітку в заголовку', () => {
+      const paragraphs = [
+        'Стаття 10. {Статтю 10 виключено на підставі Закону № 1234-IX від 01.01.2024}',
+        'Стаття 11. Діюча стаття',
+        '1. Текст діючої статті.',
+      ];
+
+      const chunks = parseArticleBased(paragraphs, 'test');
+
+      const excluded = chunks.find(c => c.article === 'Стаття 10');
+      expect(excluded).toBeDefined();
+      expect(excluded!.text).toContain('виключена');
+      expect(excluded!.id).toBe('test-st10-ch0');
+      expect(chunks.some(c => c.article === 'Стаття 11')).toBe(true);
+    });
+
+    it('не виключає статтю коли inline примітка в заголовку стосується іншої статті', () => {
+      const paragraphs = [
+        'Стаття 15. {Статтю 10 виключено на підставі Закону № 1234-IX від 01.01.2024}',
+        '1. Текст першої частини статті 15.',
+      ];
+
+      const chunks = parseArticleBased(paragraphs, 'test');
+
+      // Стаття 15 НЕ повинна бути виключена — примітка стосується статті 10
+      const article15 = chunks.filter(c => c.article === 'Стаття 15');
+      expect(article15.length).toBeGreaterThan(0);
+      expect(article15.some(c => c.text.includes('Текст першої частини'))).toBe(true);
+    });
+
+    it('не класифікує як виключену статтю з приміткою лише про назву', () => {
+      const paragraphs = [
+        'Стаття 15. {Назву статті 15 виключено на підставі Закону № 5678-IX}',
+        '1. Текст першої частини статті 15 що залишилась.',
+        '2. Текст другої частини.',
+      ];
+
+      const chunks = parseArticleBased(paragraphs, 'test');
+
+      // Стаття 15 НЕ повинна бути позначена як виключена — виключено лише назву
+      const article15 = chunks.filter(c => c.article === 'Стаття 15');
+      expect(article15.length).toBeGreaterThan(0);
+      expect(article15.some(c => c.text.includes('Текст першої частини'))).toBe(true);
+    });
+
+    it('створює чанк для дворядкової форми виключення статті', () => {
+      const paragraphs = [
+        'Стаття 20. ',
+        '{Статтю 20 виключено на підставі Закону № 9999-IX від 01.06.2025}',
+        'Стаття 21. Діюча стаття',
+        '1. Текст діючої статті 21.',
+      ];
+
+      const chunks = parseArticleBased(paragraphs, 'test');
+
+      // Виключена стаття 20 повинна створити маркерний чанк
+      const excluded = chunks.find(c => c.article === 'Стаття 20');
+      expect(excluded).toBeDefined();
+      expect(excluded!.text).toContain('виключена');
+      expect(excluded!.id).toBe('test-st20-ch0');
+      // Стаття 21 повинна бути нормально розпарсена
+      expect(chunks.some(c => c.article === 'Стаття 21')).toBe(true);
+    });
+
+    it('не виключає поточну статтю коли примітка стосується іншої статті', () => {
+      const paragraphs = [
+        'Стаття 5. Назва п\'ятої статті',
+        '{Статтю 10 виключено на підставі Закону № 1234-IX від 01.01.2024}',
+        '1. Текст першої частини статті 5.',
+      ];
+
+      const chunks = parseArticleBased(paragraphs, 'test');
+
+      // Стаття 5 НЕ повинна бути виключена — примітка стосується статті 10
+      const article5 = chunks.filter(c => c.article === 'Стаття 5');
+      expect(article5.length).toBeGreaterThan(0);
+      expect(article5.some(c => c.text.includes('Текст першої частини'))).toBe(true);
+      // Стаття 10 не повинна з'явитися (це просто примітка, без заголовка)
+      expect(chunks.every(c => c.article !== 'Стаття 10')).toBe(true);
+    });
+
+    it('не скидає контекст Прикінцевих положень при примітці про виключену статтю', () => {
+      const paragraphs = [
+        'Прикінцеві положення',
+        '{Статтю 99 виключено на підставі Закону № 5555-IX від 01.01.2025}',
+        '1. Текст першого пункту прикінцевих положень.',
+        '2. Текст другого пункту.',
+      ];
+
+      const chunks = parseArticleBased(paragraphs, 'test');
+
+      // Прикінцеві положення повинні зберегти свій контент
+      expect(chunks.length).toBeGreaterThan(0);
+      expect(chunks.some(c => c.text.includes('прикінцевих положень'))).toBe(true);
     });
 
     it('повертає порожній масив якщо статей немає', () => {
