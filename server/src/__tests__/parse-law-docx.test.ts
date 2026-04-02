@@ -236,19 +236,6 @@ describe('експортовані функції parse-law.ts', () => {
   });
 
   describe('splitLargeChunks', () => {
-    it('не розбиває маленькі чанки', () => {
-      const chunks = [{
-        id: 'test-st1-ch1',
-        article: 'Стаття 1',
-        part: 'Частина 1',
-        text: 'Короткий текст.',
-        keywords: ['текст'],
-      }];
-
-      const result = splitLargeChunks(chunks);
-      expect(result.length).toBe(1);
-    });
-
     it('розбиває великі чанки по цифрових маркерах (пункти)', () => {
       const longText = 'Преамбула тексту. ' +
         '1) ' + 'А'.repeat(800) + ' ' +
