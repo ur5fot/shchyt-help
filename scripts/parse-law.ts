@@ -395,9 +395,48 @@ function splitEmbeddedStattyaChunks(chunks: LawChunkRaw[], baseId: string): LawC
 // Максимальний розмір чанка — більші розбиваються по підпунктах
 const МАКС_РОЗМІР_ЧАНКА = 2000;
 
-// Розбиває великі чанки по підпунктах
+// Знаходить межі маркерів у тексті та повертає масив позицій з мітками
+function findBoundaries(text: string, pattern: RegExp, labelExtractor: (m: RegExpExecArray) => string): { pos: number; label: string }[] {
+  const boundaries: { pos: number; label: string }[] = [];
+  let m;
+  while ((m = pattern.exec(text)) !== null) {
+    boundaries.push({ pos: m.index + 1, label: labelExtractor(m) });
+  }
+  return boundaries;
+}
+
+// Розбиває текст по знайдених межах, додаючи преамбулу до першого сегмента
+function splitTextByBoundaries(
+  text: string,
+  boundaries: { pos: number; label: string }[],
+): { label: string; text: string }[] {
+  const preamble = text.slice(0, boundaries[0].pos).trim();
+  const segments: { label: string; text: string }[] = [];
+
+  for (let i = 0; i < boundaries.length; i++) {
+    const start = boundaries[i].pos;
+    const end = i + 1 < boundaries.length ? boundaries[i + 1].pos : text.length;
+    let segmentText = text.slice(start, end).trim();
+
+    if (i === 0 && preamble) {
+      segmentText = preamble + ' ' + segmentText;
+    }
+
+    if (segmentText.length >= 10) {
+      segments.push({ label: boundaries[i].label, text: segmentText });
+    }
+  }
+
+  return segments;
+}
+
+// Розбиває великі чанки по підпунктах (дворівневий алгоритм)
 export function splitLargeChunks(chunks: LawChunkRaw[]): LawChunkRaw[] {
   const result: LawChunkRaw[] = [];
+
+  // Регекси для двох рівнів маркерів
+  const digitRe = /\s(\d+\.\d+\.|\d+\)\s)/g;
+  const letterRe = /\s(([а-яіїєґ])\)\s)/g;
 
   for (const chunk of chunks) {
     if (chunk.text.length <= МАКС_РОЗМІР_ЧАНКА) {
@@ -405,46 +444,64 @@ export function splitLargeChunks(chunks: LawChunkRaw[]): LawChunkRaw[] {
       continue;
     }
 
-    // Шукаємо підпункти: "а) ...", "ґ) ...", "1) ...", "21.1. ..."
-    // Літерні підпункти (а-я, і, ї, є, ґ) — стандарт українського законодавства
-    const subItemRe = /\s(\d+\.\d+\.|\d+\)\s|([а-яіїєґ])\)\s)/g;
-    const boundaries: { pos: number; label: string }[] = [];
-    let m;
-    while ((m = subItemRe.exec(chunk.text)) !== null) {
-      // Літерний підпункт → зберігаємо літеру; цифровий → номер
-      const label = m[2] || m[1].replace(/[.)\s]/g, '');
-      boundaries.push({ pos: m.index + 1, label });
-    }
+    // Рівень 1: спробувати розбити по цифрових маркерах (пункти)
+    const digitBounds = findBoundaries(chunk.text, new RegExp(digitRe.source, 'g'), (m) => m[1].replace(/[.)\s]/g, ''));
 
-    // Якщо немає підпунктів або лише один — залишаємо як є
-    if (boundaries.length <= 1) {
-      result.push(chunk);
-      continue;
-    }
+    if (digitBounds.length > 1) {
+      // Є цифрові маркери — розбиваємо по них
+      const digitSegments = splitTextByBoundaries(chunk.text, digitBounds);
 
-    // Текст до першого підпункту (преамбула)
-    const preamble = chunk.text.slice(0, boundaries[0].pos).trim();
+      for (const seg of digitSegments) {
+        const punktId = `${chunk.id}-${seg.label}`;
+        const punktPart = chunk.part ? `${chunk.part}, п.${seg.label}` : `п.${seg.label}`;
 
-    for (let i = 0; i < boundaries.length; i++) {
-      const start = boundaries[i].pos;
-      const end = i + 1 < boundaries.length ? boundaries[i + 1].pos : chunk.text.length;
-      let segmentText = chunk.text.slice(start, end).trim();
+        // Рівень 2: якщо пункт ще великий — розбити по літерних маркерах (підпункти)
+        if (seg.text.length > МАКС_РОЗМІР_ЧАНКА) {
+          const letterBounds = findBoundaries(seg.text, new RegExp(letterRe.source, 'g'), (m) => m[2]);
 
-      // Додаємо преамбулу до першого підпункту для контексту
-      if (i === 0 && preamble) {
-        segmentText = preamble + ' ' + segmentText;
+          if (letterBounds.length > 1) {
+            const letterSegments = splitTextByBoundaries(seg.text, letterBounds);
+            for (const lseg of letterSegments) {
+              result.push({
+                ...chunk,
+                id: `${punktId}-${lseg.label}`,
+                part: `${punktPart}, пп.${lseg.label}`,
+                text: lseg.text,
+                keywords: extractKeywords(lseg.text),
+              });
+            }
+            continue;
+          }
+        }
+
+        // Пункт достатньо малий або немає літерних підпунктів
+        result.push({
+          ...chunk,
+          id: punktId,
+          part: punktPart,
+          text: seg.text,
+          keywords: extractKeywords(seg.text),
+        });
+      }
+    } else {
+      // Fallback: немає цифрових маркерів — розбиваємо по літерних (як раніше)
+      const letterBounds = findBoundaries(chunk.text, new RegExp(letterRe.source, 'g'), (m) => m[2]);
+
+      if (letterBounds.length <= 1) {
+        result.push(chunk);
+        continue;
       }
 
-      if (segmentText.length < 10) continue;
-
-      const label = boundaries[i].label;
-      result.push({
-        ...chunk,
-        id: `${chunk.id}-${label}`,
-        part: chunk.part ? `${chunk.part}, пп.${label}` : `пп.${label}`,
-        text: segmentText,
-        keywords: extractKeywords(segmentText),
-      });
+      const letterSegments = splitTextByBoundaries(chunk.text, letterBounds);
+      for (const seg of letterSegments) {
+        result.push({
+          ...chunk,
+          id: `${chunk.id}-${seg.label}`,
+          part: chunk.part ? `${chunk.part}, пп.${seg.label}` : `пп.${seg.label}`,
+          text: seg.text,
+          keywords: extractKeywords(seg.text),
+        });
+      }
     }
   }
 

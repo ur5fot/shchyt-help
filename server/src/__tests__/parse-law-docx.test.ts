@@ -249,8 +249,7 @@ describe('експортовані функції parse-law.ts', () => {
       expect(result.length).toBe(1);
     });
 
-    it('розбиває великі чанки по підпунктах', () => {
-      // Генеруємо великий текст з підпунктами
+    it('розбиває великі чанки по цифрових маркерах (пункти)', () => {
       const longText = 'Преамбула тексту. ' +
         '1) ' + 'А'.repeat(800) + ' ' +
         '2) ' + 'Б'.repeat(800) + ' ' +
@@ -265,8 +264,98 @@ describe('експортовані функції parse-law.ts', () => {
       }];
 
       const result = splitLargeChunks(chunks);
-      expect(result.length).toBeGreaterThan(1);
-      expect(result[0].id).toContain('-1');
+      expect(result.length).toBe(3);
+      expect(result[0].id).toBe('test-st1-ch1-1');
+      expect(result[0].part).toBe('Частина 1, п.1');
+      expect(result[1].id).toBe('test-st1-ch1-2');
+      expect(result[1].part).toBe('Частина 1, п.2');
+      expect(result[2].id).toBe('test-st1-ch1-3');
+      expect(result[2].part).toBe('Частина 1, п.3');
+    });
+
+    it('дворівневий split: цифрові пункти → літерні підпункти', () => {
+      // Пункт 1 великий з літерними підпунктами, пункт 2 малий
+      const longText = 'Преамбула тексту. ' +
+        '1) Перший пункт: ' + 'а) ' + 'А'.repeat(1000) + ' б) ' + 'Б'.repeat(1000) + ' в) ' + 'В'.repeat(500) + ' ' +
+        '2) ' + 'Д'.repeat(300);
+
+      const chunks = [{
+        id: 'test-st26-ch5',
+        article: 'Стаття 26',
+        part: 'Частина 5',
+        text: longText,
+        keywords: ['тест'],
+      }];
+
+      const result = splitLargeChunks(chunks);
+      // Пункт 1 розбитий на літерні підпункти
+      const p1subs = result.filter(c => c.part.includes('п.1'));
+      expect(p1subs.length).toBe(3);
+      expect(p1subs[0].id).toBe('test-st26-ch5-1-а');
+      expect(p1subs[0].part).toBe('Частина 5, п.1, пп.а');
+      expect(p1subs[1].id).toBe('test-st26-ch5-1-б');
+      expect(p1subs[1].part).toBe('Частина 5, п.1, пп.б');
+      expect(p1subs[2].id).toBe('test-st26-ch5-1-в');
+      expect(p1subs[2].part).toBe('Частина 5, п.1, пп.в');
+
+      // Пункт 2 малий — не розбивається далі
+      const p2 = result.find(c => c.part === 'Частина 5, п.2');
+      expect(p2).toBeDefined();
+      expect(p2!.id).toBe('test-st26-ch5-2');
+    });
+
+    it('fallback: тільки літерні підпункти (без цифрових)', () => {
+      const longText = 'Преамбула тексту. ' +
+        'а) ' + 'А'.repeat(800) + ' ' +
+        'б) ' + 'Б'.repeat(800) + ' ' +
+        'в) ' + 'В'.repeat(800);
+
+      const chunks = [{
+        id: 'test-st5-ch1',
+        article: 'Стаття 5',
+        part: 'Частина 1',
+        text: longText,
+        keywords: ['тест'],
+      }];
+
+      const result = splitLargeChunks(chunks);
+      expect(result.length).toBe(3);
+      expect(result[0].id).toBe('test-st5-ch1-а');
+      expect(result[0].part).toBe('Частина 1, пп.а');
+      expect(result[1].id).toBe('test-st5-ch1-б');
+      expect(result[1].part).toBe('Частина 1, пп.б');
+    });
+
+    it('не розбиває маленькі чанки', () => {
+      const chunks = [{
+        id: 'test-st1-ch1',
+        article: 'Стаття 1',
+        part: 'Частина 1',
+        text: 'Короткий текст.',
+        keywords: ['текст'],
+      }];
+
+      const result = splitLargeChunks(chunks);
+      expect(result.length).toBe(1);
+      expect(result[0].id).toBe('test-st1-ch1');
+    });
+
+    it('зберігає преамбулу в першому підчанку', () => {
+      const longText = 'Важлива преамбула статті. ' +
+        '1) ' + 'А'.repeat(800) + ' ' +
+        '2) ' + 'Б'.repeat(800) + ' ' +
+        '3) ' + 'В'.repeat(800);
+
+      const chunks = [{
+        id: 'test-st1-ch1',
+        article: 'Стаття 1',
+        part: 'Частина 1',
+        text: longText,
+        keywords: ['тест'],
+      }];
+
+      const result = splitLargeChunks(chunks);
+      expect(result[0].text).toContain('Важлива преамбула статті');
     });
   });
 });
