@@ -43,10 +43,10 @@ AI змішує підпункти з різних пунктів статті 2
 - [x] Запустити `npm test` — всі тести проходять
 
 ### Task 3: Оновити golden set та перевірити якість
-- [ ] Перевірити чи змінились chunk ID у golden set — оновити якщо потрібно
-- [ ] Запустити `npm run init-vector-db` — переініціалізація LanceDB
-- [ ] Запустити `npm run eval` — retrieval recall не впав суттєво (>= 80%)
-- [ ] Запустити `npm run lint` — без помилок
+- [x] Перевірити чи змінились chunk ID у golden set — оновити якщо потрібно
+- [x] Запустити `npm run init-vector-db` — переініціалізація LanceDB
+- [x] Запустити `npm run eval` — retrieval recall не впав суттєво (>= 80%)
+- [x] Запустити `npm run lint` — без помилок
 
 ### Task 4: Verify acceptance criteria
 - [ ] Чанк пп.ж п.3 ч.5 ст.26 має part з повною ієрархією (п.3, пп.ж)
