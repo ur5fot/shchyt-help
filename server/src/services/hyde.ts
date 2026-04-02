@@ -13,11 +13,11 @@ const МІН_ДОВЖИНА_ЗАПИТУ = 15;
 let _client: Anthropic | null = null;
 
 function getClient(): Anthropic {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error('API ключ ANTHROPIC_API_KEY не встановлений');
-  }
   if (!_client) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      throw new Error('API ключ ANTHROPIC_API_KEY не встановлений');
+    }
     _client = new Anthropic({ apiKey, maxRetries: МАКС_ПОВТОРІВ_CLAUDE });
   }
   return _client;

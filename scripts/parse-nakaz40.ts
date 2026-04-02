@@ -511,8 +511,7 @@ async function main() {
 }
 
 // Запускати main() тільки при прямому виклику скрипта, не при імпорті
-const isDirectRun = process.argv[1]?.replace(/\.ts$/, '').endsWith('parse-nakaz40');
-if (isDirectRun) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main().catch((err) => {
     console.error(err);
     process.exit(1);

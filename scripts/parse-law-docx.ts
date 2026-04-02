@@ -66,7 +66,7 @@ export function parseLawDocx(
     last_updated: options.lastUpdated || new Date().toISOString().slice(0, 10),
     ...(options.documentId ? { document_id: options.documentId } : {}),
     chunks,
-  } as LawFile & { document_id?: string };
+  };
 }
 
 function parseArgs(args: string[]): {

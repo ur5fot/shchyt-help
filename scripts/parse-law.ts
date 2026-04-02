@@ -31,6 +31,7 @@ export interface LawFile {
   short_title: string;
   source_url: string;
   last_updated: string;
+  document_id?: string;
   chunks: LawChunkRaw[];
 }
 

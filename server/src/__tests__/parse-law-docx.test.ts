@@ -200,7 +200,7 @@ describe('parseLawDocx (інтеграція)', () => {
     expect(law.short_title).toBe('Про тестовий закон');
     expect(law.source_url).toBe('https://zakon.rada.gov.ua/laws/show/test');
     expect(law.last_updated).toBe('2026-01-15');
-    expect((law as any).document_id).toBe('Закон №TEST від 01.01.2020');
+    expect(law.document_id).toBe('Закон №TEST від 01.01.2020');
 
     expect(law.chunks.length).toBe(4); // 2 частини ст.1 + ст.2 + ст.2-1
     expect(law.chunks.every(c => c.id && c.article && c.text && c.keywords.length > 0)).toBe(true);
