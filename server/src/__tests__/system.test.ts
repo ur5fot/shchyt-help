@@ -46,6 +46,13 @@ describe('SYSTEM_PROMPT', () => {
     expect(SYSTEM_PROMPT).toContain('Період: мирний час vs особливий період vs мобілізація/воєнний стан');
   });
 
+  it('вказує поточний правовий режим — воєнний стан з 24.02.2022', () => {
+    expect(SYSTEM_PROMPT).toContain('ПОТОЧНИЙ ПРАВОВИЙ РЕЖИМ');
+    expect(SYSTEM_PROMPT).toContain('24.02.2022');
+    expect(SYSTEM_PROMPT).toContain('ВОЄННИЙ СТАН');
+    expect(SYSTEM_PROMPT).toContain('САМЕ п.3');
+  });
+
   it('містить правило про умовне розмежування норм', () => {
     expect(SYSTEM_PROMPT).toContain('УМОВНЕ РОЗМЕЖУВАННЯ НОРМ');
     expect(SYSTEM_PROMPT).toContain('ДО воєнного стану vs ПІД ЧАС воєнного стану');
