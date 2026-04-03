@@ -327,7 +327,7 @@ describe('експортовані функції parse-law.ts', () => {
       expect(result[0].id).toBe('test-st1-ch1');
     });
 
-    it('fallback на літерні підпункти при одному цифровому маркері', () => {
+    it('один цифровий маркер з літерними підпунктами зберігає ієрархію', () => {
       const longText = 'Преамбула. ' +
         '1) Єдиний пункт: ' +
         'а) ' + 'А'.repeat(800) + ' ' +
@@ -343,10 +343,10 @@ describe('експортовані функції parse-law.ts', () => {
       }];
 
       const result = splitLargeChunks(chunks);
-      // Один цифровий маркер — fallback на літерні
+      // Один цифровий маркер — зберігає п.1 в ієрархії
       expect(result.length).toBe(3);
-      expect(result[0].part).toBe('Частина 1, пп.а');
-      expect(result[1].part).toBe('Частина 1, пп.б');
+      expect(result[0].part).toBe('Частина 1, п.1, пп.а');
+      expect(result[1].part).toBe('Частина 1, п.1, пп.б');
     });
 
     it('не розбиває великий чанк без маркерів', () => {

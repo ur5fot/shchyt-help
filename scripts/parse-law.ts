@@ -450,7 +450,7 @@ export function splitLargeChunks(chunks: LawChunkRaw[]): LawChunkRaw[] {
     // Рівень 1: спробувати розбити по цифрових маркерах (пункти)
     const digitBounds = findBoundaries(chunk.text, new RegExp(digitRe.source, 'g'), (m) => m[1].replace(/[.)\s]/g, ''));
 
-    if (digitBounds.length > 1) {
+    if (digitBounds.length >= 1) {
       // Є цифрові маркери — розбиваємо по них
       const digitSegments = splitTextByBoundaries(chunk.text, digitBounds);
 

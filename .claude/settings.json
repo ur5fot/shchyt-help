@@ -46,7 +46,16 @@
       "Bash(ralphex -s --max-iterations 50 docs/plans/2026-03-30-auto-update-laws.md)",
       "Bash(ralphex -s --max-iterations 50 docs/plans/2026-04-01-fix-contract-distinction.md)",
       "Bash(git -C /Users/dim/code/shchyt_help status --short)",
-      "Bash(ralphex -s --max-iterations 50 docs/plans/2026-04-02-reparse-law-2232.md)"
+      "Bash(ralphex -s --max-iterations 50 docs/plans/2026-04-02-reparse-law-2232.md)",
+      "Bash(ralphex -s --max-iterations 50 docs/plans/2026-04-02-hierarchical-chunk-split.md)",
+      "Bash(pkill -f \"ralphex.*hierarchical\")",
+      "Bash(git -C /Users/dim/code/shchyt_help branch --show-current)",
+      "Bash(git -C /Users/dim/code/shchyt_help diff server/src/constants.ts)",
+      "Bash(ralphex --review docs/plans/2026-04-02-hierarchical-chunk-split.md)"
+    ],
+    "additionalDirectories": [
+      "/private/tmp",
+      "/Users/dim/code/shchyt_help"
     ]
   }
 }

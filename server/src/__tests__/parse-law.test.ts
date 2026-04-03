@@ -447,7 +447,8 @@ describe('splitLargeChunks', () => {
     const result = parseLawHtml(html, 'https://test.ua', 'Тест');
     expect(result.chunks.length).toBeGreaterThan(1);
     // Цифрові маркери розбиваються як пункти (п.)
-    const splitChunks = result.chunks.filter(c => c.part.includes('п.'));
+    // Перевіряємо саме цифрові пункти (п.N), а не літерні підпункти (пп.N)
+    const splitChunks = result.chunks.filter(c => /(?<![п])п\.\d/.test(c.part));
     expect(splitChunks.length).toBeGreaterThan(0);
   });
 
