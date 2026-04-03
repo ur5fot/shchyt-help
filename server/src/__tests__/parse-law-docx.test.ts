@@ -327,6 +327,62 @@ describe('експортовані функції parse-law.ts', () => {
       expect(result[0].id).toBe('test-st1-ch1');
     });
 
+    it('fallback на літерні підпункти при одному цифровому маркері', () => {
+      const longText = 'Преамбула. ' +
+        '1) Єдиний пункт: ' +
+        'а) ' + 'А'.repeat(800) + ' ' +
+        'б) ' + 'Б'.repeat(800) + ' ' +
+        'в) ' + 'В'.repeat(800);
+
+      const chunks = [{
+        id: 'test-st1-ch1',
+        article: 'Стаття 1',
+        part: 'Частина 1',
+        text: longText,
+        keywords: ['тест'],
+      }];
+
+      const result = splitLargeChunks(chunks);
+      // Один цифровий маркер — fallback на літерні
+      expect(result.length).toBe(3);
+      expect(result[0].part).toBe('Частина 1, пп.а');
+      expect(result[1].part).toBe('Частина 1, пп.б');
+    });
+
+    it('не розбиває великий чанк без маркерів', () => {
+      const chunks = [{
+        id: 'test-st1-ch1',
+        article: 'Стаття 1',
+        part: 'Частина 1',
+        text: 'Х'.repeat(3000),
+        keywords: ['тест'],
+      }];
+
+      const result = splitLargeChunks(chunks);
+      expect(result.length).toBe(1);
+      expect(result[0].id).toBe('test-st1-ch1');
+    });
+
+    it('розбиває чанк що починається з цифрового маркера', () => {
+      const longText =
+        '1) ' + 'А'.repeat(800) + ' ' +
+        '2) ' + 'Б'.repeat(800) + ' ' +
+        '3) ' + 'В'.repeat(800);
+
+      const chunks = [{
+        id: 'test-st1-ch1',
+        article: 'Стаття 1',
+        part: 'Частина 1',
+        text: longText,
+        keywords: ['тест'],
+      }];
+
+      const result = splitLargeChunks(chunks);
+      expect(result.length).toBe(3);
+      expect(result[0].id).toBe('test-st1-ch1-1');
+      expect(result[0].part).toBe('Частина 1, п.1');
+    });
+
     it('зберігає преамбулу в першому підчанку', () => {
       const longText = 'Важлива преамбула статті. ' +
         '1) ' + 'А'.repeat(800) + ' ' +

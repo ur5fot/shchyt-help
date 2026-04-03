@@ -400,7 +400,9 @@ function findBoundaries(text: string, pattern: RegExp, labelExtractor: (m: RegEx
   const boundaries: { pos: number; label: string }[] = [];
   let m;
   while ((m = pattern.exec(text)) !== null) {
-    boundaries.push({ pos: m.index + 1, label: labelExtractor(m) });
+    // Якщо збіг на початку тексту (^), позиція = 0; інакше +1 щоб пропустити \s
+    const pos = m.index === 0 ? 0 : m.index + 1;
+    boundaries.push({ pos, label: labelExtractor(m) });
   }
   return boundaries;
 }
@@ -410,6 +412,7 @@ function splitTextByBoundaries(
   text: string,
   boundaries: { pos: number; label: string }[],
 ): { label: string; text: string }[] {
+  if (boundaries.length === 0) return [];
   const preamble = text.slice(0, boundaries[0].pos).trim();
   const segments: { label: string; text: string }[] = [];
 
@@ -434,9 +437,9 @@ function splitTextByBoundaries(
 export function splitLargeChunks(chunks: LawChunkRaw[]): LawChunkRaw[] {
   const result: LawChunkRaw[] = [];
 
-  // Регекси для двох рівнів маркерів
-  const digitRe = /\s(\d+\.\d+\.|\d+\)\s)/g;
-  const letterRe = /\s(([а-яіїєґ])\)\s)/g;
+  // Регекси для двох рівнів маркерів ((?:^|\s) — збіг і на початку тексту, і після пробілу)
+  const digitRe = /(?:^|\s)(\d+\.\d+\.|\d+\)\s)/;
+  const letterRe = /(?:^|\s)(([а-яіїєґ])\)\s)/;
 
   for (const chunk of chunks) {
     if (chunk.text.length <= МАКС_РОЗМІР_ЧАНКА) {
@@ -450,6 +453,11 @@ export function splitLargeChunks(chunks: LawChunkRaw[]): LawChunkRaw[] {
     if (digitBounds.length > 1) {
       // Є цифрові маркери — розбиваємо по них
       const digitSegments = splitTextByBoundaries(chunk.text, digitBounds);
+
+      if (digitSegments.length === 0) {
+        result.push(chunk);
+        continue;
+      }
 
       for (const seg of digitSegments) {
         const punktId = `${chunk.id}-${seg.label}`;
