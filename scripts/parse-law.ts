@@ -393,8 +393,8 @@ function splitEmbeddedStattyaChunks(chunks: LawChunkRaw[], baseId: string): LawC
 }
 
 // Максимальний розмір чанка — більші розбиваються по підпунктах
-// Opus з extended thinking справляється з 4000 символів на чанк
-const МАКС_РОЗМІР_ЧАНКА = 4000;
+// Opus з extended thinking справляється з великими чанками
+const МАКС_РОЗМІР_ЧАНКА = 6000;
 
 // Знаходить межі маркерів у тексті та повертає масив позицій з мітками
 function findBoundaries(text: string, pattern: RegExp, labelExtractor: (m: RegExpExecArray) => string): { pos: number; label: string }[] {
