@@ -5,6 +5,7 @@ import { SUMMARIZE_PROMPT } from '../prompts/summarize.ts';
 import {
   МОДЕЛЬ_CLAUDE,
   МАКС_ТОКЕНІВ,
+  БЮДЖЕТ_ДУМАННЯ,
   МАКС_ПОВТОРІВ_CLAUDE,
   ТАЙМАУТ_ЗАПИТУ_CLAUDE_МС,
   ТАЙМАУТ_СТИСНЕННЯ_CLAUDE_МС,
@@ -66,18 +67,19 @@ export async function askClaude(
       {
         model: МОДЕЛЬ_CLAUDE,
         max_tokens: МАКС_ТОКЕНІВ,
+        thinking: { type: 'enabled', budget_tokens: БЮДЖЕТ_ДУМАННЯ },
         system: SYSTEM_PROMPT,
         messages,
       },
       { timeout: ТАЙМАУТ_ЗАПИТУ_CLAUDE_МС },
     );
 
-    const блок = відповідь.content[0];
-    if (!блок || блок.type !== 'text') {
+    const текстовийБлок = відповідь.content.find((б) => б.type === 'text');
+    if (!текстовийБлок || текстовийБлок.type !== 'text') {
       throw new Error('Несподіваний тип відповіді від Claude');
     }
 
-    return блок.text;
+    return текстовийБлок.text;
   } catch (помилка) {
     logger.error({ помилка }, 'Помилка виклику Claude API');
     throw помилка;
