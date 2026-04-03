@@ -9,7 +9,7 @@ export const МОДЕЛІ_CLAUDE = {
 export type МодельClaude = (typeof МОДЕЛІ_CLAUDE)[keyof typeof МОДЕЛІ_CLAUDE];
 
 // Перемикач активної Claude-моделі
-export const МОДЕЛЬ_CLAUDE: МодельClaude = МОДЕЛІ_CLAUDE.SONNET_4_6;
+export const МОДЕЛЬ_CLAUDE: МодельClaude = МОДЕЛІ_CLAUDE.OPUS_4_6;
 export const МАКС_ТОКЕНІВ = 2048;
 export const МАКС_ПОВТОРІВ_CLAUDE = 1;
 export const ТАЙМАУТ_ЗАПИТУ_CLAUDE_МС = 60_000;

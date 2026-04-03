@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Frontend:** React + Vite + TypeScript + Tailwind CSS + docxtemplater/pizzip (.docx генерація) + pdf-lib (експорт чату в PDF)
 - **Backend:** Node.js + Express + TypeScript
-- **AI:** Claude API (`claude-sonnet-4-6`) через `@anthropic-ai/sdk`
+- **AI:** Claude API (`claude-opus-4-6`) через `@anthropic-ai/sdk`
 - **Векторний пошук:** LanceDB (вбудована векторна БД) + `@xenova/transformers` (ембеддинги: `Xenova/multilingual-e5-small`, 384d; re-ranking: `Xenova/bge-reranker-base`)
 - **База законів:** JSON-файли + LanceDB векторна база (генерується локально)
 - **Без** Docker, PostgreSQL, pgvector, Ollama
