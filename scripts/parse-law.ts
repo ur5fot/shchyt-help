@@ -407,7 +407,7 @@ function findBoundaries(text: string, pattern: RegExp, labelExtractor: (m: RegEx
   return boundaries;
 }
 
-// Розбиває текст по знайдених межах, додаючи преамбулу до першого сегмента
+// Розбиває текст по знайдених межах, додаючи преамбулу до КОЖНОГО сегмента для контексту
 function splitTextByBoundaries(
   text: string,
   boundaries: { pos: number; label: string }[],
@@ -421,7 +421,9 @@ function splitTextByBoundaries(
     const end = i + 1 < boundaries.length ? boundaries[i + 1].pos : text.length;
     let segmentText = text.slice(start, end).trim();
 
-    if (i === 0 && preamble) {
+    // Преамбула додається до КОЖНОГО підпункту — інакше keyword search не знаходить
+    // чанки без слів "звільнення", "контракт", "воєнний стан" з преамбули
+    if (preamble) {
       segmentText = preamble + ' ' + segmentText;
     }
 
