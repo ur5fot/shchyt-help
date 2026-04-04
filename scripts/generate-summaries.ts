@@ -19,7 +19,7 @@ const LAWS_DIR = join(__dirname, '..', 'laws');
 
 const МОДЕЛЬ = 'claude-sonnet-4-6';
 const МАКС_ТОКЕНІВ = 100;
-const МАКС_ЗАПИТІВ_НА_СЕК = 10;
+const МАКС_ЗАПИТІВ_НА_СЕК = 4;
 
 interface LawChunkRaw {
   id: string;
