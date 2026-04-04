@@ -59,6 +59,7 @@ export default function Chat() {
   const [summary, setSummary] = useState<string | null>(initialState?.summary ?? null);
   const [summarizedUpTo, setSummarizedUpTo] = useState(initialState?.summarizedUpTo ?? 0);
   const [quoteTooltip, setQuoteTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
+  const [showPrivacyWarning, setShowPrivacyWarning] = useState(() => !localStorage.getItem('shchyt-privacy-accepted'));
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -229,11 +230,6 @@ export default function Chat() {
 
         {isEmpty && (
           <div className="mt-4">
-            <div className="mx-auto max-w-md mb-6 p-4 rounded-xl bg-yellow-900/20 border border-yellow-800/30">
-              <p className="text-yellow-200/90 text-sm leading-relaxed">
-                🛡️ <strong>Не вводьте особисту інформацію:</strong> позивний, номер частини, місце дислокації, прізвище командира, координати. Формулюйте питання загально — наприклад, «як звільнитися за контрактом» замість «я Петренко з в/ч А1234, як мені звільнитися».
-              </p>
-            </div>
             <p className="text-xs text-gray-500 uppercase tracking-wide mb-3 text-center">
               Типові питання
             </p>
@@ -305,6 +301,25 @@ export default function Chat() {
           ⚠️ Це не юридична консультація. Для прийняття рішень зверніться до військового адвоката.
         </p>
       </div>
+      {showPrivacyWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="mx-4 max-w-md rounded-2xl bg-gray-900 border border-gray-700 p-6 shadow-2xl">
+            <h2 className="text-lg font-semibold text-gray-100 mb-3">🛡️ Безпека даних</h2>
+            <p className="text-gray-300 text-sm leading-relaxed mb-4">
+              Не вводьте особисту інформацію: позивний, номер частини, місце дислокації, прізвище командира, координати.
+            </p>
+            <p className="text-gray-400 text-sm leading-relaxed mb-5">
+              Формулюйте питання загально — наприклад, «як звільнитися за контрактом» замість «я Петренко з в/ч А1234, як мені звільнитися».
+            </p>
+            <button
+              onClick={() => { localStorage.setItem('shchyt-privacy-accepted', '1'); setShowPrivacyWarning(false); }}
+              className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-colors cursor-pointer"
+            >
+              Зрозуміло
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
