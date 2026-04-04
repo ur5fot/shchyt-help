@@ -288,7 +288,11 @@ describe('Chat', () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
       render(<Chat />);
       expect(screen.getByText('Питання')).toBeInTheDocument();
+      // Натискаємо "Новий чат" — з'являється попап підтвердження
       await userEvent.click(screen.getByRole('button', { name: /Новий чат/i }));
+      expect(screen.getByText(/Поточну бесіду буде видалено/)).toBeInTheDocument();
+      // Натискаємо "Почати новий без збереження"
+      await userEvent.click(screen.getByRole('button', { name: /Почати новий без збереження/i }));
       expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
       expect(screen.queryByText('Питання')).not.toBeInTheDocument();
     });

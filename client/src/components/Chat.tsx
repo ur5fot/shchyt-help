@@ -60,6 +60,7 @@ export default function Chat() {
   const [summarizedUpTo, setSummarizedUpTo] = useState(initialState?.summarizedUpTo ?? 0);
   const [quoteTooltip, setQuoteTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
   const [showPrivacyWarning, setShowPrivacyWarning] = useState(() => !localStorage.getItem('shchyt-privacy-accepted'));
+  const [showNewChatConfirm, setShowNewChatConfirm] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -202,7 +203,7 @@ export default function Chat() {
         {messages.length > 0 && (
           <>
             <button onClick={() => void handleExportPdf()} className="text-xs text-gray-500 hover:text-gray-300 transition-colors cursor-pointer" title="Зберегти бесіду в PDF">PDF</button>
-            <button onClick={очистити} className="text-xs text-gray-500 hover:text-gray-300 transition-colors cursor-pointer" title="Почати новий чат">Новий чат</button>
+            <button onClick={() => setShowNewChatConfirm(true)} className="text-xs text-gray-500 hover:text-gray-300 transition-colors cursor-pointer" title="Почати новий чат">Новий чат</button>
           </>
         )}
       </header>
@@ -301,6 +302,37 @@ export default function Chat() {
           ⚠️ Це не юридична консультація. Для прийняття рішень зверніться до військового адвоката.
         </p>
       </div>
+      {showNewChatConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="mx-4 max-w-sm rounded-2xl bg-gray-900 border border-gray-700 p-6 shadow-2xl">
+            <h2 className="text-lg font-semibold text-gray-100 mb-3">Новий чат</h2>
+            <p className="text-gray-300 text-sm leading-relaxed mb-5">
+              Поточну бесіду буде видалено. Бажаєте спочатку зберегти її в PDF?
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => { void handleExportPdf(); очистити(); setShowNewChatConfirm(false); }}
+                className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-colors cursor-pointer"
+              >
+                📄 Зберегти в PDF і почати новий
+              </button>
+              <button
+                onClick={() => { очистити(); setShowNewChatConfirm(false); }}
+                className="w-full py-2.5 bg-gray-700 hover:bg-gray-600 text-gray-200 font-semibold rounded-xl transition-colors cursor-pointer"
+              >
+                Почати новий без збереження
+              </button>
+              <button
+                onClick={() => setShowNewChatConfirm(false)}
+                className="w-full py-2 text-gray-500 hover:text-gray-300 text-sm transition-colors cursor-pointer"
+              >
+                Скасувати
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showPrivacyWarning && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
           <div className="mx-4 max-w-md rounded-2xl bg-gray-900 border border-gray-700 p-6 shadow-2xl">
