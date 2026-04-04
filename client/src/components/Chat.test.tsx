@@ -305,5 +305,43 @@ describe('Chat', () => {
       render(<Chat />);
       expect(screen.getByText(/Типові питання/i)).toBeInTheDocument();
     });
+
+    it('при повідомленнях без обовʼязкових полів — чат починає з нуля', () => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        messages: [{ foo: 'bar' }],
+        summary: null,
+        summarizedUpTo: 0,
+      }));
+      render(<Chat />);
+      expect(screen.getByText(/Типові питання/i)).toBeInTheDocument();
+    });
+
+    it('при невалідному summarizedUpTo — чат починає з нуля', () => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        messages: [{ role: 'user', text: 'Питання' }],
+        summary: null,
+        summarizedUpTo: -1,
+      }));
+      render(<Chat />);
+      expect(screen.getByText(/Типові питання/i)).toBeInTheDocument();
+    });
+
+    it('продовжує працювати при переповненні localStorage', async () => {
+      const setItemOriginal = Storage.prototype.setItem;
+      Storage.prototype.setItem = vi.fn().mockImplementation((key: string) => {
+        if (key === STORAGE_KEY) throw new DOMException('QuotaExceededError');
+        return setItemOriginal.call(localStorage, key);
+      });
+
+      render(<Chat />);
+      const input = screen.getByPlaceholderText(/Введіть ваше питання/i);
+      await userEvent.type(input, 'Тестове питання');
+      await userEvent.click(screen.getByRole('button', { name: /Надіслати/i }));
+      await waitFor(() => {
+        expect(screen.getByText('Відповідь від AI')).toBeInTheDocument();
+      });
+
+      Storage.prototype.setItem = setItemOriginal;
+    });
   });
 });

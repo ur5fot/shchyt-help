@@ -29,6 +29,11 @@ function loadChat(): ChatState | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as ChatState;
     if (!Array.isArray(parsed.messages)) return null;
+    if (!parsed.messages.every((m: unknown) =>
+      typeof m === 'object' && m !== null && 'role' in m && 'text' in m
+    )) return null;
+    if (typeof parsed.summarizedUpTo !== 'number' || parsed.summarizedUpTo < 0) return null;
+    if (parsed.summary !== null && typeof parsed.summary !== 'string') return null;
     return parsed;
   } catch {
     return null;
@@ -36,16 +41,21 @@ function loadChat(): ChatState | null {
 }
 
 function saveChat(state: ChatState): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // QuotaExceededError — ігноруємо
+  }
 }
 
 export default function Chat() {
-  const [messages, setMessages] = useState<ChatMessage[]>(() => loadChat()?.messages ?? []);
+  const [saved] = useState(loadChat);
+  const [messages, setMessages] = useState<ChatMessage[]>(saved?.messages ?? []);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [summary, setSummary] = useState<string | null>(() => loadChat()?.summary ?? null);
-  const [summarizedUpTo, setSummarizedUpTo] = useState(() => loadChat()?.summarizedUpTo ?? 0);
+  const [summary, setSummary] = useState<string | null>(saved?.summary ?? null);
+  const [summarizedUpTo, setSummarizedUpTo] = useState(saved?.summarizedUpTo ?? 0);
   const [quoteTooltip, setQuoteTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatAreaRef = useRef<HTMLDivElement>(null);
