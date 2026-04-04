@@ -1,10 +1,7 @@
 // HyDE (Hypothetical Document Embeddings) — генерація гіпотетичної відповіді
 // для покращення векторного пошуку по розмитих запитах
 import Anthropic from '@anthropic-ai/sdk';
-import { МОДЕЛІ_CLAUDE, МАКС_ПОВТОРІВ_CLAUDE, ТАЙМАУТ_HYDE_МС } from '../constants.ts';
-
-// HyDE використовує Sonnet — дешевша модель достатня для 200-токенної гіпотези
-const МОДЕЛЬ_HYDE = МОДЕЛІ_CLAUDE.SONNET_4_6;
+import { МОДЕЛЬ_CLAUDE, МАКС_ПОВТОРІВ_CLAUDE, ТАЙМАУТ_HYDE_МС } from '../constants.ts';
 import { logger } from '../logger.ts';
 
 const HYDE_SYSTEM_PROMPT = `Ти — юрист з питань військового права України. Дай коротку відповідь (2-3 речення) на питання, згадай конкретні статті законів. Не додавай вступних фраз.`;
@@ -59,7 +56,7 @@ export async function generateHypothesis(query: string): Promise<string | null> 
     const client = getClient();
     const відповідь = await client.messages.create(
       {
-        model: МОДЕЛЬ_HYDE,
+        model: МОДЕЛЬ_CLAUDE,
         max_tokens: HYDE_МАКС_ТОКЕНІВ,
         system: HYDE_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: query }],
