@@ -2,11 +2,13 @@ import type { LawChunk } from '../../../laws/index';
 import { створитиЕмбеддинг } from './embeddings';
 import { пошукПоВектору, type VectorSearchResult } from './vectorStore';
 import { rerank } from './reranker';
+import { claudeRerank } from './claudeReranker';
 import {
   ВАГА_КЛЮЧОВИХ_СЛІВ,
   ВАГА_ВЕКТОРА,
   МІНІМАЛЬНА_ГІБРИДНА_ОЦІНКА,
   HYDE_УВІМКНЕНИЙ,
+  ВИКОРИСТОВУВАТИ_CLAUDE_RERANKER,
 } from '../constants';
 import { generateHypothesis } from './hyde';
 import { logger } from '../logger';
@@ -413,19 +415,30 @@ export async function hybridSearchLaws(
     return [];
   }
 
-  // Re-ranking через cross-encoder
+  // Re-ranking через Claude Sonnet або bge cross-encoder
   try {
-    const документиДляRerank = кандидати.map(р => ({
-      id: р.chunk.id,
-      text: р.chunk.text,
-    }));
-
     const rerankПочаток = Date.now();
-    const rerankРезультати = await rerank(запит, документиДляRerank, МАКС_РЕЗУЛЬТАТІВ);
+    let rerankРезультати;
+
+    if (ВИКОРИСТОВУВАТИ_CLAUDE_RERANKER) {
+      const документиДляClaude = кандидати.map(р => ({
+        id: р.chunk.id,
+        text: р.chunk.text,
+        summary: р.chunk.summary,
+      }));
+      rerankРезультати = await claudeRerank(запит, документиДляClaude, МАКС_РЕЗУЛЬТАТІВ);
+    } else {
+      const документиДляRerank = кандидати.map(р => ({
+        id: р.chunk.id,
+        text: р.chunk.text,
+      }));
+      rerankРезультати = await rerank(запит, документиДляRerank, МАКС_РЕЗУЛЬТАТІВ);
+    }
+
     const rerankЧасМс = Date.now() - rerankПочаток;
 
     logger.info(
-      { кандидатів: кандидати.length, результатів: rerankРезультати.length, rerankЧасМс },
+      { кандидатів: кандидати.length, результатів: rerankРезультати.length, rerankЧасМс, claude: ВИКОРИСТОВУВАТИ_CLAUDE_RERANKER },
       'Re-ranking: %d кандидатів → %d результатів за %dмс',
       кандидати.length,
       rerankРезультати.length,

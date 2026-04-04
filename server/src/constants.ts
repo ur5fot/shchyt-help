@@ -40,6 +40,9 @@ export const МІНІМАЛЬНА_ГІБРИДНА_ОЦІНКА = 0.15;
 // HyDE (Hypothetical Document Embeddings)
 export const HYDE_УВІМКНЕНИЙ = true;
 
+// Claude re-ranker (замість bge-reranker-base)
+export const ВИКОРИСТОВУВАТИ_CLAUDE_RERANKER = true;
+
 // Express
 export const JSON_ЛІМІТ = '10kb';
 export const ПОРТ = 3001;
