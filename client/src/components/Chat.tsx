@@ -32,7 +32,7 @@ function loadChat(): ChatState | null {
     if (!parsed.messages.every((m: unknown) =>
       typeof m === 'object' && m !== null && 'role' in m && 'text' in m
     )) return null;
-    if (typeof parsed.summarizedUpTo !== 'number' || parsed.summarizedUpTo < 0) return null;
+    if (typeof parsed.summarizedUpTo !== 'number' || parsed.summarizedUpTo < 0 || parsed.summarizedUpTo > parsed.messages.length) return null;
     if (parsed.summary !== null && typeof parsed.summary !== 'string') return null;
     return parsed;
   } catch {

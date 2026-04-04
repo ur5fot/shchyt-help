@@ -326,6 +326,16 @@ describe('Chat', () => {
       expect(screen.getByText(/Типові питання/i)).toBeInTheDocument();
     });
 
+    it('при summarizedUpTo більшому за кількість повідомлень — чат починає з нуля', () => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        messages: [{ role: 'user', text: 'Питання' }],
+        summary: null,
+        summarizedUpTo: 100,
+      }));
+      render(<Chat />);
+      expect(screen.getByText(/Типові питання/i)).toBeInTheDocument();
+    });
+
     it('продовжує працювати при переповненні localStorage', async () => {
       const setItemOriginal = Storage.prototype.setItem;
       Storage.prototype.setItem = vi.fn().mockImplementation((key: string) => {
@@ -333,15 +343,17 @@ describe('Chat', () => {
         return setItemOriginal.call(localStorage, key);
       });
 
-      render(<Chat />);
-      const input = screen.getByPlaceholderText(/Введіть ваше питання/i);
-      await userEvent.type(input, 'Тестове питання');
-      await userEvent.click(screen.getByRole('button', { name: /Надіслати/i }));
-      await waitFor(() => {
-        expect(screen.getByText('Відповідь від AI')).toBeInTheDocument();
-      });
-
-      Storage.prototype.setItem = setItemOriginal;
+      try {
+        render(<Chat />);
+        const input = screen.getByPlaceholderText(/Введіть ваше питання/i);
+        await userEvent.type(input, 'Тестове питання');
+        await userEvent.click(screen.getByRole('button', { name: /Надіслати/i }));
+        await waitFor(() => {
+          expect(screen.getByText('Відповідь від AI')).toBeInTheDocument();
+        });
+      } finally {
+        Storage.prototype.setItem = setItemOriginal;
+      }
     });
   });
 });
