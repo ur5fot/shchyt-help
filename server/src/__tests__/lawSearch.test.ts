@@ -280,7 +280,7 @@ describe('searchLaws — edge cases', () => {
     expect(результати1.length).toBe(результати2.length);
   });
 
-  it('повертає не більше 10 результатів за замовчуванням', () => {
+  it('повертає не більше 25 результатів за замовчуванням', () => {
     // Створюємо 15 чанків з однаковим ключовим словом (більше ніж ліміт)
     const багатоЧанків: LawChunk[] = Array.from({ length: 15 }, (_, i) => ({
       id: `chunk-${i}`,
@@ -559,7 +559,7 @@ describe('hybridSearchLaws — гібридний пошук', () => {
     expect(пільговий).toBeUndefined();
   });
 
-  it('повертає не більше 8 результатів', async () => {
+  it('повертає не більше 25 результатів', async () => {
     mockСтворитиЕмбеддинг.mockResolvedValue(new Array(384).fill(0.1));
     mockПошукПоВектору.mockResolvedValue(
       Array.from({ length: 10 }, (_, i) => ({

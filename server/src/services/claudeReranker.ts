@@ -70,7 +70,7 @@ function розпарситиВідповідь(
 ): RerankResult[] | null {
   try {
     // Витягуємо JSON масив з відповіді (може бути обгорнутий у ```json ... ```)
-    const jsonMatch = текст.match(/\[[\s\S]*\]/);
+    const jsonMatch = текст.match(/\[\s*\{[\s\S]*?\}\s*\]/);
     if (!jsonMatch) return null;
 
     const масив: { n: number; s: number }[] = JSON.parse(jsonMatch[0]);

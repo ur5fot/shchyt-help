@@ -63,13 +63,17 @@ describe('loadAllLaws', () => {
     }
   });
 
-  it('summary є необов\'язковим полем типу string', () => {
+  it('summary є полем типу string і присутнє в більшості чанків', () => {
     const chunks = loadAllLaws();
+    let зSummary = 0;
     for (const chunk of chunks) {
       if (chunk.summary !== undefined) {
         expect(typeof chunk.summary).toBe('string');
+        зSummary++;
       }
     }
+    // Після генерації LLM-резюме більшість чанків повинні мати summary
+    expect(зSummary).toBeGreaterThan(chunks.length * 0.9);
   });
 
   it('завантажує чанки з pro-soczakhyst.json — lawTitle відповідає назві закону', () => {

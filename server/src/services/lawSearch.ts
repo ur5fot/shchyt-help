@@ -417,7 +417,6 @@ export async function hybridSearchLaws(
 
   // Re-ranking через Claude Sonnet або bge cross-encoder
   try {
-    const rerankПочаток = Date.now();
     let rerankРезультати;
 
     if (ВИКОРИСТОВУВАТИ_CLAUDE_RERANKER) {
@@ -434,16 +433,6 @@ export async function hybridSearchLaws(
       }));
       rerankРезультати = await rerank(запит, документиДляRerank, МАКС_РЕЗУЛЬТАТІВ);
     }
-
-    const rerankЧасМс = Date.now() - rerankПочаток;
-
-    logger.info(
-      { кандидатів: кандидати.length, результатів: rerankРезультати.length, rerankЧасМс, claude: ВИКОРИСТОВУВАТИ_CLAUDE_RERANKER },
-      'Re-ranking: %d кандидатів → %d результатів за %dмс',
-      кандидати.length,
-      rerankРезультати.length,
-      rerankЧасМс
-    );
 
     // Створюємо мапу чанків за id для швидкого доступу
     const кандидатиМапа = new Map(кандидати.map(р => [р.chunk.id, р]));
