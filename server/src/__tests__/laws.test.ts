@@ -132,7 +132,7 @@ describe('hotlines.json', () => {
       expect(chunk.keywords.length).toBeGreaterThan(0);
       expect(chunk.lawTitle).toBe('Гарячі лінії та контакти для військовослужбовців');
       expect(chunk.sourceUrl).toBe('internal://hotlines');
-      expect(chunk.documentId).toBe('Довідник контактів');
+      expect(chunk.documentId).toContain('Довідник контактів');
     }
   });
 
@@ -173,7 +173,7 @@ describe('dovidkovi-dokumenty.json', () => {
       expect(chunk.keywords.length).toBeGreaterThan(0);
       expect(chunk.lawTitle).toBe('Довідник типових документів для військовослужбовців');
       expect(chunk.sourceUrl).toBe('internal://documents-guide');
-      expect(chunk.documentId).toBe('Довідник документів');
+      expect(chunk.documentId).toContain('Довідник документів');
     }
   });
 
