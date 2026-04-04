@@ -77,6 +77,7 @@ function розпарситиВідповідь(
     if (!Array.isArray(масив)) return null;
 
     const результати: RerankResult[] = [];
+    const побачені = new Set<string>();
 
     for (const елемент of масив) {
       const індекс = елемент.n - 1; // n — 1-based
@@ -84,14 +85,19 @@ function розпарситиВідповідь(
 
       if (
         typeof індекс !== 'number' || typeof оцінка !== 'number' ||
+        Number.isNaN(індекс) || Number.isNaN(оцінка) ||
         індекс < 0 || індекс >= документи.length ||
         оцінка < 0 || оцінка > 10
       ) {
         continue; // пропускаємо невалідні елементи
       }
 
+      const id = документи[індекс].id;
+      if (побачені.has(id)) continue; // дедуплікація
+      побачені.add(id);
+
       результати.push({
-        id: документи[індекс].id,
+        id,
         score: оцінка,
       });
     }

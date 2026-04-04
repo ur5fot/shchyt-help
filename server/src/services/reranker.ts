@@ -6,7 +6,7 @@ import { logger } from '../logger';
 const НАЗВА_МОДЕЛІ = 'Xenova/bge-reranker-base';
 
 // Lazy singleton — модель завантажується один раз при першому виклику
-let модельPromise: Promise<TextClassificationPipeline> | null = null;
+let модельPromise: Promise<TextClassificationPipeline | null> | null = null;
 let модельНедоступна = false;
 
 export interface RerankDocument {

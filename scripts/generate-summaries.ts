@@ -114,7 +114,7 @@ export function parseArgs(argv: string[]): Args {
       args.file = argv[i + 1];
       i++;
     } else if (argv[i] === '--batch-size' && argv[i + 1]) {
-      args.batchSize = parseInt(argv[i + 1], 10) || 5;
+      args.batchSize = Math.max(1, parseInt(argv[i + 1], 10) || 5);
       i++;
     }
   }
