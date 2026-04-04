@@ -4,7 +4,8 @@ import Sources from './Sources';
 import { sendMessage, type Source, type HistoryMessage } from '../services/api';
 import { exportChatToPdf } from '../services/pdfGenerator';
 import { generateDocx } from '../services/docxGenerator';
-import { detectTemplate } from '../services/templateDetector';
+// TODO: увімкнути коли шаблони будуть доопрацьовані
+// import { detectTemplate } from '../services/templateDetector';
 import { ПІДКАЗКИ, МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ } from '../constants';
 
 interface ChatMessage {
@@ -144,7 +145,9 @@ export default function Chat() {
           text: response.answer,
           sources: response.sources,
           verifiedSources: response.verifiedSources,
-          suggestedTemplate: detectTemplate(response.answer),
+          // TODO: увімкнути коли шаблони будуть доопрацьовані
+          // suggestedTemplate: detectTemplate(response.answer),
+          suggestedTemplate: null,
         },
       ]);
     } catch (err) {
