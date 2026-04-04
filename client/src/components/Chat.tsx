@@ -229,6 +229,11 @@ export default function Chat() {
 
         {isEmpty && (
           <div className="mt-4">
+            <div className="mx-auto max-w-md mb-6 p-4 rounded-xl bg-yellow-900/20 border border-yellow-800/30">
+              <p className="text-yellow-200/90 text-sm leading-relaxed">
+                🛡️ <strong>Не вводьте особисту інформацію:</strong> позивний, номер частини, місце дислокації, прізвище командира, координати. Формулюйте питання загально — наприклад, «як звільнитися за контрактом» замість «я Петренко з в/ч А1234, як мені звільнитися».
+              </p>
+            </div>
             <p className="text-xs text-gray-500 uppercase tracking-wide mb-3 text-center">
               Типові питання
             </p>
