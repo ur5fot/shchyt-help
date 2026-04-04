@@ -1,6 +1,7 @@
 // react-markdown не рендерить raw HTML за замовчуванням — це безпечно.
 // НЕ додавати rehype-raw без rehype-sanitize — це створить XSS-вразливість.
 import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export type MessageRole = 'user' | 'assistant';
 
@@ -26,6 +27,7 @@ export default function Message({ role, text }: MessageProps) {
           text
         ) : (
           <Markdown
+            remarkPlugins={[remarkGfm]}
             components={{
               a: ({ href, children }) => (
                 <a href={href} target="_blank" rel="noopener noreferrer">

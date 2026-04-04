@@ -51,7 +51,14 @@
       "Bash(pkill -f \"ralphex.*hierarchical\")",
       "Bash(git -C /Users/dim/code/shchyt_help branch --show-current)",
       "Bash(git -C /Users/dim/code/shchyt_help diff server/src/constants.ts)",
-      "Bash(ralphex --review docs/plans/2026-04-02-hierarchical-chunk-split.md)"
+      "Bash(ralphex --review docs/plans/2026-04-02-hierarchical-chunk-split.md)",
+      "Bash(mv \"laws/реабілітація-ветеранів.json\" laws/reabilitatsiya-veteraniv.json)",
+      "Bash(mv \"laws/супровід-ветеранів-та-демобілізованих.json\" laws/suprovid-veteraniv.json)",
+      "Bash(mv \"laws/одноразова-допомога-при-загибелі-та-інвалідності.json\" laws/odnorazova-dopomoga.json)",
+      "Bash(rm -f laws/poryadok-odnorazovoi-dopomogy.json)",
+      "Bash(node -e 'const l=require\\('\\\\''./laws/__TRACKED_VAR__.json'\\\\''\\); console.log\\('\\\\''__TRACKED_VAR__:'\\\\'', l.chunks.length, '\\\\''чанків |'\\\\'', l.title?.substring\\(0,60\\)\\)')",
+      "Bash(npx tsx:*)",
+      "Bash(npm install:*)"
     ],
     "additionalDirectories": [
       "/private/tmp",
