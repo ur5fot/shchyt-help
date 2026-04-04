@@ -63,6 +63,15 @@ describe('loadAllLaws', () => {
     }
   });
 
+  it('summary є необов\'язковим полем типу string', () => {
+    const chunks = loadAllLaws();
+    for (const chunk of chunks) {
+      if (chunk.summary !== undefined) {
+        expect(typeof chunk.summary).toBe('string');
+      }
+    }
+  });
+
   it('завантажує чанки з pro-soczakhyst.json — lawTitle відповідає назві закону', () => {
     const chunks = loadAllLaws();
     const soczakhystChunks = chunks.filter(c =>

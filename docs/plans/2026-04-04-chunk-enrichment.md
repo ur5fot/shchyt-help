@@ -24,13 +24,13 @@ Retrieval recall 88.2% — 8 питань пропускаються через 
 ## Implementation Steps
 
 ### Task 1: Додати поле summary до інтерфейсів та бази
-- [ ] Додати `summary?: string` до `LawChunkRaw` в `scripts/parse-law.ts`
-- [ ] Додати `summary?: string` до `LawChunk` в `laws/index.ts` — та передавати його при завантаженні
-- [ ] Додати поле `summary` до LanceDB schema в `server/src/services/vectorStore.ts` — створитиТаблицю, оновитиЧанки, пошукПоВектору, VectorSearchResult
-- [ ] Оновити keyword search в `server/src/services/lawSearch.ts` — додати summary як зважене поле (вага 2, як title)
-- [ ] Написати тести для нових полів
-- [ ] Запустити `npm test` — всі тести проходять
-- [ ] Запустити `npm run lint` — без помилок
+- [x] Додати `summary?: string` до `LawChunkRaw` в `scripts/parse-law.ts`
+- [x] Додати `summary?: string` до `LawChunk` в `laws/index.ts` — та передавати його при завантаженні
+- [x] Додати поле `summary` до LanceDB schema в `server/src/services/vectorStore.ts` — створитиТаблицю, оновитиЧанки, пошукПоВектору, VectorSearchResult
+- [x] Оновити keyword search в `server/src/services/lawSearch.ts` — додати summary як зважене поле (вага 2, як title)
+- [x] Написати тести для нових полів
+- [x] Запустити `npm test` — всі тести проходять
+- [x] Запустити `npm run lint` — без помилок
 
 ### Task 2: Створити скрипт генерації резюме через Claude API
 - [ ] Створити `scripts/generate-summaries.ts` — скрипт що:

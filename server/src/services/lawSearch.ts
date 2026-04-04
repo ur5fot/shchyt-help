@@ -22,6 +22,7 @@ const МІН_ДОВЖИНА_СЛОВА = 3;
 
 // Вагові коефіцієнти пошуку
 const ВАГА_KEYWORD = 3;
+const ВАГА_РЕЗЮМЕ = 2;
 const ВАГА_НАЗВИ = 2;
 const ВАГА_ТЕКСТУ = 1;
 
@@ -229,11 +230,17 @@ export function searchLaws(запит: string, чанки: LawChunk[], maxResult
     const keywordsНижній = чанк.keywords.map(k => k.toLowerCase());
     const текстНижній = чанк.text.toLowerCase();
     const назваНижня = (чанк.title ?? '').toLowerCase();
+    const резюмеНижнє = (чанк.summary ?? '').toLowerCase();
 
     for (const слово of всіСлова) {
       // Перевіряємо keywords (вага +3 за кожен збіг)
       if (keywordsНижній.some(k => k.includes(слово))) {
         оцінка += ВАГА_KEYWORD;
+      }
+
+      // Перевіряємо резюме (вага +2)
+      if (резюмеНижнє.includes(слово)) {
+        оцінка += ВАГА_РЕЗЮМЕ;
       }
 
       // Перевіряємо назву статті (вага +2)
@@ -383,6 +390,7 @@ export async function hybridSearchLaws(
           article: vr.article,
           part: vr.part,
           title: vr.title ?? undefined,
+          summary: vr.summary ?? undefined,
           text: vr.text,
           keywords: vr.keywords,
           lawTitle: vr.lawTitle,

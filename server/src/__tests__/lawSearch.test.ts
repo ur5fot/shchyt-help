@@ -122,6 +122,39 @@ describe('searchLaws — пошук по тексту та назві', () => {
     const результати = searchLaws('безоплатно', тестовіЧанки);
     expect(результати).toEqual([]);
   });
+
+  it('summary враховується при пошуку з вагою +2', () => {
+    // Два ідентичних чанки, але один має summary з додатковим словом
+    const чанкиЗРезюме: LawChunk[] = [
+      {
+        id: 'test-summary-1',
+        article: 'Стаття 99',
+        part: 'Частина 1',
+        title: 'Пільги',
+        summary: 'Встановлює знижки на комунальні послуги для ветеранів',
+        text: 'Ветерани мають право на пільги.',
+        keywords: ['пільги', 'ветеран'],
+        lawTitle: 'Закон про ветеранів',
+        sourceUrl: 'https://zakon.rada.gov.ua/laws/show/test',
+      },
+      {
+        id: 'test-summary-2',
+        article: 'Стаття 100',
+        part: 'Частина 1',
+        title: 'Пільги',
+        text: 'Ветерани мають право на пільги.',
+        keywords: ['пільги', 'ветеран'],
+        lawTitle: 'Закон про ветеранів',
+        sourceUrl: 'https://zakon.rada.gov.ua/laws/show/test',
+      },
+    ];
+    // "знижки" є тільки в summary першого чанка
+    const результати = searchLaws('пільги знижки', чанкиЗРезюме);
+    expect(результати.length).toBe(2);
+    const зРезюме = результати.find(r => r.chunk.id === 'test-summary-1')!;
+    const безРезюме = результати.find(r => r.chunk.id === 'test-summary-2')!;
+    expect(зРезюме.score).toBeGreaterThan(безРезюме.score);
+  });
 });
 
 describe('searchLaws — мінімальний поріг релевантності', () => {

@@ -9,6 +9,7 @@ export interface LawChunk {
   article: string;
   part: string;
   title?: string;
+  summary?: string;
   text: string;
   keywords: string[];
   lawTitle: string;
@@ -21,6 +22,7 @@ interface LawChunkRaw {
   article: string;
   part: string;
   title?: string;
+  summary?: string;
   text: string;
   keywords: string[];
 }

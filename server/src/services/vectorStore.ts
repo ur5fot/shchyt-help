@@ -16,6 +16,7 @@ export interface VectorSearchResult {
   article: string;
   part: string;
   title: string | null;
+  summary: string | null;
   text: string;
   keywords: string[];
   lawTitle: string;
@@ -67,6 +68,7 @@ export async function створитиТаблицю(
     article: чанк.article,
     part: чанк.part,
     title: чанк.title ?? '',
+    summary: чанк.summary ?? '',
     text: чанк.text,
     keywords: чанк.keywords.join(','),
     lawTitle: чанк.lawTitle,
@@ -124,6 +126,7 @@ export async function пошукПоВектору(
     article: рядок.article as string,
     part: рядок.part as string,
     title: (рядок.title as string) || null,
+    summary: (рядок.summary as string) || null,
     text: рядок.text as string,
     keywords: (рядок.keywords as string) ? (рядок.keywords as string).split(',').filter(Boolean) : [],
     lawTitle: рядок.lawTitle as string,
@@ -157,6 +160,7 @@ export async function оновитиЧанки(
     article: чанк.article,
     part: чанк.part,
     title: чанк.title ?? '',
+    summary: чанк.summary ?? '',
     text: чанк.text,
     keywords: чанк.keywords.join(','),
     lawTitle: чанк.lawTitle,
