@@ -16,7 +16,7 @@ async function main(): Promise<void> {
 
   console.log('Генерація ембеддингів (може зайняти кілька секунд при першому запуску)...');
   const тексти = чанки.map(
-    (ч) => `${ч.lawTitle}. ${ч.article}. ${ч.title ?? ''}. ${ч.text}`
+    (ч) => `${ч.lawTitle}. ${ч.article}. ${ч.title ?? ''}. ${ч.summary ?? ''}. ${ч.text}`
   );
   const ембеддинги = await створитиЕмбеддинги(тексти, 'passage');
   console.log(`Згенеровано ${ембеддинги.length} ембеддингів`);
