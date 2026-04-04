@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import Chat from './Chat';
 import * as api from '../services/api';
 import * as docxGenerator from '../services/docxGenerator';
@@ -14,6 +14,11 @@ describe('Chat', () => {
   beforeEach(() => {
     mockSendMessage.mockReset();
     mockSendMessage.mockResolvedValue({ answer: 'Відповідь від AI', sources: [] });
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    localStorage.clear();
   });
 
   it('відображає поле вводу', () => {
@@ -236,6 +241,69 @@ describe('Chat', () => {
         expect(screen.getByText('Відповідь')).toBeInTheDocument();
       });
       expect(screen.queryByText(/Джерела/i)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('збереження чату в localStorage', () => {
+    const STORAGE_KEY = 'shchyt-chat';
+
+    it('відновлює збережені повідомлення при mount', () => {
+      const saved = {
+        messages: [
+          { role: 'user', text: 'Збережене питання' },
+          { role: 'assistant', text: 'Збережена відповідь', sources: [] },
+        ],
+        summary: null,
+        summarizedUpTo: 0,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+      render(<Chat />);
+      expect(screen.getByText('Збережене питання')).toBeInTheDocument();
+      expect(screen.getByText('Збережена відповідь')).toBeInTheDocument();
+    });
+
+    it('зберігає повідомлення в localStorage після надсилання', async () => {
+      render(<Chat />);
+      const input = screen.getByPlaceholderText(/Введіть ваше питання/i);
+      await userEvent.type(input, 'Нове питання');
+      await userEvent.click(screen.getByRole('button', { name: /Надіслати/i }));
+      await waitFor(() => {
+        expect(screen.getByText('Відповідь від AI')).toBeInTheDocument();
+      });
+      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!);
+      expect(stored.messages).toHaveLength(2);
+      expect(stored.messages[0].text).toBe('Нове питання');
+      expect(stored.messages[1].text).toBe('Відповідь від AI');
+    });
+
+    it('очищує localStorage при натисканні "Новий чат"', async () => {
+      const saved = {
+        messages: [
+          { role: 'user', text: 'Питання' },
+          { role: 'assistant', text: 'Відповідь', sources: [] },
+        ],
+        summary: null,
+        summarizedUpTo: 0,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+      render(<Chat />);
+      expect(screen.getByText('Питання')).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: /Новий чат/i }));
+      expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+      expect(screen.queryByText('Питання')).not.toBeInTheDocument();
+    });
+
+    it('при невалідному JSON в localStorage — чат починає з нуля', () => {
+      localStorage.setItem(STORAGE_KEY, '{invalid json!!!');
+      render(<Chat />);
+      expect(screen.getByPlaceholderText(/Введіть ваше питання/i)).toBeInTheDocument();
+      expect(screen.getByText(/Типові питання/i)).toBeInTheDocument();
+    });
+
+    it('при невалідній структурі в localStorage — чат починає з нуля', () => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ messages: 'not-an-array' }));
+      render(<Chat />);
+      expect(screen.getByText(/Типові питання/i)).toBeInTheDocument();
     });
   });
 });

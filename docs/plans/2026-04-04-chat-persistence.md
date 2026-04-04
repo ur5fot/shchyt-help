@@ -19,7 +19,7 @@
 ## Implementation Steps
 
 ### Task 1: Зберігати та відновлювати чат з localStorage
-- [ ] В `client/src/components/Chat.tsx`:
+- [x] В `client/src/components/Chat.tsx`:
   1. Створити константу `STORAGE_KEY = 'shchyt-chat'`
   2. Створити інтерфейс `ChatState = { messages: ChatMessage[], summary: string | null, summarizedUpTo: number }`
   3. Створити функцію `loadChat(): ChatState | null` — читає localStorage, парсить JSON, повертає null якщо порожньо або невалідно (try/catch)
@@ -27,14 +27,14 @@
   5. Ініціалізувати стан з localStorage: в `useState` використати lazy initializer (`useState(() => loadChat()?.messages ?? [])` тощо)
   6. Додати `useEffect` що зберігає при зміні `[messages, summary, summarizedUpTo]` — але тільки якщо messages.length > 0 (не зберігати порожній чат)
   7. В функцію `очистити()` додати `localStorage.removeItem(STORAGE_KEY)`
-- [ ] Написати тести в `client/src/components/Chat.test.tsx`:
+- [x] Написати тести в `client/src/components/Chat.test.tsx`:
   - При mount з даними в localStorage — відображає збережені повідомлення
   - При надсиланні повідомлення — localStorage оновлюється
   - При натисканні "Новий чат" — localStorage очищується
   - При невалідному JSON в localStorage — чат починає з нуля (не крашиться)
   - Мокати localStorage через `vi.spyOn(Storage.prototype, 'getItem')` / `vi.spyOn(Storage.prototype, 'setItem')`
-- [ ] Запустити `npm test` — всі тести проходять
-- [ ] Запустити `npm run lint` — без помилок
+- [x] Запустити `npm test` — всі тести проходять
+- [x] Запустити `npm run lint` — без помилок
 
 ### Task 2: Verify acceptance criteria
 - [ ] Всі тести проходять (`npm test`)

@@ -15,13 +15,37 @@ interface ChatMessage {
   suggestedTemplate?: string | null;
 }
 
+interface ChatState {
+  messages: ChatMessage[];
+  summary: string | null;
+  summarizedUpTo: number;
+}
+
+const STORAGE_KEY = 'shchyt-chat';
+
+function loadChat(): ChatState | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as ChatState;
+    if (!Array.isArray(parsed.messages)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveChat(state: ChatState): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
 export default function Chat() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => loadChat()?.messages ?? []);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [summary, setSummary] = useState<string | null>(null);
-  const [summarizedUpTo, setSummarizedUpTo] = useState(0);
+  const [summary, setSummary] = useState<string | null>(() => loadChat()?.summary ?? null);
+  const [summarizedUpTo, setSummarizedUpTo] = useState(() => loadChat()?.summarizedUpTo ?? 0);
   const [quoteTooltip, setQuoteTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatAreaRef = useRef<HTMLDivElement>(null);
@@ -30,6 +54,21 @@ export default function Chat() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveChat({ messages, summary, summarizedUpTo });
+    }
+  }, [messages, summary, summarizedUpTo]);
+
+  function очистити() {
+    setMessages([]);
+    setSummary(null);
+    setSummarizedUpTo(0);
+    setInput('');
+    setError(null);
+    localStorage.removeItem(STORAGE_KEY);
+  }
 
   useEffect(() => {
     const area = chatAreaRef.current;
@@ -148,7 +187,10 @@ export default function Chat() {
         <span className="font-semibold text-gray-100">Shchyt ⚖️</span>
         <span className="text-gray-500 text-sm flex-1">AI-асистент з прав військовослужбовців</span>
         {messages.length > 0 && (
-          <button onClick={() => void handleExportPdf()} className="text-xs text-gray-500 hover:text-gray-300 transition-colors cursor-pointer" title="Зберегти бесіду в PDF">PDF</button>
+          <>
+            <button onClick={() => void handleExportPdf()} className="text-xs text-gray-500 hover:text-gray-300 transition-colors cursor-pointer" title="Зберегти бесіду в PDF">PDF</button>
+            <button onClick={очистити} className="text-xs text-gray-500 hover:text-gray-300 transition-colors cursor-pointer" title="Почати новий чат">Новий чат</button>
+          </>
         )}
       </header>
 
