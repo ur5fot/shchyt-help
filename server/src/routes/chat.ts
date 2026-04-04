@@ -54,6 +54,7 @@ interface SourceItem {
   article: string;
   sourceUrl: string;
   documentId?: string;
+  lastUpdated?: string;
   quote?: string;
 }
 
@@ -244,6 +245,7 @@ router.post('/', async (req: Request<object, ChatResponse, ChatRequest>, res: Re
           : р.chunk.article,
         sourceUrl: р.chunk.sourceUrl,
         documentId: р.chunk.documentId,
+        lastUpdated: р.chunk.lastUpdated,
         quote: р.chunk.text.length > 120
           ? р.chunk.text.slice(0, 120).replace(/\s+\S*$/, '') + '…'
           : р.chunk.text || undefined,

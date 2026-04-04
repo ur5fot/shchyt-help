@@ -3,6 +3,7 @@ export interface Source {
   article: string;
   sourceUrl: string;
   documentId?: string;
+  lastUpdated?: string;
   quote?: string;
 }
 

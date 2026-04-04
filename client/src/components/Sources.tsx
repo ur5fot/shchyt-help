@@ -36,6 +36,9 @@ export default function Sources({ sources, verifiedSources }: SourcesProps) {
               {джерело.documentId && (
                 <span className="text-gray-600"> ({джерело.documentId})</span>
               )}
+              {джерело.lastUpdated && (
+                <span className="text-gray-500 text-xs ml-1">ред. {джерело.lastUpdated}</span>
+              )}
             </div>
             {джерело.quote && (
               <p className="text-gray-600 mt-0.5 italic line-clamp-2">«{джерело.quote}»</p>

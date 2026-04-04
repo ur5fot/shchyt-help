@@ -113,7 +113,9 @@ export async function exportChatToPdf(messages: ChatMessageForPdf[]): Promise<Ui
         pg.y -= 4;
         drawBlock(wrapLines('Джерела:', font, 9, cw), doc, pg, font, 9, 12, ml + 10, mt, rgb(0.4, 0.4, 0.4));
         for (const s of m.sources) {
-          const t = '- ' + s.article + ' — ' + s.law + (s.documentId ? ' (' + s.documentId + ')' : '');
+          const docInfo = s.documentId ? ' (' + s.documentId + ')' : '';
+          const updInfo = (s as { lastUpdated?: string }).lastUpdated ? ' [ред. ' + (s as { lastUpdated?: string }).lastUpdated + ']' : '';
+          const t = '- ' + s.article + ' — ' + s.law + docInfo + updInfo;
           drawBlock(wrapLines(t, font, 8, cw - 10), doc, pg, font, 8, 11, ml + 20, mt, rgb(0.4, 0.4, 0.4));
         }
       }

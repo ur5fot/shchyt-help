@@ -17,7 +17,8 @@ export function buildPrompt(питання: string, чанки: LawChunk[]): str
         : чанк.article;
 
       const документ = чанк.documentId ? ` (${чанк.documentId})` : '';
-      return `📎 ${чанк.lawTitle}${документ}\n   ${статтяЧастина}\n   ${чанк.text}`;
+      const редакція = чанк.lastUpdated ? ` [редакція від ${чанк.lastUpdated}]` : '';
+      return `📎 ${чанк.lawTitle}${документ}${редакція}\n   ${статтяЧастина}\n   ${чанк.text}`;
     })
     .join('\n\n---\n\n');
 

@@ -15,6 +15,7 @@ export interface LawChunk {
   lawTitle: string;
   sourceUrl: string;
   documentId?: string;
+  lastUpdated?: string;
 }
 
 interface LawChunkRaw {
@@ -56,17 +57,13 @@ export function loadAllLaws(): LawChunk[] {
       continue;
     }
 
-    // Формуємо documentId з редакцією: "Закон №2232-XII від 25.03.1992, редакція від 15.01.2026"
-    const docId = law.document_id && law.last_updated
-      ? `${law.document_id}, редакція від ${law.last_updated}`
-      : law.document_id;
-
     for (const chunk of law.chunks) {
       allChunks.push({
         ...chunk,
         lawTitle: law.title,
         sourceUrl: law.source_url,
-        documentId: docId,
+        documentId: law.document_id,
+        lastUpdated: law.last_updated,
       });
     }
   }
