@@ -37,11 +37,11 @@
 - [x] Запустити `npm run lint` — без помилок
 
 ### Task 2: Verify acceptance criteria
-- [ ] Всі тести проходять (`npm test`)
-- [ ] Лінтер проходить (`npm run lint`)
-- [ ] Чат зберігається після F5 (messages, summary, sources)
-- [ ] "Новий чат" очищує localStorage
-- [ ] Невалідний localStorage не ламає додаток
+- [x] Всі тести проходять (`npm test`)
+- [x] Лінтер проходить (`npm run lint`)
+- [x] Чат зберігається після F5 (messages, summary, sources)
+- [x] "Новий чат" очищує localStorage
+- [x] Невалідний localStorage не ламає додаток
 
 ## Technical Details
 
