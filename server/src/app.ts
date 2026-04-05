@@ -26,14 +26,14 @@ export const apiLimiter = createApiLimiter();
 export function createApp() {
   const app = express();
 
-  // Дозволяємо localhost, локальну мережу та Cloudflare Tunnel
-  app.use(cors({ origin: /^https?:\/\/(localhost|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|.*\.trycloudflare\.com)(:\d+)?$/ }));
+  // Дозволяємо localhost, локальну мережу, Cloudflare Tunnel та власний домен
+  app.use(cors({ origin: /^https?:\/\/(localhost|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|.*\.trycloudflare\.com|.*\.cryptofeecalc\.com)(:\d+)?$/ }));
   app.use(express.json({ limit: JSON_ЛІМІТ }));
 
   app.use('/api/chat', createApiLimiter(), chatRouter);
 
   // Production: роздача фронтенду з client/dist (після npm run build)
-  const clientDist = join(__dirname, '../../../client/dist');
+  const clientDist = join(process.cwd(), 'client/dist');
   if (existsSync(clientDist)) {
     app.use(express.static(clientDist));
     app.get('*', (_req, res) => {
