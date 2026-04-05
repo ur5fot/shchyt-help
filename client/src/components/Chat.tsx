@@ -170,7 +170,7 @@ export default function Chat() {
   async function handleExportPdf() {
     try {
       const pdfBytes = await exportChatToPdf(messages.map(m => ({ role: m.role, text: m.text, sources: m.sources })));
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
