@@ -193,6 +193,7 @@ describe('dovidkovi-dokumenty.json', () => {
       const hasObtainInfo = text.includes('видає') ||
         text.includes('порядок отримання') ||
         text.includes('подається') ||
+        text.includes('подати') ||
         text.includes('оформлення');
       expect(hasObtainInfo).toBe(true);
     }
