@@ -13,8 +13,8 @@ import { звільнитиReranker } from './services/reranker.ts';
 
 const app = createApp();
 
-const server = app.listen(ПОРТ, () => {
-  logger.info({ порт: ПОРТ }, `Сервер запущено на http://localhost:${ПОРТ}`);
+const server = app.listen(ПОРТ, '0.0.0.0', () => {
+  logger.info({ порт: ПОРТ }, `Сервер запущено на http://0.0.0.0:${ПОРТ}`);
 });
 
 // Graceful shutdown — звільняємо ML моделі

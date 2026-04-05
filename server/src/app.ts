@@ -21,8 +21,8 @@ export const apiLimiter = createApiLimiter();
 export function createApp() {
   const app = express();
 
-  // Дозволяємо будь-який localhost-порт — Vite може автоматично змінити порт якщо 5173 зайнятий
-  app.use(cors({ origin: /^http:\/\/localhost(:\d+)?$/ }));
+  // Дозволяємо localhost та локальну мережу (192.168.x.x, 10.x.x.x)
+  app.use(cors({ origin: /^http:\/\/(localhost|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?$/ }));
   app.use(express.json({ limit: JSON_ЛІМІТ }));
 
   app.use('/api/chat', createApiLimiter(), chatRouter);
