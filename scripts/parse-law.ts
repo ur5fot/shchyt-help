@@ -36,23 +36,42 @@ export interface LawFile {
   chunks: LawChunkRaw[];
 }
 
-// Витягає keywords зі значущих слів тексту
+// Витягає keywords зі значущих слів тексту — уніграми + біграми
 export function extractKeywords(text: string): string[] {
-  const words = text
+  const clean = text
     .toLowerCase()
     .replace(/[.,;:!?()«»"'\/\-–—]/g, ' ')
-    .split(/\s+/)
-    .filter(w => w.length > 4 && !STOP_WORDS.has(w));
+    .replace(/\s+/g, ' ')
+    .trim();
 
+  const allWords = clean.split(' ');
+  const words = allWords.filter(w => w.length > 4 && !STOP_WORDS.has(w));
+
+  // Уніграми — top-6 за частотою
   const freq: Record<string, number> = {};
   for (const word of words) {
     freq[word] = (freq[word] || 0) + 1;
   }
-
-  return Object.entries(freq)
+  const unigrams = Object.entries(freq)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 8)
+    .slice(0, 6)
     .map(([word]) => word);
+
+  // Біграми — двослівні фрази з значущих слів поруч (top-4)
+  const bigramFreq: Record<string, number> = {};
+  for (let i = 0; i < allWords.length - 1; i++) {
+    const a = allWords[i], b = allWords[i + 1];
+    if (a.length > 3 && b.length > 3 && !STOP_WORDS.has(a) && !STOP_WORDS.has(b)) {
+      const bigram = `${a} ${b}`;
+      bigramFreq[bigram] = (bigramFreq[bigram] || 0) + 1;
+    }
+  }
+  const bigrams = Object.entries(bigramFreq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([phrase]) => phrase);
+
+  return [...bigrams, ...unigrams];
 }
 
 // Витягає текстовий вміст тегу (без вкладених тегів)
@@ -108,7 +127,8 @@ export function parseArticleBased(paragraphs: string[], baseId: string): LawChun
   let partBuffer: string[] = [];
   let partNum = 0;
 
-  const ARTICLE_RE = /^Стаття\s+([\d][\d-]*)\.\s*(.*)/;
+  // Підтримує "Стаття 8-1.", "Стаття 8 - 1 .", "Стаття 10-1." з пробілами навколо дефіса
+  const ARTICLE_RE = /^Стаття\s+([\d]+(?:\s*-\s*\d+)*)\s*\.\s*(.*)/;
   const PART_RE = /^(\d{1,2})\.\s+(.+)/s;
   // Розділи типу "Прикінцеві положення", "Перехідні положення" — окремий псевдо-артикль
   // Може бути як "Прикінцеві положення", так і "Розділ VII ПРИКІНЦЕВІ ПОЛОЖЕННЯ"
@@ -186,7 +206,8 @@ export function parseArticleBased(paragraphs: string[], baseId: string): LawChun
     const articleMatch = ARTICLE_RE.exec(text);
     if (articleMatch) {
       flushChunk();
-      currentArticleNum = articleMatch[1];
+      // Нормалізуємо номер: "8 - 1" → "8-1"
+      currentArticleNum = articleMatch[1].replace(/\s*-\s*/g, '-');
       currentArticleTitle = articleMatch[2].trim();
       partBuffer = [];
       partNum = 0;
