@@ -46,7 +46,8 @@ export function buildPrompt(питання: string, чанки: LawChunk[]): str
 
       const документ = чанк.documentId ? ` (${чанк.documentId})` : '';
       const редакція = чанк.lastUpdated ? ` [редакція від ${чанк.lastUpdated}]` : '';
-      return `📎 ${чанк.lawTitle}${документ}${редакція}\n   ${статтяЧастина}\n   ${чанк.text}`;
+      const посилання = чанк.sourceUrl && !чанк.sourceUrl.startsWith('internal://') ? ` URL: ${чанк.sourceUrl}` : '';
+      return `📎 ${чанк.lawTitle}${документ}${редакція}${посилання}\n   ${статтяЧастина}\n   ${чанк.text}`;
     })
     .join('\n\n---\n\n');
 
