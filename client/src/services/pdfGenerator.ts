@@ -80,8 +80,38 @@ function drawBlock(
   }
 }
 
+function convertMdTable(text: string): string {
+  // Знаходимо Markdown таблиці і конвертуємо у читабельний формат
+  const lines = text.split('\n');
+  const result: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    // Виявляємо рядок-роздільник таблиці |---|---|
+    if (/^\|[-:\s|]+\|$/.test(line)) {
+      i++; // пропускаємо роздільник
+      continue;
+    }
+    // Рядок таблиці: | col1 | col2 |
+    if (line.startsWith('|') && line.endsWith('|')) {
+      const cells = line.split('|').filter(c => c.trim()).map(c => c.trim());
+      // Перший рядок таблиці (заголовок) — жирний
+      if (i + 1 < lines.length && /^\|[-:\s|]+\|$/.test(lines[i + 1].trim())) {
+        result.push(cells.join(' — '));
+      } else {
+        result.push('  ' + cells.join(' — '));
+      }
+    } else {
+      result.push(lines[i]);
+    }
+    i++;
+  }
+  return result.join('\n');
+}
+
 function stripMd(text: string): string {
-  return text.replace(/\*\*/g, '').replace(/^#{1,6}\s+/gm, '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/^[-*]\s/gm, '  - ');
+  const withTables = convertMdTable(text);
+  return withTables.replace(/\*\*/g, '').replace(/^#{1,6}\s+/gm, '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/^[-*]\s/gm, '  - ');
 }
 
 export async function exportChatToPdf(messages: ChatMessageForPdf[]): Promise<Uint8Array> {
