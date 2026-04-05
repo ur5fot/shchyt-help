@@ -18,7 +18,11 @@
     "eval": "tsx scripts/eval.ts",
     "init-hashes": "tsx scripts/generate-hashes.ts",
     "check-updates": "tsx scripts/check-updates.ts",
-    "generate-summaries": "tsx scripts/generate-summaries.ts"
+    "generate-summaries": "tsx scripts/generate-summaries.ts",
+    "build": "npm run build --workspace=client",
+    "prod": "npm run build && NODE_ENV=production tsx server/src/index.ts",
+    "tunnel": "cloudflared tunnel run shchyt",
+    "prod:tunnel": "npm run build && concurrently \"NODE_ENV=production tsx server/src/index.ts\" \"cloudflared tunnel run shchyt\""
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
