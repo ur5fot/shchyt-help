@@ -59,11 +59,18 @@ router.post('/', async (req: Request, res: Response) => {
         res.status(400).json({ error: 'PDF файл занадто великий (макс. 5MB)' });
         return;
       }
-      const safeName = pdfFilename
-        ? pdfFilename.replace(/[^a-zA-Z0-9а-яіїєґА-ЯІЇЄҐ._-]/g, '_').slice(0, 100)
-        : 'chat-export.pdf';
+      // Перевірка magic bytes — файл повинен бути справжнім PDF (%PDF)
+      const PDF_MAGIC = Buffer.from([0x25, 0x50, 0x44, 0x46]); // %PDF
+      if (pdfBuffer.length < 4 || !pdfBuffer.subarray(0, 4).equals(PDF_MAGIC)) {
+        res.status(400).json({ error: 'Файл не є валідним PDF' });
+        return;
+      }
+      // Примусово .pdf розширення, санітизація імені
+      const baseName = pdfFilename
+        ? pdfFilename.replace(/\.pdf$/i, '').replace(/[^a-zA-Z0-9а-яіїєґА-ЯІЇЄҐ._-]/g, '_').slice(0, 95)
+        : 'chat-export';
       attachments.push({
-        filename: safeName,
+        filename: `${baseName}.pdf`,
         content: pdfBuffer,
       });
     }

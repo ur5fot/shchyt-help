@@ -22,6 +22,10 @@ import request from 'supertest';
 import { createApp } from '../app.ts';
 import { _скинутиTransporter } from '../routes/feedback.ts';
 
+// Мінімальний валідний PDF (magic bytes %PDF + довільний контент)
+const валіднийPdfBuffer = Buffer.concat([Buffer.from('%PDF-1.4 fake content'), Buffer.alloc(100)]);
+const валіднийPdfBase64 = валіднийPdfBuffer.toString('base64');
+
 describe('POST /api/feedback', () => {
   let app: ReturnType<typeof createApp>;
 
@@ -130,14 +134,12 @@ describe('POST /api/feedback', () => {
   });
 
   it('успішна відправка з PDF вкладенням', async () => {
-    const малийPdf = Buffer.from('fake-pdf-content').toString('base64');
-
     const відповідь = await request(app)
       .post('/api/feedback')
       .send({
         message: 'Відгук з вкладенням',
         type: 'suggestion',
-        pdfBase64: малийPdf,
+        pdfBase64: валіднийPdfBase64,
       });
 
     expect(відповідь.status).toBe(200);
@@ -154,14 +156,12 @@ describe('POST /api/feedback', () => {
   });
 
   it('використовує pdfFilename з запиту якщо надано', async () => {
-    const малийPdf = Buffer.from('fake-pdf-content').toString('base64');
-
     const відповідь = await request(app)
       .post('/api/feedback')
       .send({
         message: 'Відгук з назвою файлу',
         type: 'suggestion',
-        pdfBase64: малийPdf,
+        pdfBase64: валіднийPdfBase64,
         pdfFilename: 'shchyt-2026-04-06.pdf',
       });
 
@@ -177,15 +177,13 @@ describe('POST /api/feedback', () => {
     );
   });
 
-  it('санітизує небезпечний pdfFilename', async () => {
-    const малийPdf = Buffer.from('fake-pdf-content').toString('base64');
-
+  it('санітизує небезпечний pdfFilename та додає .pdf', async () => {
     const відповідь = await request(app)
       .post('/api/feedback')
       .send({
         message: 'Відгук з небезпечною назвою',
         type: 'suggestion',
-        pdfBase64: малийPdf,
+        pdfBase64: валіднийPdfBase64,
         pdfFilename: '../../etc/passwd',
       });
 
@@ -194,7 +192,44 @@ describe('POST /api/feedback', () => {
       expect.objectContaining({
         attachments: expect.arrayContaining([
           expect.objectContaining({
-            filename: '.._.._etc_passwd',
+            filename: '.._.._etc_passwd.pdf',
+          }),
+        ]),
+      }),
+    );
+  });
+
+  it('повертає 400 якщо файл не є валідним PDF', async () => {
+    const неPdf = Buffer.from('not-a-pdf-file-at-all').toString('base64');
+
+    const відповідь = await request(app)
+      .post('/api/feedback')
+      .send({
+        message: 'Відгук з невалідним файлом',
+        type: 'suggestion',
+        pdfBase64: неPdf,
+      });
+
+    expect(відповідь.status).toBe(400);
+    expect(відповідь.body.error).toContain('валідним PDF');
+  });
+
+  it('примусово додає .pdf розширення до назви файлу', async () => {
+    const відповідь = await request(app)
+      .post('/api/feedback')
+      .send({
+        message: 'Відгук з назвою без розширення',
+        type: 'suggestion',
+        pdfBase64: валіднийPdfBase64,
+        pdfFilename: 'my-file.html',
+      });
+
+    expect(відповідь.status).toBe(200);
+    expect(mockSendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attachments: expect.arrayContaining([
+          expect.objectContaining({
+            filename: 'my-file.html.pdf',
           }),
         ]),
       }),
@@ -213,9 +248,10 @@ describe('POST /api/feedback', () => {
   });
 
   it('приймає payload більше 10kb (окремий JSON ліміт 10mb для feedback)', async () => {
-    // Генеруємо PDF ~15kb в base64 (~20kb) — це перевищує chat ліміт (10kb),
+    // Генеруємо валідний PDF ~15kb в base64 (~20kb) — це перевищує chat ліміт (10kb),
     // але feedback має окремий JSON ліміт 10mb
-    const pdfBase64 = Buffer.alloc(15_000).toString('base64');
+    const великийВаліднийPdf = Buffer.concat([Buffer.from('%PDF-1.4 '), Buffer.alloc(15_000)]);
+    const pdfBase64 = великийВаліднийPdf.toString('base64');
 
     const відповідь = await request(app)
       .post('/api/feedback')
