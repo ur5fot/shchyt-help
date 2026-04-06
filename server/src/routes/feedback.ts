@@ -39,12 +39,14 @@ router.post('/', async (req: Request, res: Response) => {
     const validTypes = ['good', 'bad', 'suggestion'] as const;
     const type = validTypes.includes(rawType as typeof validTypes[number]) ? rawType as typeof validTypes[number] : 'suggestion';
 
-    if (!message || message.trim().length < 5) {
+    const trimmedMessage = message?.trim();
+
+    if (!trimmedMessage || trimmedMessage.length < 5) {
       res.status(400).json({ error: 'Повідомлення занадто коротке' });
       return;
     }
 
-    if (message.trim().length > 5000) {
+    if (trimmedMessage.length > 5000) {
       res.status(400).json({ error: 'Повідомлення занадто довге (макс. 5000 символів)' });
       return;
     }
@@ -57,8 +59,11 @@ router.post('/', async (req: Request, res: Response) => {
         res.status(400).json({ error: 'PDF файл занадто великий (макс. 5MB)' });
         return;
       }
+      const safeName = pdfFilename
+        ? pdfFilename.replace(/[^a-zA-Z0-9а-яіїєґА-ЯІЇЄҐ._-]/g, '_').slice(0, 100)
+        : 'chat-export.pdf';
       attachments.push({
-        filename: pdfFilename || 'chat-export.pdf',
+        filename: safeName,
         content: pdfBuffer,
       });
     }
@@ -74,7 +79,7 @@ router.post('/', async (req: Request, res: Response) => {
       html: `
         <h2>${typeLabel}</h2>
         <p><strong>Повідомлення:</strong></p>
-        <pre style="background:#f5f5f5;padding:12px;border-radius:8px;white-space:pre-wrap;">${message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+        <pre style="background:#f5f5f5;padding:12px;border-radius:8px;white-space:pre-wrap;">${trimmedMessage.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
         ${attachments.length > 0 ? '<p>📎 PDF-файл бесіди додано.</p>' : ''}
         <hr>
         <p style="color:#888;font-size:12px;">Відправлено з Shchyt — ${new Date().toISOString()}</p>

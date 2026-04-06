@@ -177,6 +177,30 @@ describe('POST /api/feedback', () => {
     );
   });
 
+  it('санітизує небезпечний pdfFilename', async () => {
+    const малийPdf = Buffer.from('fake-pdf-content').toString('base64');
+
+    const відповідь = await request(app)
+      .post('/api/feedback')
+      .send({
+        message: 'Відгук з небезпечною назвою',
+        type: 'suggestion',
+        pdfBase64: малийPdf,
+        pdfFilename: '../../etc/passwd',
+      });
+
+    expect(відповідь.status).toBe(200);
+    expect(mockSendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attachments: expect.arrayContaining([
+          expect.objectContaining({
+            filename: '.._.._etc_passwd',
+          }),
+        ]),
+      }),
+    );
+  });
+
   it('повертає 500 при помилці SMTP', async () => {
     mockSendMail.mockRejectedValueOnce(new Error('SMTP connection failed'));
 
