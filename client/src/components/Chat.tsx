@@ -6,6 +6,7 @@ import { exportChatToPdf } from '../services/pdfGenerator';
 import { generateDocx } from '../services/docxGenerator';
 // TODO: увімкнути коли шаблони будуть доопрацьовані
 // import { detectTemplate } from '../services/templateDetector';
+import FeedbackModal from './FeedbackModal';
 import { ПІДКАЗКИ, МАКС_ДОВЖИНА_ПОВІДОМЛЕННЯ } from '../constants';
 
 interface ChatMessage {
@@ -63,6 +64,7 @@ export default function Chat() {
   const [quoteTooltip, setQuoteTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
   const [showPrivacyWarning, setShowPrivacyWarning] = useState(() => !localStorage.getItem('shchyt-privacy-accepted'));
   const [showNewChatConfirm, setShowNewChatConfirm] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -240,6 +242,7 @@ export default function Chat() {
         {messages.length > 0 && (
           <>
             <button onClick={() => void handleExportPdf()} className="text-xs text-gray-500 hover:text-gray-300 transition-colors cursor-pointer" title="Зберегти бесіду в PDF">PDF</button>
+            <button onClick={() => setShowFeedback(true)} className="text-xs text-gray-500 hover:text-gray-300 transition-colors cursor-pointer" title="Зворотній зв'язок">Відгук</button>
             <button onClick={() => setShowNewChatConfirm(true)} className="text-xs text-gray-500 hover:text-gray-300 transition-colors cursor-pointer" title="Почати новий чат">Новий чат</button>
           </>
         )}
@@ -368,6 +371,13 @@ export default function Chat() {
             </div>
           </div>
         </div>
+      )}
+
+      {showFeedback && (
+        <FeedbackModal
+          onClose={() => setShowFeedback(false)}
+          onExportPdf={() => exportChatToPdf(messages.map(m => ({ role: m.role, text: m.text, sources: m.sources })))}
+        />
       )}
 
       {showPrivacyWarning && (

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
 import rateLimit from 'express-rate-limit';
 import chatRouter from './routes/chat.ts';
+import feedbackRouter from './routes/feedback.ts';
 import { RATE_LIMIT_ВІКНО_МС, RATE_LIMIT_МАКС_ЗАПИТІВ, JSON_ЛІМІТ } from './constants.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -28,9 +29,10 @@ export function createApp() {
 
   // Дозволяємо localhost, локальну мережу, Cloudflare Tunnel та власний домен
   app.use(cors({ origin: /^https?:\/\/(localhost|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|.*\.trycloudflare\.com|.*\.cryptofeecalc\.com)(:\d+)?$/ }));
-  app.use(express.json({ limit: JSON_ЛІМІТ }));
+  app.use(express.json({ limit: '10mb' }));
 
   app.use('/api/chat', createApiLimiter(), chatRouter);
+  app.use('/api/feedback', createApiLimiter(), feedbackRouter);
 
   // Production: роздача фронтенду з client/dist (після npm run build)
   const clientDist = join(process.cwd(), 'client/dist');
