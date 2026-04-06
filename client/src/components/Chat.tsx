@@ -77,10 +77,10 @@ export default function Chat() {
     const start = Date.now();
     const stages = [
       { after: 0, text: '🔍 Пошук у базі законів...' },
-      { after: 3000, text: '⚖️ Аналіз релевантних норм...' },
-      { after: 8000, text: '🤔 Формування відповіді...' },
-      { after: 15000, text: '📝 Перевірка цитат...' },
-      { after: 25000, text: '⏳ Майже готово...' },
+      { after: 6000, text: '⚖️ Аналіз релевантних норм...' },
+      { after: 16000, text: '🤔 Формування відповіді...' },
+      { after: 30000, text: '📝 Перевірка цитат...' },
+      { after: 50000, text: '⏳ Майже готово...' },
     ];
     setLoadingStatus(stages[0].text);
     const interval = setInterval(() => {
