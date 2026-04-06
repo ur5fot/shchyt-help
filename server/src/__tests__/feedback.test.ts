@@ -146,7 +146,31 @@ describe('POST /api/feedback', () => {
       expect.objectContaining({
         attachments: expect.arrayContaining([
           expect.objectContaining({
-            filename: 'attachment.pdf',
+            filename: 'chat-export.pdf',
+          }),
+        ]),
+      }),
+    );
+  });
+
+  it('використовує pdfFilename з запиту якщо надано', async () => {
+    const малийPdf = Buffer.from('fake-pdf-content').toString('base64');
+
+    const відповідь = await request(app)
+      .post('/api/feedback')
+      .send({
+        message: 'Відгук з назвою файлу',
+        type: 'suggestion',
+        pdfBase64: малийPdf,
+        pdfFilename: 'shchyt-2026-04-06.pdf',
+      });
+
+    expect(відповідь.status).toBe(200);
+    expect(mockSendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attachments: expect.arrayContaining([
+          expect.objectContaining({
+            filename: 'shchyt-2026-04-06.pdf',
           }),
         ]),
       }),

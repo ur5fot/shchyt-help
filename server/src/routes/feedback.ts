@@ -29,10 +29,11 @@ router.post('/', async (req: Request, res: Response) => {
       return;
     }
 
-    const { message, type: rawType, pdfBase64 } = req.body as {
+    const { message, type: rawType, pdfBase64, pdfFilename } = req.body as {
       message?: string;
       type?: string;
       pdfBase64?: string;
+      pdfFilename?: string;
     };
 
     const validTypes = ['good', 'bad', 'suggestion'] as const;
@@ -43,7 +44,7 @@ router.post('/', async (req: Request, res: Response) => {
       return;
     }
 
-    if (message.length > 5000) {
+    if (message.trim().length > 5000) {
       res.status(400).json({ error: 'Повідомлення занадто довге (макс. 5000 символів)' });
       return;
     }
@@ -57,7 +58,7 @@ router.post('/', async (req: Request, res: Response) => {
         return;
       }
       attachments.push({
-        filename: 'attachment.pdf',
+        filename: pdfFilename || 'chat-export.pdf',
         content: pdfBuffer,
       });
     }
@@ -73,7 +74,7 @@ router.post('/', async (req: Request, res: Response) => {
       html: `
         <h2>${typeLabel}</h2>
         <p><strong>Повідомлення:</strong></p>
-        <pre style="background:#f5f5f5;padding:12px;border-radius:8px;white-space:pre-wrap;">${message.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+        <pre style="background:#f5f5f5;padding:12px;border-radius:8px;white-space:pre-wrap;">${message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
         ${attachments.length > 0 ? '<p>📎 PDF-файл бесіди додано.</p>' : ''}
         <hr>
         <p style="color:#888;font-size:12px;">Відправлено з Shchyt — ${new Date().toISOString()}</p>
