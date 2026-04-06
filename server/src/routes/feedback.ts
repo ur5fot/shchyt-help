@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express';
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import { logger } from '../logger.ts';
 
 const router = Router();
@@ -8,10 +8,13 @@ const МАКС_РОЗМІР_PDF = 5_000_000; // 5MB
 
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const apiKey = process.env.RESEND_API_KEY;
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = parseInt(process.env.SMTP_PORT || '587');
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
     const emailTo = process.env.FEEDBACK_EMAIL;
 
-    if (!apiKey || !emailTo) {
+    if (!smtpHost || !smtpUser || !smtpPass || !emailTo) {
       res.status(503).json({ error: 'Зворотній зв\'язок тимчасово недоступний' });
       return;
     }
@@ -49,9 +52,15 @@ router.post('/', async (req: Request, res: Response) => {
 
     const typeLabel = type === 'good' ? '👍 Корисно' : type === 'bad' ? '👎 Некорисно' : '💡 Пропозиція';
 
-    const resend = new Resend(apiKey);
-    await resend.emails.send({
-      from: 'Shchyt Feedback <onboarding@resend.dev>',
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: { user: smtpUser, pass: smtpPass },
+    });
+
+    await transporter.sendMail({
+      from: smtpUser,
       to: emailTo,
       subject: `[Щит] ${typeLabel} — зворотній зв'язок`,
       html: `
@@ -62,10 +71,7 @@ router.post('/', async (req: Request, res: Response) => {
         <hr>
         <p style="color:#888;font-size:12px;">Відправлено з Shchyt — ${new Date().toISOString()}</p>
       `,
-      attachments: attachments.map(a => ({
-        filename: a.filename,
-        content: a.content,
-      })),
+      attachments,
     });
 
     logger.info({ type, hasAttachment: attachments.length > 0 }, 'Feedback відправлено');
