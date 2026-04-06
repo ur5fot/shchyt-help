@@ -31,7 +31,10 @@ export default function FeedbackModal({ onClose, onExportPdf }: FeedbackModalPro
         pdfFilename = customPdf.name;
       } else if (attachPdf) {
         const bytes = await onExportPdf();
-        pdfBase64 = btoa(String.fromCharCode(...bytes));
+        // chunk-based btoa — spread operator не витримує великих масивів
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        pdfBase64 = btoa(binary);
         pdfFilename = `shchyt-${new Date().toISOString().slice(0, 10)}.pdf`;
       }
 

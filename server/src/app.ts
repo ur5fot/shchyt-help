@@ -29,10 +29,17 @@ export function createApp() {
 
   // Дозволяємо localhost, локальну мережу, Cloudflare Tunnel та власний домен
   app.use(cors({ origin: /^https?:\/\/(localhost|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|.*\.trycloudflare\.com|.*\.cryptofeecalc\.com)(:\d+)?$/ }));
-  app.use(express.json({ limit: '10mb' }));
+  app.use('/api/feedback', express.json({ limit: '10mb' }));
+  app.use(express.json({ limit: JSON_ЛІМІТ }));
 
   app.use('/api/chat', createApiLimiter(), chatRouter);
-  app.use('/api/feedback', createApiLimiter(), feedbackRouter);
+  app.use('/api/feedback', rateLimit({
+    windowMs: RATE_LIMIT_ВІКНО_МС,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Забагато відгуків. Спробуйте через хвилину.' },
+  }), feedbackRouter);
 
   // Production: роздача фронтенду з client/dist (після npm run build)
   const clientDist = join(process.cwd(), 'client/dist');

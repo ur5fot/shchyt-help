@@ -6,15 +6,25 @@ const router = Router();
 
 const МАКС_РОЗМІР_PDF = 5_000_000; // 5MB
 
+// Lazy singleton transporter — одне TCP з'єднання
+let _transporter: nodemailer.Transporter | null = null;
+function getTransporter() {
+  if (!_transporter) {
+    _transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: parseInt(process.env.SMTP_PORT || '587') === 465,
+      auth: { user: process.env.SMTP_USER!, pass: process.env.SMTP_PASS! },
+    });
+  }
+  return _transporter;
+}
+
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpPort = parseInt(process.env.SMTP_PORT || '587');
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
     const emailTo = process.env.FEEDBACK_EMAIL;
 
-    if (!smtpHost || !smtpUser || !smtpPass || !emailTo) {
+    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS || !emailTo) {
       res.status(503).json({ error: 'Зворотній зв\'язок тимчасово недоступний' });
       return;
     }
@@ -45,22 +55,17 @@ router.post('/', async (req: Request, res: Response) => {
         return;
       }
       attachments.push({
-        filename: pdfFilename || 'chat-export.pdf',
+        filename: 'attachment.pdf',
         content: pdfBuffer,
       });
     }
 
     const typeLabel = type === 'good' ? '👍 Корисно' : type === 'bad' ? '👎 Некорисно' : '💡 Пропозиція';
 
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: { user: smtpUser, pass: smtpPass },
-    });
+    const transporter = getTransporter();
 
     await transporter.sendMail({
-      from: smtpUser,
+      from: process.env.SMTP_USER,
       to: emailTo,
       subject: `[Щит] ${typeLabel} — зворотній зв'язок`,
       html: `
