@@ -164,6 +164,20 @@ describe('POST /api/feedback', () => {
     expect(відповідь.body.error).toContain('Не вдалося відправити');
   });
 
+  it('приймає payload до 10mb (окремий JSON ліміт для feedback)', async () => {
+    // Генеруємо PDF трохи менше 5MB (ліміт PDF) — це перевищує 10kb (ліміт chat),
+    // але feedback має окремий JSON ліміт 10mb
+    const pdfBase64 = Buffer.alloc(100_000).toString('base64');
+
+    const відповідь = await request(app)
+      .post('/api/feedback')
+      .send({ message: 'Тестове повідомлення', pdfBase64 });
+
+    // Не повертає 413 (Payload Too Large) — JSON ліміт 10mb дозволяє
+    expect(відповідь.status).toBe(200);
+    expect(відповідь.body.ok).toBe(true);
+  });
+
   describe('валідація type', () => {
     it('приймає type "good"', async () => {
       const відповідь = await request(app)

@@ -30,12 +30,12 @@
 - [x] Запустити `npm run lint` — без помилок
 
 ### Task 2: Виправити JSON ліміт для chat роуту
-- [ ] В `server/src/app.ts` — переконатись що `/api/chat` використовує `JSON_ЛІМІТ` з constants (10kb), а `/api/feedback` використовує 10mb
-- [ ] Перевірити що rate limit для chat та feedback працюють незалежно
-- [ ] Написати тест: chat відхиляє payload > 10kb
-- [ ] Написати тест: feedback приймає payload до 10mb
-- [ ] Запустити `npm test` — всі тести проходять
-- [ ] Запустити `npm run lint` — без помилок
+- [x] В `server/src/app.ts` — переконатись що `/api/chat` використовує `JSON_ЛІМІТ` з constants (10kb), а `/api/feedback` використовує 10mb
+- [x] Перевірити що rate limit для chat та feedback працюють незалежно
+- [x] Написати тест: chat відхиляє payload > 10kb
+- [x] Написати тест: feedback приймає payload до 10mb
+- [x] Запустити `npm test` — всі тести проходять
+- [x] Запустити `npm run lint` — без помилок
 
 ### Task 3: Verify acceptance criteria
 - [ ] Feedback endpoint: всі error cases покриті тестами

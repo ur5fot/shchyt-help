@@ -284,6 +284,19 @@ describe('POST /api/chat', () => {
     expect(відповідь.body.sources[0].article).toBe('Стаття 15');
   });
 
+  it('відхиляє payload більше 10kb (JSON_ЛІМІТ)', async () => {
+    // Генеруємо повідомлення трохи більше 10kb
+    const великеПовідомлення = 'А'.repeat(12_000);
+
+    const відповідь = await request(app)
+      .post('/api/chat')
+      .send({ message: великеПовідомлення })
+      .set('Content-Type', 'application/json');
+
+    // Express повертає 413 Payload Too Large коли тіло перевищує ліміт
+    expect(відповідь.status).toBe(413);
+  });
+
   describe('query expansion для follow-up питань', () => {
     it('витягує посилання на статті з останньої відповіді AI та додає до пошуку', async () => {
       const history = [
