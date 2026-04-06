@@ -13,8 +13,11 @@ import { звільнитиReranker } from './services/reranker.ts';
 
 const app = createApp();
 
-const server = app.listen(ПОРТ, '0.0.0.0', () => {
-  logger.info({ порт: ПОРТ }, `Сервер запущено на http://0.0.0.0:${ПОРТ}`);
+// PORT з env має пріоритет (для запуску dev на іншому порті)
+const порт = parseInt(process.env.PORT || '') || ПОРТ;
+
+const server = app.listen(порт, '0.0.0.0', () => {
+  logger.info({ порт }, `Сервер запущено на http://0.0.0.0:${порт}`);
 });
 
 // Graceful shutdown — звільняємо ML моделі
