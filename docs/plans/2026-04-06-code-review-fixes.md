@@ -38,12 +38,12 @@
 - [x] Запустити `npm run lint` — без помилок
 
 ### Task 3: Verify acceptance criteria
-- [ ] Feedback endpoint: всі error cases покриті тестами
-- [ ] JSON ліміт: chat = 10kb, feedback = 10mb
-- [ ] Type валідація: невідомий type → 'suggestion'
-- [ ] Всі тести проходять (`npm test`)
-- [ ] Лінтер проходить (`npm run lint`)
-- [ ] Жодних нових пропущених тестів (skip count не збільшився)
+- [x] Feedback endpoint: всі error cases покриті тестами
+- [x] JSON ліміт: chat = 10kb, feedback = 10mb
+- [x] Type валідація: невідомий type → 'suggestion'
+- [x] Всі тести проходять (`npm test`)
+- [x] Лінтер проходить (`npm run lint`)
+- [x] Жодних нових пропущених тестів (skip count не збільшився)
 
 ## Technical Details
 
