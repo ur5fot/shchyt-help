@@ -188,6 +188,19 @@ export default function Chat() {
     }
   }
 
+  function summarizeChat(): string {
+    const firstUserMsg = messages.find(m => m.role === 'user')?.text ?? '';
+    return firstUserMsg
+      .replace(/[?!.,;:()«»"'\/\\]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 3)
+      .slice(0, 4)
+      .join('-')
+      .toLowerCase()
+      .replace(/[^а-яіїєґa-z0-9-]/g, '')
+      .slice(0, 50) || 'бесіда';
+  }
+
   async function handleExportPdf() {
     try {
       const pdfBytes = await exportChatToPdf(messages.map(m => ({ role: m.role, text: m.text, sources: m.sources })));
@@ -195,7 +208,7 @@ export default function Chat() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `shchyt-${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.download = `shchyt-${new Date().toISOString().slice(0, 10)}-${summarizeChat()}.pdf`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 5000);
     } catch (err) { console.error('PDF export failed', err); setError('Не вдалося згенерувати PDF'); }
