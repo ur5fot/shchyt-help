@@ -56,6 +56,7 @@ export default function Chat() {
   const [messages, setMessages] = useState<ChatMessage[]>(initialState?.messages ?? []);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(initialState?.summary ?? null);
   const [summarizedUpTo, setSummarizedUpTo] = useState(initialState?.summarizedUpTo ?? 0);
@@ -69,6 +70,26 @@ export default function Chat() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
+
+  // Індикатор прогресу — змінює текст по таймеру під час очікування
+  useEffect(() => {
+    if (!loading) { setLoadingStatus(''); return; }
+    const start = Date.now();
+    const stages = [
+      { after: 0, text: '🔍 Пошук у базі законів...' },
+      { after: 3000, text: '⚖️ Аналіз релевантних норм...' },
+      { after: 8000, text: '🤔 Формування відповіді...' },
+      { after: 15000, text: '📝 Перевірка цитат...' },
+      { after: 25000, text: '⏳ Майже готово...' },
+    ];
+    setLoadingStatus(stages[0].text);
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - start;
+      const current = [...stages].reverse().find(s => elapsed >= s.after);
+      if (current) setLoadingStatus(current.text);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -256,7 +277,7 @@ export default function Chat() {
         {loading && (
           <div className="flex justify-start mb-3">
             <div className="bg-gray-800 text-gray-400 px-4 py-3 rounded-2xl rounded-bl-sm text-sm">
-              AI друкує...
+              {loadingStatus || 'AI друкує...'}
             </div>
           </div>
         )}

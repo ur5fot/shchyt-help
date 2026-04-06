@@ -72,13 +72,13 @@ describe('Chat', () => {
     expect(input.value).toBe('');
   });
 
-  it('відображає "AI друкує..." під час очікування відповіді', async () => {
+  it('відображає індикатор прогресу під час очікування відповіді', async () => {
     mockSendMessage.mockImplementation(() => new Promise(() => {}));
     render(<Chat />);
     const input = screen.getByPlaceholderText(/Введіть ваше питання/i);
     await userEvent.type(input, 'Питання');
     await userEvent.click(screen.getByRole('button', { name: /Надіслати/i }));
-    expect(screen.getByText(/AI друкує/i)).toBeInTheDocument();
+    expect(screen.getByText(/Пошук у базі законів/i)).toBeInTheDocument();
   });
 
   it('відображає помилку якщо API недоступний', async () => {
