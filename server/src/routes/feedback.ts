@@ -29,12 +29,14 @@ router.post('/', async (req: Request, res: Response) => {
       return;
     }
 
-    const { message, type, pdfBase64, pdfFilename } = req.body as {
+    const { message, type: rawType, pdfBase64 } = req.body as {
       message?: string;
-      type?: 'good' | 'bad' | 'suggestion';
+      type?: string;
       pdfBase64?: string;
-      pdfFilename?: string;
     };
+
+    const validTypes = ['good', 'bad', 'suggestion'] as const;
+    const type = validTypes.includes(rawType as typeof validTypes[number]) ? rawType as typeof validTypes[number] : 'suggestion';
 
     if (!message || message.trim().length < 5) {
       res.status(400).json({ error: 'Повідомлення занадто коротке' });
@@ -86,5 +88,10 @@ router.post('/', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Не вдалося відправити зворотній зв\'язок' });
   }
 });
+
+// Для тестування — скидання singleton transporter
+export function _скинутиTransporter() {
+  _transporter = null;
+}
 
 export default router;
