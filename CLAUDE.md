@@ -53,7 +53,7 @@ Public: `https://shchyt.cryptofeecalc.com` (Cloudflare Tunnel → localhost:3001
 
 ```
 client/      → React фронтенд (Vite), проксі /api на localhost:3002 (dev) або роздається Express (prod)
-server/      → Express бекенд, єдиний ендпоінт POST /api/chat
+server/      → Express бекенд, ендпоінти POST /api/chat та POST /api/feedback
 laws/        → JSON-файли українських законів (чанки з ключовими словами)
 data/lancedb/→ Векторна база LanceDB (генерується локально через init-vector-db)
 data/law-hashes.json → Хеші HTML сторінок законів для виявлення змін (генерується через init-hashes / check-updates)
@@ -91,7 +91,8 @@ eval/        → Golden test set (68 питань з очікуваними ча
 - **pdfGenerator.ts** (клієнт) — `exportChatToPdf` для експорту бесіди в PDF (Markdown stripping, джерела з documentId, автопагінація A4)
 - **logger.ts** (сервер) — структуроване логування через pino (JSON в production, pretty в dev)
 - **chat.ts** (сервер) — маршрут POST /api/chat: оркестрація запиту (пошук → промпт → Claude → верифікація цитат). Query expansion для follow-up: витягує посилання на статті з попередньої відповіді AI (regex) і додає до пошукового запиту (ліміт 400 символів). Об'єднання контексту (top-25 з основного + follow-up пошуку)
-- **app.ts** — Express з rate limiting (20 запитів/хвилину на IP)
+- **feedback.ts** (сервер) — маршрут POST /api/feedback: відправка зворотного зв'язку через SMTP (nodemailer). Валідація type ('good'|'bad'|'suggestion', default: 'suggestion'), ліміт повідомлення 5-5000 символів, PDF вкладення до 5MB. Lazy singleton transporter. Rate limit: 5 запитів/хвилину. JSON ліміт 10mb (окремий від chat 10kb). Потребує SMTP_HOST, SMTP_USER, SMTP_PASS, FEEDBACK_EMAIL в .env
+- **app.ts** — Express з rate limiting (chat: 20 запитів/хвилину, feedback: 5 запитів/хвилину на IP). JSON ліміти: `/api/chat` — 10kb, `/api/feedback` — 10mb (для PDF вкладень)
 - **evalMetrics.ts** (сервер) — утиліти для eval: нормалізація статей, перевірка фактів, підрахунок retrieval recall, citation accuracy, hallucination rate
 - **scripts/eval.ts** — скрипт оцінки якості: `npm run eval` (retrieval recall по golden set, 68 питань), `npm run eval -- --full` (повний eval з Claude API: citation accuracy, fact recall)
 - **scripts/parse-law.ts** — парсер законів з HTML (rada.gov.ua): `parseArticleBased()` створює чанки по частинах статей, `splitLargeChunks()` дворівневий split великих чанків (рівень 1: цифрові пункти `N)`, рівень 2: літерні підпункти `а)`, `б)`; fallback на літерні якщо цифрових немає; преамбула додається до кожного підпункту для контексту keyword search). ID формат: `{base}-{пункт}-{підпункт}`, Part формат: `{base}, п.{N}, пп.{літера}`. МАКС_РОЗМІР_ЧАНКА = 6000

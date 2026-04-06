@@ -1,15 +1,12 @@
 // Фабрика Express-застосунку (окремо від запуску сервера — для тестування)
 import express from 'express';
 import cors from 'cors';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 import { existsSync } from 'fs';
 import rateLimit from 'express-rate-limit';
 import chatRouter from './routes/chat.ts';
 import feedbackRouter from './routes/feedback.ts';
 import { RATE_LIMIT_ВІКНО_МС, RATE_LIMIT_МАКС_ЗАПИТІВ, JSON_ЛІМІТ } from './constants.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export function createApiLimiter() {
   return rateLimit({

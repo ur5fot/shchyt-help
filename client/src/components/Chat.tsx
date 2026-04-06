@@ -193,7 +193,7 @@ export default function Chat() {
   function summarizeChat(): string {
     const firstUserMsg = messages.find(m => m.role === 'user')?.text ?? '';
     return firstUserMsg
-      .replace(/[?!.,;:()«»"'\/\\]/g, ' ')
+      .replace(/[?!.,;:()«»"'/\\]/g, ' ')
       .split(/\s+/)
       .filter(w => w.length > 3)
       .slice(0, 4)
