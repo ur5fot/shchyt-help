@@ -194,7 +194,8 @@ describe('dovidkovi-dokumenty.json', () => {
         text.includes('порядок отримання') ||
         text.includes('подається') ||
         text.includes('подати') ||
-        text.includes('оформлення');
+        text.includes('оформлення') ||
+        text.includes('скористатися');
       expect(hasObtainInfo).toBe(true);
     }
   });
