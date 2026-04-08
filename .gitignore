@@ -2,6 +2,9 @@
 # ralphex progress logs
 .ralphex/progress/
 
+# Claude Code локальні налаштування
+.claude/settings.local.json
+
 # Залежності
 node_modules/
 **/node_modules/
